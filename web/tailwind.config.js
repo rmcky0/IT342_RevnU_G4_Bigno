@@ -2,10 +2,15 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,jsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        prompt: ['Prompt', 'sans-serif'],
+        ubuntu: ['Ubuntu', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 }
