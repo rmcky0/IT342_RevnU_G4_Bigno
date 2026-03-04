@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
+import { useRegister } from '../hooks/useRegister';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -12,28 +12,23 @@ const GoogleIcon = () => (
 );
 
 export const Register = () => {
-  const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: wire up registration API
-    console.log(form);
-  };
+  const { form, loading, error, success, handleChange, handleSubmit } = useRegister();
 
   return (
     <AuthLayout
       title="Create Your Account"
       subtitle="Join the digital transformation for your restaurant."
     >
+      {error && (
+        <div className="mb-3 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="mb-3 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+          {success}
+        </div>
+      )}
       {/* Google Register */}
       <button
         type="button"
@@ -107,9 +102,10 @@ export const Register = () => {
 
         <button
           type="submit"
-          className="w-full py-3 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition-colors mt-2"
+          disabled={loading}
+          className="w-full py-3 bg-[#2563EB] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg text-sm transition-colors mt-2"
         >
-          Create Account
+          {loading ? 'Creating account…' : 'Create Account'}
         </button>
 
         <p className="text-center text-xs text-gray-400 italic">

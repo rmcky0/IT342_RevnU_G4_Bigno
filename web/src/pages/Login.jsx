@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
+import { useLogin } from '../hooks/useLogin';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -12,23 +12,18 @@ const GoogleIcon = () => (
 );
 
 export const Login = () => {
-  const [form, setForm] = useState({ email: '', password: '' });
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: wire up login API
-    console.log(form);
-  };
+  const { form, loading, error, handleChange, handleSubmit } = useLogin();
 
   return (
     <AuthLayout
       title="Welcome Back to RevnU"
       subtitle="Sign in to manage your restaurant's revenue and expenses."
     >
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+          {error}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Email */}
         <div>
@@ -66,9 +61,10 @@ export const Login = () => {
         {/* Sign in button */}
         <button
           type="submit"
-          className="w-full py-3 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition-colors"
+          disabled={loading}
+          className="w-full py-3 bg-[#2563EB] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg text-sm transition-colors"
         >
-          Sign in
+          {loading ? 'Signing in…' : 'Sign in'}
         </button>
 
         {/* Google sign in */}
