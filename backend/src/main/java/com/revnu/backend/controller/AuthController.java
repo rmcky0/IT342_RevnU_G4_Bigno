@@ -1,6 +1,8 @@
 package com.revnu.backend.controller;
 
-import com.revnu.backend.model.User;
+import com.revnu.backend.dto.AuthResponse;
+import com.revnu.backend.dto.LoginRequest;
+import com.revnu.backend.dto.RegisterRequest;
 import com.revnu.backend.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +17,20 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
-            User registeredUser = authService.register(user);
-            return ResponseEntity.ok(registeredUser);
+            AuthResponse response = authService.register(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            AuthResponse response = authService.login(request);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

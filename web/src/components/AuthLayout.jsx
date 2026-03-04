@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import revnuLogo from '../assets/revnu_logo.svg';
 
 const RevnULogo = () => (
-  <div className="w-20 h-20 flex items-center justify-center mb-6">
+  <div className="w-20 h-20 flex items-center justify-center mb-6 mx-auto">
     <img src={revnuLogo} alt="RevnU Logo" className="w-full h-full object-contain" />
   </div>
 );
@@ -31,23 +31,12 @@ export const AuthLayout = ({ children, title, subtitle }) => {
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex flex-col">
-        <div className="p-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center justify-center px-8 pb-12">
-          <div className="w-full max-w-md">
-            <RevnULogo />
-            <h2 className="text-3xl font-bold text-gray-900 mb-1">{title}</h2>
-            <p className="text-sm text-gray-500 mb-8">{subtitle}</p>
-            {children}
-          </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-8 pb-12">
+        <div className="w-full max-w-md flex flex-col">
+          <RevnULogo />
+          <h2 className="text-3xl font-bold text-gray-900 mb-1 text-center">{title}</h2>
+          <p className="text-sm text-gray-500 mb-8 text-center">{subtitle}</p>
+          {children}
         </div>
       </div>
     </div>
