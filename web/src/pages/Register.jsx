@@ -32,10 +32,14 @@ export const Register = () => {
       {/* Google Register */}
       <button
         type="button"
+        onClick={() => {
+          sessionStorage.setItem('oauth2_source', '/register');
+          window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+        }}
         className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors mb-4"
       >
         <GoogleIcon />
-        Register with Google
+        Continue with Google
       </button>
 
       {/* Divider */}
