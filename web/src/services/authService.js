@@ -11,6 +11,11 @@ export const authService = {
     return response.data;
   },
 
+  linkGoogle: async ({ email, password, googleId }) => {
+    const response = await api.post('/auth/link-google', { email, password, googleId });
+    return response.data;
+  },
+
   getSession: () => {
     const raw = sessionStorage.getItem('user');
     return raw ? JSON.parse(raw) : null;

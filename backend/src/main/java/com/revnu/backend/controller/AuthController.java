@@ -1,6 +1,7 @@
 package com.revnu.backend.controller;
 
 import com.revnu.backend.dto.AuthResponse;
+import com.revnu.backend.dto.LinkGoogleRequest;
 import com.revnu.backend.dto.LoginRequest;
 import com.revnu.backend.dto.RegisterRequest;
 import com.revnu.backend.service.AuthService;
@@ -30,6 +31,16 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
             AuthResponse response = authService.login(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/link-google")
+    public ResponseEntity<?> linkGoogle(@RequestBody LinkGoogleRequest request) {
+        try {
+            AuthResponse response = authService.linkGoogleAccount(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

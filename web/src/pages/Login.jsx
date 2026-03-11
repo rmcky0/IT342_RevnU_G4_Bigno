@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
 import { useLogin } from '../hooks/useLogin';
+import { Notification } from '../components/Notification';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -12,18 +13,35 @@ const GoogleIcon = () => (
 );
 
 export const Login = () => {
-  const { form, loading, error, handleChange, handleSubmit } = useLogin();
+  const { form, loading, error, success, handleChange, handleSubmit } = useLogin();
 
   return (
     <AuthLayout
       title="Welcome Back to RevnU"
       subtitle="Sign in to manage your restaurant's revenue and expenses."
     >
-      {error && (
-        <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <Notification type="error">{error}</Notification>}
+      {success && <Notification type="success">{success}</Notification>}
+      
+        {/* Google sign in */}
+        <button
+          type="button"
+          onClick={() => {
+            sessionStorage.setItem('oauth2_source', '/login');
+            window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+          }}
+          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors mb-4"
+      >
+          <GoogleIcon />
+          Continue with Google
+        </button>
+
+        {/* Divider */}
+      <div className="flex items-center gap-3 mb-4">
+        <hr className="flex-1 border-gray-200" />
+        <span className="text-xs text-gray-400 font-medium">— OR —</span>
+        <hr className="flex-1 border-gray-200" />
+      </div>
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Email */}
         <div>
@@ -67,14 +85,7 @@ export const Login = () => {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
 
-        {/* Google sign in */}
-        <button
-          type="button"
-          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <GoogleIcon />
-          Sign in with Google
-        </button>
+        
 
         <p className="text-center text-xs text-gray-400 italic">
           By signing in, you agree to our{' '}

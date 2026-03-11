@@ -6,6 +6,7 @@ export const useLogin = () => {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -16,10 +17,13 @@ export const useLogin = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       const data = await authService.login(form);
       authService.saveSession(data);
-      navigate('/dashboard');
+      setSuccess('Login successful — redirecting…');
+      // short pause so user can see success UI
+      setTimeout(() => navigate('/dashboard'), 600);
     } catch (err) {
       setError(err.response?.data || 'Login failed. Please try again.');
     } finally {
@@ -27,5 +31,5 @@ export const useLogin = () => {
     }
   };
 
-  return { form, loading, error, handleChange, handleSubmit };
+  return { form, loading, error, success, handleChange, handleSubmit };
 };
