@@ -14,6 +14,7 @@ import com.revnu.backend.model.User;
 import com.revnu.backend.model.UserStatus;
 import com.revnu.backend.repository.UserRepository;
 import com.revnu.backend.service.JwtService;
+import com.revnu.backend.service.TokenBlacklistService;
 import com.revnu.backend.strategy.RoleAssignmentService;
 import com.revnu.backend.validator.RegistrationValidationPipeline;
 
@@ -22,17 +23,20 @@ public class AuthFacade {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
     private final RegistrationValidationPipeline validationPipeline;
     private final RoleAssignmentService roleAssignmentService;
 
     public AuthFacade(UserRepository userRepository,
                       PasswordEncoder passwordEncoder,
                       JwtService jwtService,
+                      TokenBlacklistService tokenBlacklistService,
                       RegistrationValidationPipeline validationPipeline,
                       RoleAssignmentService roleAssignmentService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.tokenBlacklistService = tokenBlacklistService;
         this.validationPipeline = validationPipeline;
         this.roleAssignmentService = roleAssignmentService;
     }
@@ -109,5 +113,17 @@ public class AuthFacade {
 
         String token = jwtService.generateToken(user.getEmail());
         return new AuthResponse("Google account linked successfully", user.getEmail(), user.getFullName(), user.getRole(), token);
+    }
+
+    public AuthResponse logout(String token) {
+        if (token == null || token.isBlank()) {
+            throw new IllegalArgumentException("Token is required for logout");
+        }
+
+        String cleanToken = token.startsWith("Bearer ") ? token.substring(7) : token;
+
+        tokenBlacklistService.blacklistToken(cleanToken);
+
+        return new AuthResponse("Logout successful", null, null, null, null);
     }
 }
