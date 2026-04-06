@@ -1,9 +1,16 @@
 package com.revnu.backend.model;
 
-import jakarta.persistence.*;
-
 import java.time.LocalDate;
 import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
@@ -30,6 +37,96 @@ public class User {
     private UserStatus status; // PENDING, ACTIVE, INACTIVE
 
     private String oauthId;
+
+    public static UserBuilder builder() {
+        return new UserBuilder();
+    }
+
+    public static class UserBuilder {
+        private UUID id;
+        private String email;
+        private String passwordHash;
+        private String fullName;
+        private LocalDate birthday;
+        private String phoneNumber;
+        private String emergencyContactPerson;
+        private String emergencyContactNumber;
+        private RoleType role;
+        private UserStatus status;
+        private String oauthId;
+
+        public UserBuilder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public UserBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public UserBuilder passwordHash(String passwordHash) {
+            this.passwordHash = passwordHash;
+            return this;
+        }
+
+        public UserBuilder fullName(String fullName) {
+            this.fullName = fullName;
+            return this;
+        }
+
+        public UserBuilder birthday(LocalDate birthday) {
+            this.birthday = birthday;
+            return this;
+        }
+
+        public UserBuilder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public UserBuilder emergencyContactPerson(String emergencyContactPerson) {
+            this.emergencyContactPerson = emergencyContactPerson;
+            return this;
+        }
+
+        public UserBuilder emergencyContactNumber(String emergencyContactNumber) {
+            this.emergencyContactNumber = emergencyContactNumber;
+            return this;
+        }
+
+        public UserBuilder role(RoleType role) {
+            this.role = role;
+            return this;
+        }
+
+        public UserBuilder status(UserStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public UserBuilder oauthId(String oauthId) {
+            this.oauthId = oauthId;
+            return this;
+        }
+
+        public User build() {
+            User user = new User();
+            user.id = this.id;
+            user.email = this.email;
+            user.passwordHash = this.passwordHash;
+            user.fullName = this.fullName;
+            user.birthday = this.birthday;
+            user.phoneNumber = this.phoneNumber;
+            user.emergencyContactPerson = this.emergencyContactPerson;
+            user.emergencyContactNumber = this.emergencyContactNumber;
+            user.role = this.role;
+            user.status = this.status;
+            user.oauthId = this.oauthId;
+            return user;
+        }
+    }
+
     public UUID getId() {
         return id;
     }

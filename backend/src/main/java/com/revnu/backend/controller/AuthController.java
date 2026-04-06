@@ -1,26 +1,30 @@
 package com.revnu.backend.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.revnu.backend.dto.AuthResponse;
 import com.revnu.backend.dto.LinkGoogleRequest;
 import com.revnu.backend.dto.LoginRequest;
 import com.revnu.backend.dto.RegisterRequest;
-import com.revnu.backend.service.AuthService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.revnu.backend.facade.AuthFacade;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
-    private final AuthService authService;
+    private final AuthFacade authFacade;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
+    public AuthController(AuthFacade authFacade) {
+        this.authFacade = authFacade;
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
-            AuthResponse response = authService.register(request);
+            AuthResponse response = authFacade.register(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -30,7 +34,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
-            AuthResponse response = authService.login(request);
+            AuthResponse response = authFacade.login(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -40,7 +44,7 @@ public class AuthController {
     @PostMapping("/link-google")
     public ResponseEntity<?> linkGoogle(@RequestBody LinkGoogleRequest request) {
         try {
-            AuthResponse response = authService.linkGoogleAccount(request);
+            AuthResponse response = authFacade.linkGoogleAccount(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
