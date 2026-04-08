@@ -1,9 +1,15 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { Dashboard } from './pages/Dashboard';
-import { AuthCallback } from './pages/AuthCallback';
-import { LinkGoogle } from './pages/LinkGoogle';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { Login } from "./pages/Login";
+import { Register } from "./pages/Register";
+import { Dashboard } from "./pages/Dashboard";
+import { AuthCallback } from "./pages/AuthCallback";
+import { LinkGoogle } from "./pages/LinkGoogle";
+import { PendingApproval } from "./pages/PendingApproval";
 
 function App() {
   return (
@@ -15,6 +21,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/link-google" element={<LinkGoogle />} />
+        <Route path="/pending-approval" element={<PendingApproval />} />
       </Routes>
     </Router>
   );
