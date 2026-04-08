@@ -1,15 +1,16 @@
 package com.revnu.backend.service;
 
-import com.revnu.backend.dto.AuthResponse;
-import com.revnu.backend.dto.LoginRequest;
-import com.revnu.backend.dto.RegisterRequest;
-import com.revnu.backend.model.User;
-import com.revnu.backend.repository.UserRepository;
-import com.revnu.backend.model.RoleType;
-import com.revnu.backend.model.UserStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+
+import com.revnu.backend.dto.AuthResponse;
+import com.revnu.backend.dto.LoginRequest;
+import com.revnu.backend.dto.RegisterRequest;
+import com.revnu.backend.model.RoleType;
+import com.revnu.backend.model.User;
+import com.revnu.backend.model.UserStatus;
+import com.revnu.backend.repository.UserRepository;
 
 @Service
 public class AuthService {
@@ -35,14 +36,21 @@ public class AuthService {
 
         if (userRepository.count() == 0) {
             user.setRole(RoleType.OWNER); 
-            user.setStatus(UserStatus.ACTIVE);
+            user.setStatus(UserStatus.APPROVED);
         } else {
             user.setRole(RoleType.STAFF);
             user.setStatus(UserStatus.PENDING);
         }
 
         User saved = userRepository.save(user);
-        return new AuthResponse("Registration successful", saved.getEmail(), saved.getFullName(), saved.getRole());
+        return new AuthResponse(
+                "Registration successful",
+                saved.getEmail(),
+                saved.getFullName(),
+                saved.getRole(),
+                saved.getStatus(),
+                null
+        );
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -54,10 +62,34 @@ public class AuthService {
         }
 
         if (user.getStatus() == UserStatus.PENDING) {
-            throw new RuntimeException("Your account is pending approval by the owner");
+            return new AuthResponse(
+                    "Your account is pending approval by the owner",
+                    user.getEmail(),
+                    user.getFullName(),
+                    user.getRole(),
+                    user.getStatus(),
+                    null
+            );
         }
-
-        return new AuthResponse("Login successful", user.getEmail(), user.getFullName(), user.getRole());
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            return new AuthResponse(
+                    "Your account is inactive",
+                    user.getEmail(),
+                    user.getFullName(),
+                    user.getRole(),
+                    user.getStatus(),
+                    null
+            );
+        }
+        String token = jwtService.generateToken(user.getEmail());
+        return new AuthResponse(
+                "Login successful",
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole(),
+                user.getStatus(),
+                token
+        );
     }
 
     public AuthResponse authenticateWithGoogleOAuth2User(OAuth2User oAuth2User) {
@@ -78,10 +110,11 @@ public class AuthService {
 
             if (userRepository.count() == 0) {
                 newUser.setRole(RoleType.OWNER);
+                newUser.setStatus(UserStatus.APPROVED);
             } else {
                 newUser.setRole(RoleType.STAFF);
+                newUser.setStatus(UserStatus.PENDING);
             }
-            newUser.setStatus(UserStatus.ACTIVE);
             return userRepository.save(newUser);
         });
 
@@ -91,11 +124,36 @@ public class AuthService {
         }
 
         if (user.getStatus() == UserStatus.PENDING) {
-            throw new IllegalArgumentException("Your account is pending approval by the owner");
+            return new AuthResponse(
+                    "Your account is pending approval by the owner",
+                    user.getEmail(),
+                    user.getFullName(),
+                    user.getRole(),
+                    user.getStatus(),
+                    null
+            );
+        }
+
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            return new AuthResponse(
+                    "Your account is inactive",
+                    user.getEmail(),
+                    user.getFullName(),
+                    user.getRole(),
+                    user.getStatus(),
+                    null
+            );
         }
 
         String token = jwtService.generateToken(user.getEmail());
-        return new AuthResponse("Google login successful", user.getEmail(), user.getFullName(), user.getRole(), token);
+        return new AuthResponse(
+                "Google login successful",
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole(),
+                user.getStatus(),
+                token
+        );
     }
 
     public AuthResponse linkGoogleAccount(com.revnu.backend.dto.LinkGoogleRequest request) {
@@ -110,6 +168,13 @@ public class AuthService {
         userRepository.save(user);
 
         String token = jwtService.generateToken(user.getEmail());
-        return new AuthResponse("Google account linked successfully", user.getEmail(), user.getFullName(), user.getRole(), token);
+        return new AuthResponse(
+                "Google account linked successfully",
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole(),
+                user.getStatus(),
+                token
+        );
     }
 }
