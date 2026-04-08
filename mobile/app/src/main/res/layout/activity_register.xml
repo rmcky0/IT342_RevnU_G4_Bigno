@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:background="#F5F5F5"
     android:fillViewport="true"
-    tools:context=".auth.LoginActivity">
+    tools:context=".auth.RegisterActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -33,7 +33,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="28dp"
             android:fontFamily="@font/prompt_bold"
-            android:text="Welcome Back to RevnU"
+            android:text="Create Your Account"
             android:textAlignment="center"
             android:textColor="#111243"
             android:textSize="30sp" />
@@ -45,7 +45,7 @@
             android:layout_marginTop="12dp"
             android:fontFamily="@font/ubuntu"
             android:gravity="center"
-            android:text="Sign in to manage your restaurant's revenue and expenses."
+            android:text="Join the digital transformation for your restaurant."
             android:textColor="#1A1D4F"
             android:textSize="16sp" />
 
@@ -80,6 +80,31 @@
             android:fontFamily="@font/ubuntu"
             android:text="—  OR  —"
             android:textColor="#7B7B7B"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvFullNameLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Full Name"
+            android:textColor="#111243"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/etFullName"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_edittext_outline"
+            android:fontFamily="@font/ubuntu_light_italic"
+            android:gravity="center_vertical"
+            android:hint="e.g. Juan Dela Cruz"
+            android:inputType="textPersonName"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:textColor="#111243"
+            android:textColorHint="#9A9A9A"
             android:textSize="16sp" />
 
         <TextView
@@ -135,25 +160,38 @@
             android:textSize="16sp" />
 
         <TextView
-            android:id="@+id/tvForgotPassword"
+            android:id="@+id/tvConfirmPasswordLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
+            android:layout_marginTop="22dp"
+            android:text="Confirm Password"
+            android:textColor="#111243"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/etConfirmPassword"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
             android:layout_marginTop="10dp"
+            android:background="@drawable/bg_edittext_outline"
             android:fontFamily="@font/ubuntu_light_italic"
-            android:text="Forgot Password?"
-            android:textColor="#111111"
-            android:textSize="16sp"
-            android:textStyle="italic" />
+            android:gravity="center_vertical"
+            android:hint="Reenter your password"
+            android:inputType="textPassword"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:textColor="#111243"
+            android:textColorHint="#9A9A9A"
+            android:textSize="16sp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSignIn"
+            android:id="@+id/btnCreateAccount"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="24dp"
             android:background="@drawable/bg_signin_gradient"
             android:fontFamily="@font/ubuntu_bold"
-            android:text="Sign in"
+            android:text="Create Account"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textSize="18sp"
@@ -167,19 +205,19 @@
             android:layout_marginTop="16dp"
             android:fontFamily="@font/ubuntu_light_italic"
             android:gravity="center"
-            android:text="By signing in, you agree to our Terms of Service and Privacy Policy."
+            android:text="By registering, you agree to our Terms of Service and Privacy Policy."
             android:textColor="#2B2B2B"
             android:textSize="14sp"
             android:textStyle="italic" />
 
         <TextView
-            android:id="@+id/tvRegister"
+            android:id="@+id/tvSignin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="40dp"
             android:fontFamily="@font/ubuntu"
-            android:text="Don't have an account? Register here"
+            android:text="Already have an account? Sign In here"
             android:textColor="#111111"
             android:textSize="17sp" />
 

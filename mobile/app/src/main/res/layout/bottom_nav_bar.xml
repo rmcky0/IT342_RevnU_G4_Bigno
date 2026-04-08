@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bottomBar"
+    android:layout_width="match_parent"
+    android:layout_height="88dp"
+    android:background="@android:color/white"
+    android:elevation="8dp"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp"
+    android:weightSum="5">
+
+    <LinearLayout
+        android:id="@+id/navSales"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:background="@drawable/bg_bottom_nav_unselected"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/iconSales"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="Sales"
+            android:src="@drawable/ic_sales" />
+
+        <TextView
+            android:id="@+id/textSales"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/ubuntu"
+            android:text="Sales"
+            android:textColor="#111243"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navExpenses"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:background="@drawable/bg_bottom_nav_unselected"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/iconExpenses"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="Expenses"
+            android:src="@drawable/ic_expenses" />
+
+        <TextView
+            android:id="@+id/textExpenses"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/ubuntu"
+            android:text="Expenses"
+            android:textColor="#111243"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navHome"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:background="@drawable/bg_bottom_nav_unselected"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/iconHome"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="Home"
+            android:src="@drawable/ic_home" />
+
+        <TextView
+            android:id="@+id/textHome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/ubuntu"
+            android:text="Home"
+            android:textColor="#111243"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navStaff"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:background="@drawable/bg_bottom_nav_unselected"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/iconStaff"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="Staff"
+            android:src="@drawable/ic_staff" />
+
+        <TextView
+            android:id="@+id/textStaff"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/ubuntu"
+            android:text="Staff"
+            android:textColor="#111243"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navSettings"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:background="@drawable/bg_bottom_nav_unselected"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/iconSettings"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="Settings"
+            android:src="@drawable/ic_setting" />
+
+        <TextView
+            android:id="@+id/textSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/ubuntu"
+            android:text="Settings"
+            android:textColor="#111243"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+</LinearLayout>
