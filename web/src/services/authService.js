@@ -21,11 +21,17 @@ export const authService = {
     return raw ? JSON.parse(raw) : null;
   },
 
+  getToken: () => sessionStorage.getItem('token'),
+
   saveSession: (user) => {
-    sessionStorage.setItem('user', JSON.stringify(user));
-  },
+  sessionStorage.setItem('user', JSON.stringify(user));
+  if (user?.accessToken) {
+    sessionStorage.setItem('token', user.accessToken);
+  }
+},
 
   clearSession: () => {
     sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
   },
 };
