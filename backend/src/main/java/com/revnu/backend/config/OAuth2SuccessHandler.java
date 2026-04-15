@@ -11,22 +11,20 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import com.revnu.backend.dto.AuthResponse;
-import com.revnu.backend.model.UserStatus;
-import com.revnu.backend.service.AuthService;
-
+import com.revnu.backend.facade.AuthFacade;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final AuthService authService;
+    private final AuthFacade authFacade;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
-    public OAuth2SuccessHandler(AuthService authService) {
-        this.authService = authService;
+    public OAuth2SuccessHandler(AuthFacade authFacade) {
+        this.authFacade = authFacade;
     }
 
     @Override
@@ -41,31 +39,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         }
 
         try {
-            AuthResponse authResponse = authService.authenticateWithGoogleOAuth2User(oAuth2User);
-
-            if (authResponse.getStatus() == UserStatus.PENDING) {
-                String encodedName = URLEncoder.encode(
-                        authResponse.getFullName() != null ? authResponse.getFullName() : "User",
-                        StandardCharsets.UTF_8
-                );
-                response.sendRedirect(frontendUrl + "/pending-approval?name=" + encodedName);
-                return;
-            }
-
-            if (authResponse.getStatus() == UserStatus.INACTIVE) {
-                String encodedMessage = URLEncoder.encode(
-                        authResponse.getMessage() != null ? authResponse.getMessage() : "Account inactive",
-                        StandardCharsets.UTF_8
-                );
-                response.sendRedirect(frontendUrl + "/auth/callback?error=" + encodedMessage);
-                return;
-            }
-
-            if (authResponse.getAccessToken() == null || authResponse.getAccessToken().isBlank()) {
-                response.sendRedirect(frontendUrl + "/auth/callback?error=missing_token");
-                return;
-            }
-
+            AuthResponse authResponse = authFacade.authenticateWithGoogle(oAuth2User);
             String encodedToken = URLEncoder.encode(authResponse.getAccessToken(), StandardCharsets.UTF_8);
             String encodedEmail = URLEncoder.encode(authResponse.getEmail(), StandardCharsets.UTF_8);
             String encodedName = URLEncoder.encode(authResponse.getFullName(), StandardCharsets.UTF_8);
