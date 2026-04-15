@@ -6,9 +6,8 @@ export const PendingApproval = () => {
   const navigate = useNavigate();
 
   const sessionUser = JSON.parse(sessionStorage.getItem("user") || "{}");
-
-  const fullName =
-    searchParams.get("name") || sessionUser?.fullName || "User Name";
+  
+  const fullName = sessionUser?.fullName || searchParams.get("name") || "User";
 
   const handleBack = () => {
     navigate("/login");

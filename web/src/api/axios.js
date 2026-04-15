@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/revnu/',
+  baseURL: 'http://localhost:8080/revnu/',
   headers: {
     'Content-Type': 'application/json',
   },

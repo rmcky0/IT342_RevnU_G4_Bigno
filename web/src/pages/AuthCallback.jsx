@@ -15,7 +15,6 @@ export const AuthCallback = () => {
 
     if (error) {
       sessionStorage.removeItem('oauth2_source');
-      // access_denied = user clicked Cancel — return silently
       if (error.toLowerCase().includes('access_denied')) {
         navigate(source, { replace: true });
         return;
@@ -28,19 +27,28 @@ export const AuthCallback = () => {
 
     if (token) {
       sessionStorage.removeItem('oauth2_source');
+      const status = decodeURIComponent(searchParams.get('status') ?? 'APPROVED');
+      const fullName = decodeURIComponent(searchParams.get('name') ?? '');
       const sessionData = {
         accessToken: decodeURIComponent(token),
         email: decodeURIComponent(searchParams.get('email') ?? ''),
-        fullName: decodeURIComponent(searchParams.get('name') ?? ''),
+        fullName: fullName,
         role: decodeURIComponent(searchParams.get('role') ?? ''),
+        status: status,
         message: 'Google login successful',
       };
       authService.saveSession(sessionData);
+      
+      // Redirect to pending approval if account is pending
+      if (status === 'PENDING') {
+        navigate('/pending-approval', { replace: true });
+        return;
+      }
+      
       navigate('/dashboard', { replace: true });
       return;
     }
 
-    // Neither token nor error — just send back
     navigate(source, { replace: true });
   }, [searchParams, navigate]);
 

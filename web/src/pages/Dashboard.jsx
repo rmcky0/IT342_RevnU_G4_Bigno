@@ -1,86 +1,140 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Sales } from './Sales';
+import { Expenses } from './Expenses';
+import { Staff } from './Staff';
+import { StaffProfile } from './StaffProfile';
+import { Settings } from './Settings';
+import { Analytics } from './Analytics';
 import {
-  LayoutDashboard, TrendingUp, Receipt, Users,
-  LogOut, Menu, X, Bell, ChevronUp, ChevronDown,
+  Home, ShoppingCart, CreditCard, Users,
+  Settings as SettingsIcon, LogOut, Menu, X, Bell,
 } from 'lucide-react';
 import revnuLogo from '../assets/revnu_logo.svg';
 
 const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard' },
-  { icon: TrendingUp,      label: 'Revenue'   },
-  { icon: Receipt,         label: 'Expenses'  },
-  { icon: Users,           label: 'Staff'     },
-];
-
-const STATS = [
-  { label: 'Total Revenue',  value: '₱0.00',  change: '+0%',  up: true  },
-  { label: 'Total Expenses', value: '₱0.00',  change: '+0%',  up: false },
-  { label: 'Net Income',     value: '₱0.00',  change: '+0%',  up: true  },
-  { label: 'Staff Members',  value: '0',       change: '',     up: null  },
+  { id: 'home', icon: Home, label: 'Home' },
+  { id: 'sales', icon: ShoppingCart, label: 'Sales' },
+  { id: 'expenses', icon: CreditCard, label: 'Expenses' },
+  { id: 'staff', icon: Users, label: 'Staff', managerOnly: true },
+  { id: 'settings', icon: SettingsIcon, label: 'Settings' },
 ];
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { staffId } = useParams();
   const { user, logout } = useAuth();
-  const [active, setActive] = useState('Dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Determine active tab from URL path
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path === '/sales') return 'sales';
+    if (path === '/expenses') return 'expenses';
+    if (path === '/staff' && !staffId) return 'staff';
+    if (path.startsWith('/staff/')) return 'staff-profile';
+    if (path === '/settings') return 'settings';
+    return 'home';
+  };
+
+  const activeTab = getActiveTab();
+
+  // Check authentication
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  if (!user?.email) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  const handleNavClick = (tabId) => {
+    if (tabId === 'home') {
+      navigate('/');
+    } else {
+      navigate(`/${tabId}`);
+    }
+    setSidebarOpen(false);
+  }
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-
+      
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-300
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transition-transform duration-300 flex flex-col
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:z-auto`}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
-          <img src={revnuLogo} alt="RevnU" className="w-9 h-9" />
-          <span className="text-xl font-bold text-gray-900">RevnU</span>
-          <button className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
+        
+        {/* Logo Section */}
+        <div className="flex items-center gap-3 px-6 py-6 border-b border-gray-200">
+          <img src={revnuLogo} alt="RevnU" className="w-10 h-10" />
+          <span className="text-2xl font-bold text-gray-900">RevnU</span>
+          <button
+            className="ml-auto lg:hidden p-1 hover:bg-gray-100 rounded"
+            onClick={() => setSidebarOpen(false)}
+          >
             <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(({ icon: Icon, label }) => (
-            <button
-              key={label}
-              onClick={() => { setActive(label); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors
-                ${active === label
-                  ? 'bg-[#EEF2FF] text-[#5755FF]'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
+        {/* Navigation Items */}
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          {NAV_ITEMS.map(({ id, icon: Icon, label, managerOnly }) => {
+            // Hide manager-only items from non-managers
+            if (managerOnly && user?.role !== 'MANAGER') {
+              return null;
+            }
+
+            return (
+              <button
+                key={id}
+                onClick={() => handleNavClick(id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all
+                  ${activeTab === id
+                    ? 'bg-indigo-100 text-indigo-600'
+                    : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                <Icon className="w-5 h-5" />
+                {label}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* User + Logout */}
-        <div className="px-4 py-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 mb-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm">
+        {/* User Section */}
+        <div className="px-4 py-4 border-t border-gray-200 space-y-4">
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
               {(user.fullName || 'U')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">{user.fullName || 'User'}</p>
-              <p className="text-xs text-gray-400 truncate">{user.role || 'STAFF'}</p>
+              <p className="text-xs text-gray-500 truncate">{user.role || 'STAFF'}</p>
             </div>
           </div>
+
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            Log out
+            <LogOut className="w-5 h-5" />
+            Log Out
           </button>
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/20 lg:hidden"
@@ -88,62 +142,52 @@ export const Dashboard = () => {
         />
       )}
 
-      {/* Main */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-
-        {/* Topbar */}
-        <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center gap-4">
-          <button className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-            <Menu className="w-5 h-5 text-gray-500" />
+        
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4">
+          <button
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="w-5 h-5 text-gray-600" />
           </button>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">{active}</h1>
-            <p className="text-xs text-gray-400">Welcome back, {user.fullName || 'User'}!</p>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {activeTab === 'staff-profile' 
+                ? 'Staff Profile'
+                : NAV_ITEMS.find(item => item.id === activeTab)?.label || 'Dashboard'}
+            </h1>
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <button className="relative p-2 rounded-xl hover:bg-gray-50 transition-colors">
-              <Bell className="w-5 h-5 text-gray-400" />
-            </button>
-          </div>
+          <button className="p-2 hover:bg-gray-100 rounded-lg">
+            <Bell className="w-5 h-5 text-gray-600" />
+          </button>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 p-6 overflow-auto">
-
-          {/* Stats grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-            {STATS.map(({ label, value, change, up }) => (
-              <div key={label} className="bg-white rounded-2xl border border-gray-100 p-5">
-                <p className="text-xs text-gray-400 font-medium mb-1">{label}</p>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-                {change && (
-                  <p className={`flex items-center gap-1 text-xs font-medium mt-1 ${up ? 'text-green-500' : 'text-red-400'}`}>
-                    {up ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    {change} this month
-                  </p>
-                )}
+        {/* Content Area */}
+        <main className="flex-1 overflow-auto p-6">
+          {activeTab === 'home' && (
+            user?.role === 'MANAGER' ? (
+              <Analytics />
+            ) : (
+              <div className="bg-white rounded-lg p-8 text-center border border-gray-200">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome, {user.fullName}!</h2>
+                <p className="text-gray-600 mb-6">This is your financial dashboard for managing restaurant operations.</p>
+                <p className="text-sm text-gray-500">Use the sidebar to access Sales, Expenses, and other sections.</p>
               </div>
-            ))}
-          </div>
-
-          {/* Placeholder panels */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h2 className="text-sm font-semibold text-gray-900 mb-4">Recent Transactions</h2>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Receipt className="w-10 h-10 text-gray-200 mb-3" />
-                <p className="text-sm text-gray-400">No transactions yet</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h2 className="text-sm font-semibold text-gray-900 mb-4">Staff Overview</h2>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Users className="w-10 h-10 text-gray-200 mb-3" />
-                <p className="text-sm text-gray-400">No staff records yet</p>
-              </div>
-            </div>
-          </div>
-
+            )
+          )}
+          
+          {activeTab === 'sales' && <Sales />}
+          
+          {activeTab === 'expenses' && <Expenses />}
+          
+          {activeTab === 'staff' && <Staff />}
+          
+          {activeTab === 'staff-profile' && <StaffProfile />}
+          
+          {activeTab === 'settings' && <Settings />}
         </main>
       </div>
     </div>
