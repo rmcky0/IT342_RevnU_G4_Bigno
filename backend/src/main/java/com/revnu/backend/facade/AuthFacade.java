@@ -52,12 +52,12 @@ public class AuthFacade {
                 .fullName(request.getFullName())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role(assignedRole)
-                .status(assignedRole.name().equals("OWNER") ? UserStatus.ACTIVE : UserStatus.PENDING)
+                .status(assignedRole.name().equals("OWNER") ? UserStatus.APPROVED : UserStatus.PENDING)
                 .build();
 
         User saved = userRepository.save(user);
         String token = jwtService.generateToken(saved.getEmail());
-        return new AuthResponse("Registration successful", saved.getEmail(), saved.getFullName(), saved.getRole(), token);
+        return new AuthResponse("Registration successful", saved.getEmail(), saved.getFullName(), saved.getRole(), saved.getStatus(), token);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -68,12 +68,12 @@ public class AuthFacade {
             throw new RuntimeException("Invalid email or password");
         }
 
-        if (user.getStatus() == UserStatus.PENDING) {
-            throw new RuntimeException("Your account is pending approval by the owner");
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            throw new RuntimeException("Your account is disabled. Please contact the owner.");
         }
 
         String token = jwtService.generateToken(user.getEmail());
-        return new AuthResponse("Login successful", user.getEmail(), user.getFullName(), user.getRole(), token);
+        return new AuthResponse("Login successful", user.getEmail(), user.getFullName(), user.getRole(), user.getStatus(), token);
     }
 
    
@@ -83,7 +83,7 @@ public class AuthFacade {
         User user = userRepository.findByEmail(email).orElseGet(() -> {
             User newUser = GoogleUserAdapter.adaptGoogleUser(oAuth2User)
                     .role(roleAssignmentService.assignRole())
-                    .status(UserStatus.ACTIVE)
+                    .status(UserStatus.APPROVED)
                     .build();
             return userRepository.save(newUser);
         });
@@ -92,12 +92,12 @@ public class AuthFacade {
             throw new IllegalArgumentException("existing_account_requires_link");
         }
 
-        if (user.getStatus() == UserStatus.PENDING) {
-            throw new IllegalArgumentException("Your account is pending approval by the owner");
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            throw new RuntimeException("Your account is disabled. Please contact the owner.");
         }
 
         String token = jwtService.generateToken(user.getEmail());
-        return new AuthResponse("Google login successful", user.getEmail(), user.getFullName(), user.getRole(), token);
+        return new AuthResponse("Google login successful", user.getEmail(), user.getFullName(), user.getRole(), user.getStatus(), token);
     }
 
     public AuthResponse linkGoogleAccount(LinkGoogleRequest request) {
@@ -112,7 +112,7 @@ public class AuthFacade {
         userRepository.save(user);
 
         String token = jwtService.generateToken(user.getEmail());
-        return new AuthResponse("Google account linked successfully", user.getEmail(), user.getFullName(), user.getRole(), token);
+        return new AuthResponse("Google account linked successfully", user.getEmail(), user.getFullName(), user.getRole(), user.getStatus(), token);
     }
 
     public AuthResponse logout(String token) {
@@ -124,6 +124,6 @@ public class AuthFacade {
 
         tokenBlacklistService.blacklistToken(cleanToken);
 
-        return new AuthResponse("Logout successful", null, null, null, null);
+        return new AuthResponse("Logout successful", null, null, null, null, null);
     }
 }

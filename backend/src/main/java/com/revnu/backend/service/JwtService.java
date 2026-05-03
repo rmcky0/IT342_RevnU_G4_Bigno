@@ -31,6 +31,9 @@ public class JwtService {
                 .compact();
     }
 
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
