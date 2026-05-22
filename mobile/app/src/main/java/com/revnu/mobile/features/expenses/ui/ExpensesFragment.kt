@@ -1,49 +1,74 @@
 package com.revnu.mobile.features.expenses.ui
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.textfield.TextInputEditText
 import com.revnu.mobile.R
+import com.revnu.mobile.core.network.RetrofitClient
+import com.revnu.mobile.features.entry.ui.AddRecordActivity
 import com.revnu.mobile.features.expenses.model.ExpenseResponse
+import com.revnu.mobile.features.expenses.repository.ExpensesRepository
 import com.revnu.mobile.features.expenses.viewmodel.ExpensesViewModel
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
+import java.io.FileOutputStream
 
 class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
-
     private lateinit var viewModel: ExpensesViewModel
     private lateinit var adapter: ExpensesAdapter
 
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var rvExpenses: RecyclerView
     private lateinit var tvTotalExpenses: TextView
-    private var selectedReceiptUri: Uri? = null
 
-    // UI elements inside the dialog that need to be updated by the picker
-    private var ivReceiptPreview: ImageView? = null
-    private var tvReceiptName: TextView? = null
+    private var pendingUploadExpenseId: String? = null
+
+    private val editRecordLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) viewModel.loadExpenses()
+    }
+
+    private val imagePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { handleImageSelected(it) }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel = ViewModelProvider(this)[ExpensesViewModel::class.java]
+        val factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val repository = ExpensesRepository(RetrofitClient.apiService)
+                @Suppress("UNCHECKED_CAST")
+                return ExpensesViewModel(repository) as T
+            }
+        }
+        viewModel = ViewModelProvider(this, factory)[ExpensesViewModel::class.java]
 
         bindViews(view)
         setupRecyclerView()
-        setupListeners(view)
         setupObservers()
 
         viewModel.loadExpenses()
@@ -54,85 +79,70 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
         rvExpenses = view.findViewById(R.id.rvExpenses)
         tvTotalExpenses = view.findViewById(R.id.tvTotalExpenses)
     }
-    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) {
-            selectedReceiptUri = uri
-            ivReceiptPreview?.setImageURI(uri)
-            ivReceiptPreview?.visibility = View.VISIBLE
-            tvReceiptName?.visibility = View.VISIBLE
-        }
-    }
-    private fun setupListeners(view: View) {
-        val btnAddExpense = view.findViewById<MaterialButton>(R.id.btnAddExpense)
-        val btnLockRecords = view.findViewById<MaterialButton>(R.id.btnLockRecords)
-
-        btnAddExpense.setOnClickListener { showExpenseModal(null) }
-
-        btnLockRecords.setOnClickListener {
-            showStrictLockConfirmation()
-        }
-    }
 
     private fun setupRecyclerView() {
         adapter = ExpensesAdapter { clickedExpense ->
-            handleExpenseClick(clickedExpense)
+            showExpenseDetail(clickedExpense)
         }
         rvExpenses.layoutManager = LinearLayoutManager(requireContext())
         rvExpenses.adapter = adapter
+
+        val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            private val paint = Paint().apply { color = Color.parseColor("#EF4444") }
+
+            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val expense = adapter.getItemAt(position)
+                adapter.notifyItemChanged(position)
+                confirmDelete(expense)
+            }
+
+            override fun onChildDraw(c: Canvas, rv: RecyclerView, vh: RecyclerView.ViewHolder,
+                dX: Float, dY: Float, actionState: Int, isActive: Boolean) {
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    val itemView = vh.itemView
+                    c.drawRect(
+                        itemView.right + dX, itemView.top.toFloat(),
+                        itemView.right.toFloat(), itemView.bottom.toFloat(), paint
+                    )
+                }
+                super.onChildDraw(c, rv, vh, dX, dY, actionState, isActive)
+            }
+        }
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(rvExpenses)
     }
 
     private fun setupObservers() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.expenses.collect { expenseList ->
-                val activeExpenses = expenseList.filter { it.status == "ACTIVE" }
+            viewModel.expenses.collect { expensesList ->
+                val activeExpenses = expensesList.filter { it.status == "OPEN" }
                 adapter.updateData(activeExpenses)
-
-                if (activeExpenses.isEmpty()) {
-                    layoutEmptyState.visibility = View.VISIBLE
-                    rvExpenses.visibility = View.GONE
-                } else {
-                    layoutEmptyState.visibility = View.GONE
-                    rvExpenses.visibility = View.VISIBLE
-                }
-
-                val total = activeExpenses.sumOf { it.amount }
-                tvTotalExpenses.text = "₱${String.format("%.2f", total)}"
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.isEodLocked.collect { isLocked ->
-                if (isLocked) {
-                    val btnAddExpense = view?.findViewById<MaterialButton>(R.id.btnAddExpense)
-                    val btnLockRecords = view?.findViewById<MaterialButton>(R.id.btnLockRecords)
-
-                    btnAddExpense?.isEnabled = false
-                    btnAddExpense?.alpha = 0.5f
-
-                    btnLockRecords?.isEnabled = false
-                    btnLockRecords?.text = "Locked"
-                    btnLockRecords?.alpha = 0.5f
-                }
+                layoutEmptyState.visibility = if (activeExpenses.isEmpty()) View.VISIBLE else View.GONE
+                rvExpenses.visibility = if (activeExpenses.isEmpty()) View.GONE else View.VISIBLE
+                tvTotalExpenses.text = "₱${String.format("%.2f", activeExpenses.sumOf { it.amount })}"
             }
         }
     }
 
-    private fun handleExpenseClick(expense: ExpenseResponse) {
-        if (viewModel.isEodLocked.value) {
-            Toast.makeText(requireContext(), "Cannot modify records after EOD is locked.", Toast.LENGTH_SHORT).show()
-            return
-        }
+    private fun showExpenseDetail(expense: ExpenseResponse) {
+        val sheet = ExpenseDetailBottomSheet.newInstance(expense)
+        sheet.onEdit = { showEditExpenseModal(expense) }
+        sheet.show(childFragmentManager, "expense_detail")
+    }
 
-        val options = arrayOf("Edit Record", "Delete Record")
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Manage Expense")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> showExpenseModal(expense)
-                    1 -> confirmDelete(expense)
-                }
-            }
-            .show()
+    private fun showEditExpenseModal(expenseToEdit: ExpenseResponse) {
+        val intent = Intent(requireContext(), AddRecordActivity::class.java).apply {
+            putExtra(AddRecordActivity.EXTRA_IS_EDIT_MODE, true)
+            putExtra(AddRecordActivity.EXTRA_RECORD_ID, expenseToEdit.id)
+            putExtra(AddRecordActivity.EXTRA_RECORD_TYPE, "expense")
+            putExtra(AddRecordActivity.EXTRA_AMOUNT, expenseToEdit.amount)
+            putExtra(AddRecordActivity.EXTRA_DESCRIPTION, expenseToEdit.notes ?: "")
+            putExtra(AddRecordActivity.EXTRA_CATEGORY_ID, expenseToEdit.categoryId)
+            putExtra(AddRecordActivity.EXTRA_CATEGORY_NAME, expenseToEdit.categoryName ?: "")
+        }
+        editRecordLauncher.launch(intent)
     }
 
     private fun confirmDelete(expense: ExpenseResponse) {
@@ -144,76 +154,22 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
             .show()
     }
 
-    private fun showStrictLockConfirmation() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Lock End of Day?")
-            .setMessage("Are you absolutely sure you want to lock today's records? \n\nYou will NOT be able to add or edit any more expenses for today once locked.")
-            .setCancelable(false)
-            .setPositiveButton("Yes, Lock EOD") { dialog, _ ->
-                viewModel.lockEod()
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-            .show()
-    }
+    private fun handleImageSelected(uri: Uri) {
+        val expenseId = pendingUploadExpenseId ?: return
+        try {
+            val inputStream = requireContext().contentResolver.openInputStream(uri)
+            val tempFile = File(requireContext().cacheDir, "receipt_${System.currentTimeMillis()}.jpg")
+            FileOutputStream(tempFile).use { inputStream?.copyTo(it) }
 
-    // Passing null means "Add New", passing an object means "Edit"
-    private fun showExpenseModal(expenseToEdit: ExpenseResponse?) {
-        val dialog = BottomSheetDialog(requireContext())
-        val view = layoutInflater.inflate(R.layout.dialog_add_expense, null)
-        dialog.setContentView(view)
+            val requestFile = tempFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            val filePart = MultipartBody.Part.createFormData("file", tempFile.name, requestFile)
 
-        // Reset the URI every time the modal opens
-        selectedReceiptUri = null
-
-        val etAmount = view.findViewById<TextInputEditText>(R.id.etSaleAmount)
-        val etNotes = view.findViewById<TextInputEditText>(R.id.etSaleNotes)
-        val etTags = view.findViewById<TextInputEditText>(R.id.etSaleTags)
-        val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveSale)
-
-        val btnAttachReceipt = view.findViewById<MaterialButton>(R.id.btnAttachReceipt)
-        ivReceiptPreview = view.findViewById(R.id.ivReceiptPreview)
-        tvReceiptName = view.findViewById(R.id.tvReceiptName)
-
-        // Launch the gallery when clicked
-        btnAttachReceipt.setOnClickListener {
-            pickImageLauncher.launch("image/*") // Only show images
+            Toast.makeText(requireContext(), "Uploading receipt...", Toast.LENGTH_SHORT).show()
+            viewModel.uploadReceipt(expenseId, filePart)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Error processing image", Toast.LENGTH_SHORT).show()
+        } finally {
+            pendingUploadExpenseId = null
         }
-
-        if (expenseToEdit != null) {
-
-            etAmount.setText(expenseToEdit.amount.toString())
-            etNotes.setText(expenseToEdit.description ?: "")
-            etTags.setText(expenseToEdit.tags?.joinToString(", ") ?: "")
-            btnSave.text = "Update Record"
-
-            // If editing and it has a file, show a placeholder
-            if (expenseToEdit.fileId != null) {
-                tvReceiptName?.text = "Receipt attached"
-                tvReceiptName?.visibility = View.VISIBLE
-            }
-        }
-
-        btnSave.setOnClickListener {
-            val amountText = etAmount.text.toString()
-            val notes = etNotes.text.toString()
-            val tagsText = etTags.text.toString()
-
-            if (amountText.isNotBlank()) {
-                val amount = amountText.toDoubleOrNull() ?: 0.0
-                val tagsList = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-
-                // Pass the selected URI to the ViewModel
-                if (expenseToEdit == null) {
-                    viewModel.addExpense(requireContext(), amount, tagsList,notes,  selectedReceiptUri)
-                } else {
-                    viewModel.editExpense(expenseToEdit.id, amount, tagsList, notes, selectedReceiptUri)
-                }
-                dialog.dismiss()
-            } else {
-                etAmount.error = "Amount is required"
-            }
-        }
-        dialog.show()
     }
 }

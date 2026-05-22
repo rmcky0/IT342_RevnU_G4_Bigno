@@ -5,66 +5,96 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="20dp"
-    android:layout_marginVertical="6dp"
+    android:layout_marginVertical="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="1dp"
-    app:strokeWidth="0dp">
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#E2E8F0"
+    app:strokeWidth="1dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="16dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvAmount"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:fontFamily="@font/prompt_bold"
+            android:text="- ₱ 0.00"
+            android:textColor="#EF4444"
+            android:textSize="22sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardCategory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#FEF2F2"
+            app:cardCornerRadius="6dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/tvAmount"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tvAmount">
 
             <TextView
-                android:id="@+id/tvDateTime"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="May 9, 2026, 3:08 PM"
-                android:textColor="#111243"
-                android:textSize="14sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:id="@+id/tvAmount"
+                android:id="@+id/tvCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="-₱123.00"
-                android:textColor="#EF4444"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:fontFamily="@font/ubuntu_bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Category Name"
+                android:textColor="#DC2626"
+                android:textSize="11sp" />
+        </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
+        <ImageView
+            android:id="@+id/ivReceiptIcon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="8dp"
+            android:src="@android:drawable/ic_menu_camera"
+            app:tint="#94A3B8"
+            app:layout_constraintBottom_toBottomOf="@id/cardCategory"
+            app:layout_constraintStart_toEndOf="@id/cardCategory"
+            app:layout_constraintTop_toTopOf="@id/cardCategory" />
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupTags"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvDateTime"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:chipSpacingHorizontal="6dp" />
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/ubuntu_bold"
+            android:letterSpacing="0.02"
+            android:text="May 9, 2026, 3:08 PM"
+            android:textAllCaps="true"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cardCategory" />
 
         <TextView
             android:id="@+id/tvNotes"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/ubuntu"
+            android:maxLines="2"
             android:text="notesdescription"
-            android:textColor="#9CA3AF"
-            android:textSize="13sp" />
-        <ImageView
-            android:id="@+id/ivAttachment"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_marginEnd="8dp"
-            android:src="@android:drawable/ic_menu_gallery"
-            app:tint="#9CA3AF"
-            android:visibility="gone" />
-    </LinearLayout>
+            android:textColor="#64748B"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvDateTime" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>
