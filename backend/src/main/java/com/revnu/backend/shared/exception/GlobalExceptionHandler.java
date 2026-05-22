@@ -6,6 +6,8 @@ import java.util.logging.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -21,43 +23,43 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+    public ResponseEntity<ApiResponse> handleIllegalArgument(IllegalArgumentException ex) {
         ErrorDetail detail = new ErrorDetail(
                 "VALID-001",
                 "Validation failed",
                 ex.getMessage()
         );
-        ApiErrorResponse response = new ApiErrorResponse(false, null, detail, getCurrentTimestamp());
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiErrorResponse> handleIllegalState(IllegalStateException ex) {
+    public ResponseEntity<ApiResponse> handleIllegalState(IllegalStateException ex) {
         ErrorDetail detail = new ErrorDetail(
                 "BUSINESS-001",
                 "Business rule violation",
                 ex.getMessage()
         );
-        ApiErrorResponse response = new ApiErrorResponse(false, null, detail, getCurrentTimestamp());
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<ApiErrorResponse> handleSecurity(SecurityException ex) {
+    public ResponseEntity<ApiResponse> handleSecurity(SecurityException ex) {
         ErrorDetail detail = new ErrorDetail(
                 "AUTH-003",
                 "Insufficient permissions",
                 ex.getMessage()
         );
-        ApiErrorResponse response = new ApiErrorResponse(false, null, detail, getCurrentTimestamp());
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ApiErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
         logger.warning("Method not allowed: " + request.getMethod() + " " + request.getRequestURI() + " -> supported: " + String.join(",", ex.getSupportedMethods() == null ? new String[]{} : ex.getSupportedMethods()));
 
         ErrorDetail detail = new ErrorDetail(
@@ -65,13 +67,37 @@ public class GlobalExceptionHandler {
                 "Method not allowed",
                 "Request method '" + request.getMethod() + "' is not supported for this endpoint."
         );
-        ApiErrorResponse response = new ApiErrorResponse(false, null, detail, getCurrentTimestamp());
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
 
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
     }
 
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        ErrorDetail detail = new ErrorDetail(
+                "FILE-413",
+                "Upload too large",
+                "Uploaded file exceeds the maximum allowed size."
+        );
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
+
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(response);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse> handleResponseStatus(ResponseStatusException ex) {
+        ErrorDetail detail = new ErrorDetail(
+                "HTTP-" + ex.getStatusCode().value(),
+                ex.getReason() != null ? ex.getReason() : "Request error",
+                null
+        );
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
+
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse> handleGenericException(Exception ex, HttpServletRequest request) {
         logger.severe("UNCAUGHT EXCEPTION: " + ex.getClass().getName() + " - " + ex.getMessage());
         logger.severe("Request: " + (request != null ? request.getMethod() + " " + request.getRequestURI() : "unknown"));
         ex.printStackTrace();
@@ -87,7 +113,7 @@ public class GlobalExceptionHandler {
                 "Internal server error",
                 "An unexpected system error occurred. Please try again later."
         );
-        ApiErrorResponse response = new ApiErrorResponse(false, null, detail, getCurrentTimestamp());
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }

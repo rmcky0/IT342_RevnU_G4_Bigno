@@ -8,7 +8,7 @@ public record CashFlowRecord(
         UUID id,
         String type,
         BigDecimal amount,
-        String description,
+        String notes,
         LocalDateTime timestamp
         ) {
 

@@ -20,10 +20,12 @@ import com.revnu.backend.features.reporting.dto.CloseDayResponse;
 import com.revnu.backend.features.reporting.dto.DailySummaryDto;
 import com.revnu.backend.features.reporting.dto.DayDetailResponse;
 import com.revnu.backend.features.reporting.service.ReportingService;
+import com.revnu.backend.shared.exception.ApiResponse;
+import com.revnu.backend.shared.util.ResponseUtil;
 
 @RestController
 @RequestMapping("/revnu/day")
-@PreAuthorize("hasRole('TENANT')")
+@PreAuthorize("hasRole('RESTAURATEUR')")
 public class ReportingController {
 
     private final ReportingService reportingService;
@@ -33,34 +35,30 @@ public class ReportingController {
     }
 
     @PostMapping("/close")
-    public ResponseEntity<Map<String, Object>> closeDay(Principal principal, @RequestBody CloseDayRequest request) {
+    public ResponseEntity<ApiResponse> closeDay(Principal principal, @RequestBody CloseDayRequest request) {
         CloseDayResponse response = reportingService.closeDay(principal.getName(), request.date());
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", response
-        ));
+        return ResponseEntity.ok(ResponseUtil.success(response));
     }
 
     /**
      * GET /revnu/day/summary/{date} — single EOD summary
      */
     @GetMapping("/summary/{date}")
-    public ResponseEntity<Map<String, Object>> getSummary(
+    public ResponseEntity<ApiResponse> getSummary(
             Principal principal,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         DailySummaryDto summary = reportingService.getSummary(principal.getName(), date);
-        return ResponseEntity.ok(Map.of("success", true, "data", summary));
+        return ResponseEntity.ok(ResponseUtil.success(summary));
     }
 
     /**
-     * GET /revnu/day/summaries Returns all closed days for the tenant, newest
-     * first. Feeds the "Archived Records" list on the frontend.
+     * GET /revnu/day/summaries Returns all closed days for the restaurateur,
+     * newest first. Feeds the "Archived Records" list on the frontend.
      */
     @GetMapping("/summaries")
-    public ResponseEntity<Map<String, Object>> getAllSummaries(Principal principal) {
+    public ResponseEntity<ApiResponse> getAllSummaries(Principal principal) {
         List<DailySummaryDto> summaries = reportingService.getAllSummaries(principal.getName());
-        return ResponseEntity.ok(Map.of("success", true, "data", summaries));
+        return ResponseEntity.ok(ResponseUtil.success(summaries));
     }
 
     /**
@@ -69,10 +67,10 @@ public class ReportingController {
      * Feeds the "Archived Detail" page on the frontend.
      */
     @GetMapping("/detail/{date}")
-    public ResponseEntity<Map<String, Object>> getDayDetail(
+    public ResponseEntity<ApiResponse> getDayDetail(
             Principal principal,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         DayDetailResponse detail = reportingService.getDayDetail(principal.getName(), date);
-        return ResponseEntity.ok(Map.of("success", true, "data", detail));
+        return ResponseEntity.ok(ResponseUtil.success(detail));
     }
 }

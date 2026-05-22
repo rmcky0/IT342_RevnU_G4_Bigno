@@ -6,8 +6,7 @@ public record UserProfileDto(
         UUID id,
         String fullname,
         String email,
-        String provider,
-        UUID avatarFileId
+        String provider
         ) {
 
 }

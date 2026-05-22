@@ -20,6 +20,8 @@ import com.revnu.backend.features.admin.dto.AdminUserResponse;
 import com.revnu.backend.features.admin.dto.UpdateUserRoleRequest;
 import com.revnu.backend.features.admin.dto.UpdateUserStatusRequest;
 import com.revnu.backend.features.admin.service.AdminService;
+import com.revnu.backend.shared.exception.ApiResponse;
+import com.revnu.backend.shared.util.ResponseUtil;
 
 import jakarta.validation.Valid;
 
@@ -36,50 +38,62 @@ public class AdminController {
 
     // ── Platform Stats ────────────────────────────────────────────────────────
     @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getStats() {
-        return ResponseEntity.ok(Map.of("success", true, "data", adminService.getPlatformStats()));
+    public ResponseEntity<ApiResponse> getStats() {
+        return ResponseEntity.ok(ResponseUtil.success(adminService.getPlatformStats()));
     }
 
     // ── User Management ───────────────────────────────────────────────────────
     @GetMapping("/users")
-    public ResponseEntity<Map<String, Object>> getAllUsers(
+    public ResponseEntity<ApiResponse> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Page<AdminUserResponse> usersPage = adminService.getAllUsers(page, size);
-        return ResponseEntity.ok(Map.of("success", true, "data", usersPage));
+        return ResponseEntity.ok(ResponseUtil.success(usersPage));
     }
 
     @PutMapping("/users/{id}/status")
-    public ResponseEntity<Map<String, Object>> updateUserStatus(
+    public ResponseEntity<ApiResponse> updateUserStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserStatusRequest request) {
 
         AdminUserResponse updated = adminService.updateUserStatus(id, request);
-        return ResponseEntity.ok(Map.of("success", true, "data", updated));
+        return ResponseEntity.ok(ResponseUtil.success(updated));
     }
 
     @PutMapping("/users/{id}/role")
-    public ResponseEntity<Map<String, Object>> updateUserRole(
+    public ResponseEntity<ApiResponse> updateUserRole(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserRoleRequest request) {
 
         AdminUserResponse updated = adminService.updateUserRole(id, request);
-        return ResponseEntity.ok(Map.of("success", true, "data", updated));
+        return ResponseEntity.ok(ResponseUtil.success(updated));
+    }
+
+    @PutMapping("/users/{id}/suspend")
+    public ResponseEntity<ApiResponse> suspendUser(@PathVariable UUID id) {
+        AdminUserResponse updated = adminService.suspendUser(id);
+        return ResponseEntity.ok(ResponseUtil.success(updated));
+    }
+
+    @PutMapping("/users/{id}/reactivate")
+    public ResponseEntity<ApiResponse> reactivateUser(@PathVariable UUID id) {
+        AdminUserResponse updated = adminService.reactivateUser(id);
+        return ResponseEntity.ok(ResponseUtil.success(updated));
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> deleteUser(@PathVariable UUID id) {
         adminService.deleteUser(id);
-        return ResponseEntity.ok(Map.of("success", true, "message", "User deleted successfully."));
+        return ResponseEntity.ok(ResponseUtil.success(Map.of("message", "User deleted successfully.")));
     }
 
     @GetMapping("/restaurants")
-    public ResponseEntity<Map<String, Object>> getAllRestaurants(
+    public ResponseEntity<ApiResponse> getAllRestaurants(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Page<AdminRestaurantResponse> restaurantPage = adminService.getAllRestaurants(page, size);
-        return ResponseEntity.ok(Map.of("success", true, "data", restaurantPage));
+        return ResponseEntity.ok(ResponseUtil.success(restaurantPage));
     }
 }

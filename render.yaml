@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: revnu-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: singapore
+
+    # Health check — Spring Boot actuator or root path
+    healthCheckPath: /api/v1/actuator/health
+
+    envVars:
+      # ── Database (Supabase) ──────────────────────────────────────────────────
+      - key: DB_URL
+        sync: false # Set this in the Render dashboard — never commit
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+      # ── Supabase Storage ────────────────────────────────────────────────────
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+
+      # ── JWT ─────────────────────────────────────────────────────────────────
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: "86400000"
+      - key: JWT_REFRESH_EXPIRATION
+        value: "604800000"
+
+      # ── Google OAuth2 ───────────────────────────────────────────────────────
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+      # ── Email (SMTP) ────────────────────────────────────────────────────────
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+      # ── Admin seed ──────────────────────────────────────────────────────────
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASS
+        sync: false
+
+      # ── External APIs ───────────────────────────────────────────────────────
+      - key: HOLIDAY_API_KEY
+        sync: false
+
+      # ── Frontend URL (your Vercel URL) ──────────────────────────────────────
+      - key: FRONTEND_URL
+        sync: false # e.g. https://revnu.vercel.app

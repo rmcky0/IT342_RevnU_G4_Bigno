@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import com.revnu.backend.features.analytics.dto.HourlyExpensePoint;
 import com.revnu.backend.features.analytics.dto.HourlySalePoint;
-import com.revnu.backend.features.analytics.dto.TagBreakdownItem;
+import com.revnu.backend.features.analytics.dto.CategoryBreakdownItem;
 import com.revnu.backend.features.expenses.model.ExpenseStatus;
 import com.revnu.backend.features.reporting.model.DailySummary;
 import com.revnu.backend.features.sales.model.Sale;
@@ -87,19 +87,18 @@ public interface AnalyticsRepository extends JpaRepository<Sale, UUID> {
     );
 
     @Query("""
-        SELECT new com.revnu.backend.features.analytics.dto.TagBreakdownItem(
-            t.name,
+        SELECT new com.revnu.backend.features.analytics.dto.CategoryBreakdownItem(
+            s.category.name,
             COALESCE(SUM(s.amount), 0)
         )
         FROM Sale s
-        JOIN s.tags t
         WHERE s.restaurant.id = :restaurantId
           AND CAST(s.createdAt AS date) = :date
           AND s.status = :status
-        GROUP BY t.name
+        GROUP BY s.category.name
         ORDER BY SUM(s.amount) DESC
     """)
-    List<TagBreakdownItem> salesByTagAndDate(
+    List<CategoryBreakdownItem> salesByCategoryAndDate(
             @Param("restaurantId") UUID restaurantId,
             @Param("date") LocalDate date,
             @Param("status") SaleStatus status

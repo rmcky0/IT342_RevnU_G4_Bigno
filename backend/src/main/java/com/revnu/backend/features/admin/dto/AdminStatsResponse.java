@@ -1,11 +1,11 @@
 package com.revnu.backend.features.admin.dto;
 
 public record AdminStatsResponse(
-        long totalTenants,
+        long totalRestaurateurs,
         long totalRestaurants,
-        long newTenantsThisMonth,
-        long activeTenants,
-        long suspendedTenants
+        long newRestaurateursThisMonth,
+        long activeRestaurateurs,
+        long suspendedRestaurateurs
         ) {
 
 }

@@ -1,5 +1,7 @@
 package com.revnu.backend.features.staff.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -59,7 +61,7 @@ public class StaffService {
 
     @Transactional(readOnly = true)
     public List<StaffProfileResponse> getStaff(String ownerEmail) {
-        return staffRepository.findByRestaurant(getRestaurant(ownerEmail)).stream()
+        return staffRepository.findByRestaurantAndActiveTrue(getRestaurant(ownerEmail)).stream()
                 .map(this::mapToStaffResponse).collect(Collectors.toList());
     }
 
@@ -93,7 +95,9 @@ public class StaffService {
         Staff staff = getValidatedStaff(staffId, restaurant);
 
         if (!salaryRepository.findByStaff(staff).isEmpty()) {
-            throw new IllegalStateException("Cannot delete a staff member who has existing payroll history.");
+            staff.setActive(false);
+            staffRepository.save(staff);
+            return;
         }
 
         staffRepository.delete(staff);
@@ -104,6 +108,11 @@ public class StaffService {
     public SalaryResponse recordSalaryPayout(String ownerEmail, SalaryRequest request) {
         Restaurant restaurant = getRestaurant(ownerEmail);
         Staff staff = getValidatedStaff(request.staffId(), restaurant);
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Manila"));
+        if (request.paymentDate().isAfter(today)) {
+            throw new IllegalArgumentException("Payment date cannot be in the future.");
+        }
 
         Salary salary = Salary.builder()
                 .amount(request.amount())
@@ -123,6 +132,42 @@ public class StaffService {
 
         return salaryRepository.findByRestaurant(restaurant, pageable)
                 .map(this::mapToSalaryResponse);
+    }
+
+    @Transactional
+    public SalaryResponse updateSalaryPayout(String ownerEmail, UUID salaryId, SalaryRequest request) {
+        Restaurant restaurant = getRestaurant(ownerEmail);
+        Salary salary = salaryRepository.findById(salaryId)
+                .orElseThrow(() -> new IllegalArgumentException("Salary record not found."));
+        if (!salary.getRestaurant().getId().equals(restaurant.getId())) {
+            throw new SecurityException("Unauthorized access to this salary record.");
+        }
+        if (salary.getStatus() != SalaryStatus.OPEN) {
+            throw new IllegalStateException("Cannot modify a salary that has been EOD-locked.");
+        }
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Manila"));
+        if (request.paymentDate().isAfter(today)) {
+            throw new IllegalArgumentException("Payment date cannot be in the future.");
+        }
+
+        salary.setAmount(request.amount());
+        salary.setPaymentDate(request.paymentDate());
+        return mapToSalaryResponse(salaryRepository.save(salary));
+    }
+
+    @Transactional
+    public void deleteSalaryPayout(String ownerEmail, UUID salaryId) {
+        Restaurant restaurant = getRestaurant(ownerEmail);
+        Salary salary = salaryRepository.findById(salaryId)
+                .orElseThrow(() -> new IllegalArgumentException("Salary record not found."));
+        if (!salary.getRestaurant().getId().equals(restaurant.getId())) {
+            throw new SecurityException("Unauthorized access to this salary record.");
+        }
+        if (salary.getStatus() != SalaryStatus.OPEN) {
+            throw new IllegalStateException("Cannot delete a salary that has been EOD-locked.");
+        }
+        salaryRepository.delete(salary);
     }
 
     @Transactional(readOnly = true)
@@ -145,6 +190,9 @@ public class StaffService {
     private Staff getValidatedStaff(UUID staffId, Restaurant restaurant) {
         Staff staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new IllegalArgumentException("Staff member not found."));
+        if (!staff.isActive()) {
+            throw new IllegalArgumentException("Staff member not found.");
+        }
         if (!staff.getRestaurant().getId().equals(restaurant.getId())) {
             throw new SecurityException("Unauthorized access to this staff profile.");
         }

@@ -30,7 +30,6 @@ import com.revnu.backend.features.sales.repository.SaleRepository;
 import com.revnu.backend.features.staff.model.Salary;
 import com.revnu.backend.features.staff.model.SalaryStatus;
 import com.revnu.backend.features.staff.repository.SalaryRepository;
-import com.revnu.backend.features.tags.model.Tag;
 
 @Service
 public class ReportingService {
@@ -161,7 +160,7 @@ public class ReportingService {
                 .findByRestaurantAndCreatedAtBetween(
                         restaurant, date.atStartOfDay(), date.atTime(23, 59, 59))
                 .forEach(e -> outflow.add(new CashFlowRecord(
-                e.getId(), "EXPENSE", e.getAmount(), e.getDescription(), e.getCreatedAt())));
+                e.getId(), "EXPENSE", e.getAmount(), e.getNotes(), e.getCreatedAt())));
         salaryRepository
                 .findByRestaurantAndPaymentDate(restaurant, date)
                 .forEach(s -> outflow.add(new CashFlowRecord(
@@ -199,14 +198,15 @@ public class ReportingService {
     }
 
     private SaleResponse mapSale(Sale s) {
-        List<String> tagNames = s.getTags().stream().map(Tag::getName).collect(Collectors.toList());
-        return new SaleResponse(s.getId(), s.getAmount(), tagNames, s.getDescription(),
-                s.getStatus(), s.getCreatedAt());
+        return new SaleResponse(s.getId(), s.getAmount(),
+                s.getCategory().getId(), s.getCategory().getName(),
+                s.getNotes(), s.getStatus(), s.getCreatedAt());
     }
 
     private ExpenseResponse mapExpense(Expense e) {
-        List<String> tagNames = e.getTags().stream().map(Tag::getName).collect(Collectors.toList());
-        return new ExpenseResponse(e.getId(), e.getAmount(), tagNames, e.getDescription(),
-                e.getFile() != null ? e.getFile().getId() : null, e.getStatus(), e.getCreatedAt());
+        return new ExpenseResponse(e.getId(), e.getAmount(),
+                e.getCategory().getId(), e.getCategory().getName(),
+                e.getNotes(), e.getFile() != null ? e.getFile().getId() : null,
+                e.getStatus(), e.getCreatedAt());
     }
 }

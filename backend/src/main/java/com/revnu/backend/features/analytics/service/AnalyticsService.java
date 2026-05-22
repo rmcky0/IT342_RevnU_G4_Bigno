@@ -19,8 +19,8 @@ import com.revnu.backend.features.analytics.dto.HourlyExpensePoint;
 import com.revnu.backend.features.analytics.dto.HourlySalePoint;
 import com.revnu.backend.features.analytics.dto.ProfitTrendPoint;
 import com.revnu.backend.features.analytics.dto.SalesTrendPoint;
-import com.revnu.backend.features.analytics.dto.TagBreakdownItem;
-import com.revnu.backend.features.analytics.dto.TagSlice;
+import com.revnu.backend.features.analytics.dto.CategoryBreakdownItem;
+import com.revnu.backend.features.analytics.dto.CategorySlice;
 import com.revnu.backend.features.analytics.dto.TrendAnalyticsResponse;
 import com.revnu.backend.features.analytics.repository.AnalyticsRepository;
 import com.revnu.backend.features.auth.model.User;
@@ -157,13 +157,13 @@ public class AnalyticsService {
         ))
                 .collect(Collectors.toList());
 
-        // Tag Breakdown (pie chart)
-        List<TagBreakdownItem> rawCategories = analyticsRepository.salesByTagAndDate(
+        // Category Breakdown (pie chart)
+        List<CategoryBreakdownItem> rawCategories = analyticsRepository.salesByCategoryAndDate(
                 restaurantId, targetDate, todaySaleStatus);
-        List<TagSlice> categories = new ArrayList<>();
+        List<CategorySlice> categories = new ArrayList<>();
         for (int i = 0; i < rawCategories.size(); i++) {
-            TagBreakdownItem item = rawCategories.get(i);
-            categories.add(new TagSlice(item.name(), item.total(), CATEGORY_COLORS.get(i % CATEGORY_COLORS.size())));
+            CategoryBreakdownItem item = rawCategories.get(i);
+            categories.add(new CategorySlice(item.name(), item.total(), CATEGORY_COLORS.get(i % CATEGORY_COLORS.size())));
         }
 
         String yesterdayLabel = DateFormatUtil.formatDate(yesterday, "dd MMM");

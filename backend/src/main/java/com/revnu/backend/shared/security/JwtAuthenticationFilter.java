@@ -10,6 +10,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.revnu.backend.features.auth.model.AccountStatus;
 import com.revnu.backend.features.auth.model.User;
 import com.revnu.backend.features.auth.repository.UserRepository;
 
@@ -60,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             User user = userRepository.findByEmail(email).orElse(null);
 
-            if (user != null && jwtService.isTokenValid(token, user.getEmail())) {
+            if (user != null && user.getStatus() == AccountStatus.ACTIVE && jwtService.isTokenValid(token, user.getEmail())) {
                 UsernamePasswordAuthenticationToken authentication
                         = new UsernamePasswordAuthenticationToken(
                                 user.getEmail(),

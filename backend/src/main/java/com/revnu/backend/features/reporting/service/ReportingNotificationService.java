@@ -25,11 +25,6 @@ public class ReportingNotificationService {
 
     @Async
     public void sendEodSummaryEmail(User owner, Restaurant restaurant, DailySummary summary) {
-        if (!restaurant.getAppSettings().isEmailNotifications()) {
-            logger.info("Skipping EOD email; email notifications disabled for {}", owner.getEmail());
-            return;
-        }
-
         try {
             logger.info("Sending EOD summary email to {} for {}", owner.getEmail(), restaurant.getName());
             emailService.sendEodReport(owner.getEmail(), restaurant.getName(), summary);
@@ -44,16 +39,4 @@ public class ReportingNotificationService {
         }
     }
 
-    @Async
-    public void sendNotification(String ownerEmail, String subject, String message) {
-        try {
-            logger.info("Sending notification to {}: {}", ownerEmail, subject);
-            logger.info("Notification sent successfully to {}", ownerEmail);
-        } catch (Exception e) {
-            logger.warn(
-                    "Failed to send notification to {}: {}",
-                    ownerEmail, e.getMessage()
-            );
-        }
-    }
 }

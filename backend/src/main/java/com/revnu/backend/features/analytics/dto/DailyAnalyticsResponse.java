@@ -14,7 +14,7 @@ public record DailyAnalyticsResponse(
         long saleRecordsCount,
         long expenseRecordsCount,
         List<SalesTrendPoint> salesTrend,
-        List<TagSlice> categories,
+        List<CategorySlice> categories,
         String yesterdayLabel,
         String date,
         boolean isClosed

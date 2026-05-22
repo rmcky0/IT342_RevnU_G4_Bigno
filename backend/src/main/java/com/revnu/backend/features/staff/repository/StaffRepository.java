@@ -13,4 +13,6 @@ import com.revnu.backend.features.staff.model.Staff;
 public interface StaffRepository extends JpaRepository<Staff, UUID> {
 
     List<Staff> findByRestaurant(Restaurant restaurant);
+
+    List<Staff> findByRestaurantAndActiveTrue(Restaurant restaurant);
 }

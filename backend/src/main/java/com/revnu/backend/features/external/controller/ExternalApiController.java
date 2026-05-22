@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.revnu.backend.features.external.dto.HolidayDto;
 import com.revnu.backend.features.external.service.HolidayService;
+import com.revnu.backend.shared.exception.ApiResponse;
+import com.revnu.backend.shared.util.ResponseUtil;
 
 @RestController
 @RequestMapping("/revnu/external")
@@ -24,15 +26,12 @@ public class ExternalApiController {
     }
 
     @GetMapping("/holidays")
-    public ResponseEntity<Map<String, Object>> getHolidays(
+    public ResponseEntity<ApiResponse> getHolidays(
             @RequestParam(required = false) Integer year) {
 
         int targetYear = (year != null) ? year : LocalDate.now().getYear();
         List<HolidayDto> holidays = holidayService.getPhilippineHolidays(targetYear);
 
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", holidays
-        ));
+        return ResponseEntity.ok(ResponseUtil.success(holidays));
     }
 }

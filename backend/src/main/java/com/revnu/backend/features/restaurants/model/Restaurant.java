@@ -10,9 +10,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.revnu.backend.features.auth.model.User;
+import com.revnu.backend.features.categories.model.Category;
 import com.revnu.backend.features.files.model.FileRecord;
 import com.revnu.backend.features.staff.model.Staff;
-import com.revnu.backend.features.tags.model.Tag;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -48,9 +48,6 @@ public class Restaurant {
     @Column(name = "closing_hrs")
     private LocalTime closingHrs;
 
-    @Embedded
-    private AppSettings appSettings = new AppSettings();
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "owner_id",
@@ -67,7 +64,7 @@ public class Restaurant {
     private FileRecord logoFile;
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<Tag> tags = new ArrayList<>();
+    private List<Category> categories = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Staff> staffMembers = new ArrayList<>();
@@ -91,10 +88,9 @@ public class Restaurant {
         private String physicalLocation;
         private LocalTime openingHrs;
         private LocalTime closingHrs;
-        private AppSettings appSettings = new AppSettings();
         private User owner;
         private FileRecord logoFile;
-        private List<Tag> tags = new ArrayList<>();
+        private List<Category> categories = new ArrayList<>();
         private List<Staff> staffMembers = new ArrayList<>();
 
         public RestaurantBuilder id(UUID id) {
@@ -122,11 +118,6 @@ public class Restaurant {
             return this;
         }
 
-        public RestaurantBuilder appSettings(AppSettings appSettings) {
-            this.appSettings = appSettings;
-            return this;
-        }
-
         public RestaurantBuilder owner(User owner) {
             this.owner = owner;
             return this;
@@ -137,8 +128,8 @@ public class Restaurant {
             return this;
         }
 
-        public RestaurantBuilder tags(List<Tag> tags) {
-            this.tags = tags;
+        public RestaurantBuilder categories(List<Category> categories) {
+            this.categories = categories;
             return this;
         }
 
@@ -154,10 +145,9 @@ public class Restaurant {
             restaurant.physicalLocation = this.physicalLocation;
             restaurant.openingHrs = this.openingHrs;
             restaurant.closingHrs = this.closingHrs;
-            restaurant.appSettings = this.appSettings;
             restaurant.owner = this.owner;
             restaurant.logoFile = this.logoFile;
-            restaurant.tags = this.tags;
+            restaurant.categories = this.categories;
             restaurant.staffMembers = this.staffMembers;
             return restaurant;
         }
@@ -204,14 +194,6 @@ public class Restaurant {
         this.closingHrs = closingHrs;
     }
 
-    public AppSettings getAppSettings() {
-        return appSettings;
-    }
-
-    public void setAppSettings(AppSettings appSettings) {
-        this.appSettings = appSettings;
-    }
-
     public User getOwner() {
         return owner;
     }
@@ -228,12 +210,12 @@ public class Restaurant {
         this.logoFile = logoFile;
     }
 
-    public List<Tag> getTags() {
-        return tags;
+    public List<Category> getCategories() {
+        return categories;
     }
 
-    public void setTags(List<Tag> tags) {
-        this.tags = tags;
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
     }
 
     public List<Staff> getStaffMembers() {

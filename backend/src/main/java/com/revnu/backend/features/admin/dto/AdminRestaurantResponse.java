@@ -14,8 +14,7 @@ public record AdminRestaurantResponse(
         String ownerName,
         String ownerEmail,
         AccountStatus ownerStatus,
-        UUID logoFileId,
-        UUID ownerAvatarFileId
+        UUID logoFileId
         ) {
 
 }

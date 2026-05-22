@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,6 +24,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.revnu.backend.shared.security.JwtAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Value("${app.frontend-url}")
@@ -86,7 +88,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/revnu/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/revnu/auth/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/google").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/logout").permitAll()
                 .requestMatchers(HttpMethod.POST, "/revnu/auth/link-google").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/forgot-password").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/verify-otp").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/revnu/files/**").permitAll()
                 .requestMatchers("/revnu/settings/**").authenticated()
                 .requestMatchers("/revnu/auth/me").authenticated()

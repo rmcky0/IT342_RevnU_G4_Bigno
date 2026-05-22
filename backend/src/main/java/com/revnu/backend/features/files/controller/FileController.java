@@ -26,9 +26,9 @@ public class FileController {
     public ResponseEntity<Void> serveFile(@PathVariable UUID id) {
         return fileRecordRepository.findById(id)
                 .map(record -> ResponseEntity
-                        .status(HttpStatus.FOUND)
-                        .header(HttpHeaders.LOCATION, record.getFilepath())
-                        .<Void>build())
+                .status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, record.getFilepath())
+                .<Void>build())
                 .orElse(ResponseEntity.notFound().<Void>build());
     }
 }

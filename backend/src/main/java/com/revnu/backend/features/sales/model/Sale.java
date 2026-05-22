@@ -2,14 +2,12 @@ package com.revnu.backend.features.sales.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.revnu.backend.features.categories.model.Category;
 import com.revnu.backend.features.restaurants.model.Restaurant;
-import com.revnu.backend.features.tags.model.Tag;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,8 +19,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -38,17 +34,15 @@ public class Sale {
     private BigDecimal amount;
 
     @Column(columnDefinition = "TEXT")
-    private String description;
+    private String notes;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "sale_tags",
-            joinColumns = @JoinColumn(name = "sale_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id"),
-            foreignKey = @ForeignKey(name = "fk_sales_to_tags"),
-            inverseForeignKey = @ForeignKey(name = "fk_tags_to_sales")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "category_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_sales_category")
     )
-    private Set<Tag> tags = new HashSet<>();
+    private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -66,7 +60,6 @@ public class Sale {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    // --- Builder Pattern ---
     public static SaleBuilder builder() {
         return new SaleBuilder();
     }
@@ -75,8 +68,8 @@ public class Sale {
 
         private UUID id;
         private BigDecimal amount;
-        private String description;
-        private Set<Tag> tags = new HashSet<>();
+        private String notes;
+        private Category category;
         private Restaurant restaurant;
         private SaleStatus status = SaleStatus.OPEN;
 
@@ -90,13 +83,13 @@ public class Sale {
             return this;
         }
 
-        public SaleBuilder description(String description) {
-            this.description = description;
+        public SaleBuilder notes(String notes) {
+            this.notes = notes;
             return this;
         }
 
-        public SaleBuilder tags(Set<Tag> tags) {
-            this.tags = tags;
+        public SaleBuilder category(Category category) {
+            this.category = category;
             return this;
         }
 
@@ -114,15 +107,14 @@ public class Sale {
             Sale sale = new Sale();
             sale.id = this.id;
             sale.amount = this.amount;
-            sale.description = this.description;
-            sale.tags = this.tags;
+            sale.notes = this.notes;
+            sale.category = this.category;
             sale.restaurant = this.restaurant;
             sale.status = this.status;
             return sale;
         }
     }
 
-    // --- Getters and Setters ---
     public UUID getId() {
         return id;
     }
@@ -139,20 +131,20 @@ public class Sale {
         this.amount = amount;
     }
 
-    public String getDescription() {
-        return description;
+    public String getNotes() {
+        return notes;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
-    public Set<Tag> getTags() {
-        return tags;
+    public Category getCategory() {
+        return category;
     }
 
-    public void setTags(Set<Tag> tags) {
-        this.tags = tags;
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
     public Restaurant getRestaurant() {

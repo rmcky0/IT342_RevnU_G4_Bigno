@@ -42,6 +42,9 @@ public class Staff {
             foreignKey = @ForeignKey(name = "fk_staff_restaurant"))
     private Restaurant restaurant;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -94,6 +97,7 @@ public class Staff {
             staff.position = this.position;
             staff.salaryRate = this.salaryRate;
             staff.restaurant = this.restaurant;
+            staff.active = true;
             return staff;
         }
     }
@@ -136,6 +140,14 @@ public class Staff {
 
     public void setRestaurant(Restaurant restaurant) {
         this.restaurant = restaurant;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public LocalDateTime getCreatedAt() {

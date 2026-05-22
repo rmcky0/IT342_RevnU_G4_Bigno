@@ -45,6 +45,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             String encodedEmail = URLEncoder.encode(authResponse.email(), StandardCharsets.UTF_8);
             String encodedName = URLEncoder.encode(authResponse.fullname(), StandardCharsets.UTF_8);
             String encodedRole = URLEncoder.encode(authResponse.role().name(), StandardCharsets.UTF_8);
+            String encodedProvider = URLEncoder.encode(authResponse.provider() != null ? authResponse.provider() : "google", StandardCharsets.UTF_8);
 
             boolean hasRestaurant = authResponse.hasRestaurant();
 
@@ -53,8 +54,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     + "&email=" + encodedEmail
                     + "&name=" + encodedName
                     + "&role=" + encodedRole
-                    + "&hasRestaurant=" + hasRestaurant);
+                    + "&hasRestaurant=" + hasRestaurant
+                    + "&provider=" + encodedProvider);
 
+        } catch (SecurityException ex) {
+            response.sendRedirect(frontendUrl + "/suspended");
         } catch (IllegalArgumentException ex) {
             if ("existing_account_requires_link".equals(ex.getMessage())) {
                 String email = oAuth2User.getAttribute("email");

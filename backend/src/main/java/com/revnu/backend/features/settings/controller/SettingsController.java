@@ -18,17 +18,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.revnu.backend.features.settings.dto.ChangePasswordRequest;
 import com.revnu.backend.features.settings.dto.RestaurantProfileRequest;
-import com.revnu.backend.features.settings.dto.RestaurantProfileResponse;
+
 import com.revnu.backend.features.settings.dto.RestaurantSetupRequest;
-import com.revnu.backend.features.settings.dto.SystemSettingsDto;
 import com.revnu.backend.features.settings.dto.UserProfileDto;
 import com.revnu.backend.features.settings.service.SettingsService;
+import com.revnu.backend.shared.exception.ApiResponse;
+import com.revnu.backend.shared.util.ResponseUtil;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/revnu/settings")
-@PreAuthorize("hasRole('TENANT')")
+@PreAuthorize("hasRole('RESTAURATEUR')")
 public class SettingsController {
 
     private final SettingsService settingsService;
@@ -39,71 +40,52 @@ public class SettingsController {
 
     // ── User Profile 
     @GetMapping("/profile")
-    public ResponseEntity<UserProfileDto> getProfile(Principal principal) {
-        return ResponseEntity.ok(settingsService.getProfile(principal.getName()));
+    public ResponseEntity<ApiResponse> getProfile(Principal principal) {
+        return ResponseEntity.ok(ResponseUtil.success(settingsService.getProfile(principal.getName())));
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<UserProfileDto> updateProfile(
+    public ResponseEntity<ApiResponse> updateProfile(
             Principal principal,
             @Valid @RequestBody UserProfileDto request) {
-        return ResponseEntity.ok(settingsService.updateProfile(principal.getName(), request));
-    }
-
-    @PatchMapping("/profile/avatar")
-    public ResponseEntity<UserProfileDto> updateProfileAvatar(
-            Principal principal,
-            @RequestParam("avatar") MultipartFile avatar) {
-        return ResponseEntity.ok(settingsService.updateProfileAvatar(principal.getName(), avatar));
+        return ResponseEntity.ok(ResponseUtil.success(settingsService.updateProfile(principal.getName(), request)));
     }
 
     @PutMapping("/change-password")
-    public ResponseEntity<Map<String, String>> changePassword(
+    public ResponseEntity<ApiResponse> changePassword(
             Principal principal,
             @Valid @RequestBody ChangePasswordRequest request) {
         settingsService.changePassword(principal.getName(), request);
-        return ResponseEntity.ok(Map.of("message", "Password updated successfully."));
+        return ResponseEntity.ok(ResponseUtil.success(Map.of("message", "Password updated successfully.")));
     }
 
     // ── Restaurant Profile
     @PostMapping("/restaurant")
-    public ResponseEntity<RestaurantProfileResponse> setupRestaurant(
+    public ResponseEntity<ApiResponse> setupRestaurant(
             Principal principal,
             @Valid @RequestPart("data") RestaurantSetupRequest request,
             @RequestPart(value = "logo", required = false) MultipartFile logoFile) {
-
-        return ResponseEntity.ok(settingsService.setupRestaurant(principal.getName(), request, logoFile));
+        return ResponseEntity.ok(ResponseUtil.success(settingsService.setupRestaurant(principal.getName(), request, logoFile)));
     }
 
     @GetMapping("/restaurant")
-    public ResponseEntity<RestaurantProfileResponse> getRestaurantProfile(Principal principal) {
-        return ResponseEntity.ok(settingsService.getRestaurantProfile(principal.getName()));
+    public ResponseEntity<ApiResponse> getRestaurantProfile(Principal principal) {
+        return ResponseEntity.ok(ResponseUtil.success(settingsService.getRestaurantProfile(principal.getName())));
     }
 
     @PutMapping("/restaurant")
-    public ResponseEntity<RestaurantProfileResponse> updateRestaurantProfile(
+    public ResponseEntity<ApiResponse> updateRestaurantProfile(
             Principal principal,
             @Valid @RequestBody RestaurantProfileRequest request) {
-        return ResponseEntity.ok(settingsService.updateRestaurantProfile(principal.getName(), request));
+        return ResponseEntity.ok(ResponseUtil.success(settingsService.updateRestaurantProfile(principal.getName(), request)));
     }
 
     @PatchMapping("/restaurant/logo")
-    public ResponseEntity<Map<String, String>> updateRestaurantLogo(
+    public ResponseEntity<ApiResponse> updateRestaurantLogo(
             Principal principal,
             @RequestParam("logo") MultipartFile logo) {
         settingsService.updateRestaurantLogo(principal.getName(), logo);
-        return ResponseEntity.ok(Map.of("message", "Logo updated successfully."));
+        return ResponseEntity.ok(ResponseUtil.success(Map.of("message", "Logo updated successfully.")));
     }
 
-    @GetMapping("/system")
-    public ResponseEntity<SystemSettingsDto> getSystemSettings(Principal principal) {
-        return ResponseEntity.ok(settingsService.getSystemSettings(principal.getName()));
-    }
-
-    @PutMapping("/system")
-    public ResponseEntity<SystemSettingsDto> updateSystemSettings(
-            Principal principal,
-            @Valid @RequestBody SystemSettingsDto request) {
-        return ResponseEntity.ok(settingsService.updateSystemSettings(principal.getName(), request));
-    }
 }
