@@ -36,16 +36,14 @@ export const Expenses = () => {
     setShowForm,
     formData,
     setFormData,
-    tagInput,
-    setTagInput,
-    handleAddTag,
-    handleRemoveTag,
+    categories,
     receiptFile,
     setReceiptFile,
     searchTerm,
     setSearchTerm,
     editingId,
     totalExpenses,
+    totalRecords,
     handleSubmit,
     handleEdit,
     handleDelete,
@@ -54,7 +52,7 @@ export const Expenses = () => {
     requestSort,
   } = useExpenses();
 
-  const { isLocked, lockLoading, lockError, handleLockRecords } =
+  const { data: analyticsData, isLocked, lockLoading, lockError, handleLockRecords } =
     useAnalytics();
 
   const [showKPIs, setShowKPIs] = useState(true);
@@ -91,7 +89,7 @@ export const Expenses = () => {
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Expenses</h2>
           <span className="px-2.5 py-0.5 bg-white text-[#7c83fd] text-xs font-bold rounded-md border border-gray-100 shadow-sm ml-2">
-            {expenses.length} active records
+            {totalRecords} active records
           </span>
         </div>
 
@@ -142,8 +140,8 @@ export const Expenses = () => {
       {/* ── Components ─────────────────────────────────────────────────────── */}
       <SharedKPIs
         showKPIs={showKPIs}
-        total={totalExpenses}
-        count={expenses.length}
+        total={analyticsData.totalExpenses}
+        count={totalRecords}
         todayDisplay={todayDisplay}
         type="expenses"
       />
@@ -155,6 +153,7 @@ export const Expenses = () => {
         handlePrevPage={handlePrevPage}
         handleNextPage={handleNextPage}
         onAddClick={() => setShowForm(true)}
+        isLocked={isLocked}
         type="expenses"
       />
       <SharedTable
@@ -168,6 +167,7 @@ export const Expenses = () => {
         onEdit={handleEdit}
         onDelete={setItemToDelete}
         onViewReceipt={setReceiptLightboxId}
+        isLocked={isLocked}
         type="expenses"
       />
 
@@ -195,10 +195,7 @@ export const Expenses = () => {
         onSubmit={handleSubmit}
         formData={formData}
         setFormData={setFormData}
-        tagInput={tagInput}
-        setTagInput={setTagInput}
-        handleAddTag={handleAddTag}
-        handleRemoveTag={handleRemoveTag}
+        categories={categories}
         isEditing={!!editingId}
         loading={loading}
         error={error}

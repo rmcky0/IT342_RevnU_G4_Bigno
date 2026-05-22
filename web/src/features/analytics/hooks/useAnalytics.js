@@ -85,6 +85,8 @@ export const useAnalytics = (date = null) => {
 
       cache.invalidate(dailyCacheKey(date), trendCacheKey());
       cache.invalidate("archive:summaries");
+      cache.invalidatePrefix("sales_page_");
+      cache.invalidatePrefix("expense_page_");
 
       await fetchAnalytics(true);
     } catch (err) {

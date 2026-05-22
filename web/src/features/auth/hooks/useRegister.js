@@ -49,8 +49,8 @@ export const useRegister = () => {
       }
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-          err.response?.data ||
+        err.response?.data?.error?.details ||
+          err.response?.data?.error?.message ||
           "Registration failed. Please try again.",
       );
     } finally {

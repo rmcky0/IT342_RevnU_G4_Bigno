@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/context/AuthContext";
 import { useRestaurantProfile } from "../restaurant/hooks/useRestaurantProfile";
-import { settingsApi } from "../settings/api/settingsApi";
 import { API_BASE_URL } from "../../shared/api/axios";
 
 import {
@@ -33,18 +32,10 @@ const NAV_ITEMS = [
 export const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, updateAvatar } = useAuth();
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const { profile: restaurantProfile } = useRestaurantProfile(user?.email);
-
-  useEffect(() => {
-    if (user && !user.avatarFileId) {
-      settingsApi.getProfile().then((profile) => {
-        if (profile?.avatarFileId) updateAvatar(profile.avatarFileId);
-      }).catch(() => {});
-    }
-  }, []);
 
   // Security check: Redirect if Context says no user
   useEffect(() => {
@@ -96,7 +87,7 @@ export const Dashboard = () => {
       >
         <div className="flex flex-col px-5 pt-6 pb-4 shrink-0">
           {/* Logo row */}
-          <div className="flex items-center justify-between mb-6 px-1">
+          <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2.5">
               <img src={revnuLogo} alt="RevnU" className="w-7 h-7" />
               <span
@@ -112,38 +103,6 @@ export const Dashboard = () => {
             >
               <X className="w-4 h-4" />
             </button>
-          </div>
-
-          {/* Restaurant identity block */}
-          <div className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:border-indigo-100 transition-colors cursor-default">
-            {/* UPDATED: Image Rendering Logic */}
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 flex items-center justify-center text-[#7c83fd] font-black text-sm shrink-0 shadow-sm overflow-hidden">
-              {restaurantProfile?.logoFileId ? (
-                <img
-                  src={`${API_BASE_URL}/files/${restaurantProfile.logoFileId}`}
-                  alt="Restaurant Logo"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback if the image fails to load (e.g. backend error)
-                    e.target.style.display = "none";
-                    e.target.parentElement.innerHTML =
-                      restaurantName[0]?.toUpperCase();
-                  }}
-                />
-              ) : (
-                restaurantName[0]?.toUpperCase()
-              )}
-            </div>
-            {/* END UPDATED SECTION */}
-
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-bold text-[#1e1b4b] truncate block leading-tight">
-                {restaurantName}
-              </span>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mt-0.5 truncate">
-                {user?.fullname || "Workspace Owner"}
-              </span>
-            </div>
           </div>
         </div>
 
@@ -166,7 +125,7 @@ export const Dashboard = () => {
                   ${isActive ? "bg-indigo-50 text-[#7c83fd] shadow-sm border border-indigo-100/50" : "text-gray-500 hover:bg-gray-50 hover:text-[#1e1b4b] border border-transparent"}`}
               >
                 <Icon
-                  className={`w-[18px] h-[18px] ${isActive ? "text-[#7c83fd]" : "text-gray-400"}`}
+                  className={`w-4.5 h-4.5 ${isActive ? "text-[#7c83fd]" : "text-gray-400"}`}
                 />
                 {item.label}
               </button>
@@ -174,34 +133,43 @@ export const Dashboard = () => {
           })}
         </nav>
 
-        {/* User + Logout Footer */}
-        <div className="p-4 border-t border-gray-50 shrink-0 space-y-1">
-          <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-indigo-100 shrink-0 border border-indigo-100 shadow-sm">
-              <img
-                src={
-                  user?.avatarFileId
-                    ? `${API_BASE_URL}/files/${user.avatarFileId}`
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || "U")}&background=c7d2fe&color=4338ca&bold=true`
-                }
-                alt="avatar"
-                className="w-full h-full object-cover"
-              />
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-50 shrink-0 space-y-2">
+          {/* Restaurant identity block */}
+          <div
+            onClick={() => navigate("/settings")}
+            className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-gray-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:border-indigo-100 transition-colors cursor-default"
+          >
+            <div className="w-10 h-10 rounded-lg bg-linear-to-br from-indigo-50 to-white border border-indigo-100 flex items-center justify-center text-[#7c83fd] font-black text-sm shrink-0 shadow-sm overflow-hidden">
+              {restaurantProfile?.logoFileId ? (
+                <img
+                  src={`${API_BASE_URL}/files/${restaurantProfile.logoFileId}`}
+                  alt="Restaurant Logo"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    e.target.parentElement.innerHTML =
+                      restaurantName[0]?.toUpperCase();
+                  }}
+                />
+              ) : (
+                restaurantName[0]?.toUpperCase()
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-[#1e1b4b] truncate leading-tight">
+              <span className="text-sm font-bold text-[#1e1b4b] truncate block leading-tight">
+                {restaurantName}
+              </span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mt-0.5 truncate">
                 {user?.fullname || "Workspace Owner"}
-              </p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                {user?.role || "Tenant"}
-              </p>
+              </span>
             </div>
           </div>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-2.5 w-full text-sm font-semibold text-gray-500 rounded-lg hover:text-red-600 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100/50"
           >
-            <LogOut className="w-[18px] h-[18px]" />
+            <LogOut className="w-4.5 h-4.5" />
             Sign Out
           </button>
         </div>

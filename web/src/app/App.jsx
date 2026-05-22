@@ -12,6 +12,8 @@ import { Login } from "../features/auth/pages/Login";
 import { Register } from "../features/auth/pages/Register";
 import { AuthCallback } from "../features/auth/pages/AuthCallback";
 import { LinkGoogle } from "../features/auth/pages/LinkGoogle";
+import { Suspended } from "../features/auth/pages/Suspended";
+import { ForgotPassword } from "../features/auth/pages/ForgotPassword";
 import { SetupRestaurant } from "../features/restaurant/SetupRestaurant";
 import { Dashboard } from "../features/dashboard/Dashboard";
 import { Analytics } from "../features/analytics/Analytics";
@@ -38,6 +40,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/auth/link-google" element={<LinkGoogle />} />
+          <Route path="/suspended" element={<Suspended />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/setup-restaurant" element={<SetupRestaurant />} />
             <Route element={<Dashboard />}>

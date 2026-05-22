@@ -39,8 +39,8 @@ export const adminApi = {
     const res = await api.put(`/admin/users/${id}/role`, { role: "ADMIN" });
     return adminApi.normalizeUser(res.data.data);
   },
-  demoteToTenant: async (id) => {
-    const res = await api.put(`/admin/users/${id}/role`, { role: "TENANT" });
+  demoteToRestaurateur: async (id) => {
+    const res = await api.put(`/admin/users/${id}/role`, { role: "RESTAURATEUR" });
     return adminApi.normalizeUser(res.data.data);
   },
   deleteUser: async (id) => {

@@ -11,6 +11,7 @@ export const useSalary = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showSalaryForm, setShowSalaryForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [salaryFormData, setSalaryFormData] = useState({
     staffId: "",
     amount: "",
@@ -78,8 +79,13 @@ export const useSalary = () => {
         paymentDate: salaryFormData.paymentDate,
       };
 
-      await salaryApi.recordSalary(dataToSend);
-      setSuccess("Salary recorded!");
+      if (editingId) {
+        await salaryApi.updateSalary(editingId, dataToSend);
+        setSuccess("Salary updated!");
+      } else {
+        await salaryApi.recordSalary(dataToSend);
+        setSuccess("Salary recorded!");
+      }
 
       if (typeof cache.invalidate === "function")
         cache.invalidate(SALARIES_CACHE_KEY);
@@ -88,14 +94,46 @@ export const useSalary = () => {
       resetSalaryForm();
       await loadSalaryHistory(0, 8, true);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to record salary.");
+      setError(
+        err.response?.data?.error?.message ||
+          err.response?.data?.message ||
+          "Failed to save salary record.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const handleEditSalary = (salary) => {
+    setSalaryFormData({
+      staffId: salary.staffId,
+      amount: salary.amount,
+      paymentDate: salary.paymentDate,
+    });
+    setEditingId(salary.id);
+    setShowSalaryForm(true);
+  };
+
+  const handleDeleteSalary = async (id) => {
+    try {
+      await salaryApi.deleteSalary(id);
+      setSuccess("Salary record deleted!");
+      if (typeof cache.invalidate === "function")
+        cache.invalidate(SALARIES_CACHE_KEY);
+      else if (typeof cache.clear === "function") cache.clear();
+      await loadSalaryHistory(0, 8, true);
+    } catch (err) {
+      setError(
+        err.response?.data?.error?.message ||
+          err.response?.data?.message ||
+          "Failed to delete salary record.",
+      );
+    }
+  };
+
   const resetSalaryForm = () => {
     setSalaryFormData({ staffId: "", amount: "", paymentDate: "" });
+    setEditingId(null);
     setShowSalaryForm(false);
   };
 
@@ -109,7 +147,10 @@ export const useSalary = () => {
     setShowSalaryForm,
     salaryFormData,
     setSalaryFormData,
+    editingId,
     handleSalarySubmit,
+    handleEditSalary,
+    handleDeleteSalary,
     resetSalaryForm,
     loadSalaryHistory,
   };

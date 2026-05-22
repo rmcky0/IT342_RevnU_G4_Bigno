@@ -7,10 +7,7 @@ export const TransactionFormModal = ({
   onSubmit,
   formData,
   setFormData,
-  tagInput,
-  setTagInput,
-  handleAddTag,
-  handleRemoveTag,
+  categories = [],
   isEditing,
   loading,
   error,
@@ -73,40 +70,23 @@ export const TransactionFormModal = ({
 
             <div className="space-y-1.5">
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                Tags{" "}
-                <span className="font-normal normal-case text-gray-400">
-                  (Press Enter)
-                </span>
+                Category
               </label>
-              <div className="w-full p-2 bg-white rounded-lg border border-gray-200 focus-within:border-[#7c83fd] focus-within:ring-4 focus-within:ring-indigo-50 min-h-[46px] flex flex-wrap gap-1.5 items-center transition-all shadow-sm">
-                {formData.tagNames.map((tag, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-1 px-2 py-1 bg-indigo-50 text-[#7c83fd] rounded-md text-[11px] font-bold border border-indigo-100/50"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="hover:text-red-400 transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
+              <select
+                value={formData.categoryId}
+                onChange={(e) =>
+                  setFormData({ ...formData, categoryId: e.target.value })
+                }
+                className="w-full px-3 py-2.5 bg-white rounded-lg border border-gray-200 focus:border-[#7c83fd] focus:ring-4 focus:ring-indigo-50 text-sm text-[#1e1b4b] transition-all outline-none shadow-sm"
+                required
+              >
+                <option value="">Select a category...</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
                 ))}
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleAddTag}
-                  placeholder={
-                    formData.tagNames.length === 0
-                      ? `e.g. ${type === "Sale" ? "MEALS" : "SUPPLIES"}...`
-                      : "Add..."
-                  }
-                  className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-sm text-[#1e1b4b] placeholder:text-gray-400 min-w-[80px] p-0"
-                />
-              </div>
+              </select>
             </div>
 
             <div className="space-y-1.5">
@@ -114,9 +94,9 @@ export const TransactionFormModal = ({
                 Notes
               </label>
               <textarea
-                value={formData.description}
+                value={formData.notes}
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, notes: e.target.value })
                 }
                 className="w-full px-3 py-2.5 bg-white rounded-lg border border-gray-200 focus:border-[#7c83fd] focus:ring-4 focus:ring-indigo-50 text-sm text-[#1e1b4b] transition-all outline-none shadow-sm h-20 resize-none"
                 placeholder="Optional details"
@@ -147,7 +127,7 @@ export const TransactionFormModal = ({
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={loading || !formData.amount}
+                disabled={loading || !formData.amount || !formData.categoryId}
                 className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#7c83fd] text-white rounded-lg font-semibold text-sm shadow-md shadow-indigo-100 hover:bg-[#6b72f5] transition-all disabled:opacity-50 hover:-translate-y-0.5 disabled:hover:translate-y-0"
               >
                 {loading ? (

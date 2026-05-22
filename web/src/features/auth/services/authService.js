@@ -3,7 +3,7 @@ import api from "../../../shared/api/axios";
 export const authService = {
   login: async ({ email, password }) => {
     const response = await api.post("/auth/login", { email, password });
-    return response.data;
+    return response.data.data;
   },
 
   register: async ({ fullname, email, password }) => {
@@ -12,7 +12,7 @@ export const authService = {
       email,
       password,
     });
-    return response.data;
+    return response.data.data;
   },
 
   linkGoogle: async ({ email, password, googleId }) => {
@@ -21,11 +21,11 @@ export const authService = {
       password,
       googleId,
     });
-    return response.data;
+    return response.data.data;
   },
 
   getCurrentUser: async () => {
     const response = await api.get("/auth/me");
-    return response.data;
+    return response.data.data;
   },
 };

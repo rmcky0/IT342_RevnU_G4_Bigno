@@ -15,7 +15,7 @@ import revnuLogo from "../../assets/revnu_logo.svg";
 
 const NAV_ITEMS = [
   { id: "home", path: "/admin", icon: LayoutDashboard, label: "Overview" },
-  { id: "users", path: "/admin/users", icon: Users, label: "Tenants" },
+  { id: "users", path: "/admin/users", icon: Users, label: "Restaurateurs" },
   {
     id: "restaurants",
     path: "/admin/restaurants",

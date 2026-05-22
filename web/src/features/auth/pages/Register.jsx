@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../components/AuthLayout";
 import { useRegister } from "../hooks/useRegister";
 import { Notification } from "../components/Notification";
+import { PolicyModal } from "../components/PolicyModal";
 
 const GoogleIcon = () => (
   <svg
@@ -29,12 +31,13 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
 
 export const Register = () => {
   const { form, loading, error, success, handleChange, handleSubmit } =
     useRegister();
   const navigate = useNavigate();
+  const [modal, setModal] = useState(null); // "terms" | "privacy" | null
 
   const onFormSubmit = (e) => {
     handleSubmit(e, (destination) => {
@@ -59,7 +62,7 @@ export const Register = () => {
         onClick={() => {
           sessionStorage.setItem("oauth2_source", "/register");
           window.location.href =
-            "http://localhost:8080/oauth2/authorization/google";
+            `${API_BASE_URL}/oauth2/authorization/google`;
         }}
         className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors mb-4"
       >
@@ -146,7 +149,23 @@ export const Register = () => {
         </button>
 
         <p className="text-center text-xs text-gray-400 italic">
-          By registering, you agree to our Terms and Privacy Policy
+          By registering, you agree to our{" "}
+          <button
+            type="button"
+            onClick={() => setModal("terms")}
+            className="underline hover:text-gray-600"
+          >
+            Terms of Service
+          </button>{" "}
+          and{" "}
+          <button
+            type="button"
+            onClick={() => setModal("privacy")}
+            className="underline hover:text-gray-600"
+          >
+            Privacy Policy
+          </button>
+          .
         </p>
       </form>
 
@@ -159,6 +178,8 @@ export const Register = () => {
           Sign In here
         </Link>
       </p>
+
+      {modal && <PolicyModal type={modal} onClose={() => setModal(null)} />}
     </AuthLayout>
   );
 };

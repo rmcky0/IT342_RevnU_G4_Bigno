@@ -40,7 +40,7 @@ export const AdminUsers = () => {
       }
       setUsers(Array.isArray(u) ? u : []);
     } catch {
-      setError("Failed to load tenants.");
+      setError("Failed to load restaurateurs.");
     } finally {
       setLoading(false);
     }
@@ -135,7 +135,7 @@ export const AdminUsers = () => {
           <Users className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tenants</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Restaurateurs</h1>
           <p className="text-xs text-gray-400 font-medium">
             {filtered.length} {filterStatus !== "all" ? filterStatus : "total"}{" "}
             accounts
@@ -218,7 +218,7 @@ export const AdminUsers = () => {
             <thead className="bg-gradient-to-r from-[#8f9df7] to-[#9faaf5] text-white">
               <tr>
                 {[
-                  "Tenant",
+                  "Restaurateur",
                   "Restaurant",
                   "Joined",
                   "Role",
@@ -251,7 +251,7 @@ export const AdminUsers = () => {
                     colSpan={6}
                     className="px-6 py-12 text-center text-gray-400 text-sm font-medium"
                   >
-                    No tenants found.
+                    No restaurateurs found.
                   </td>
                 </tr>
               ) : (
@@ -459,8 +459,8 @@ export const AdminUsers = () => {
               </p>
               <p className="text-xs text-gray-500 font-semibold mb-6">
                 {confirmAction.action === "suspend"
-                  ? "This will block the tenant from accessing their account."
-                  : "This grants full admin access and removes tenant restrictions."}
+                  ? "This will block the restaurateur from accessing their account."
+                  : "This grants full admin access and removes restaurateur restrictions."}
               </p>
               <div className="flex gap-3">
                 <button

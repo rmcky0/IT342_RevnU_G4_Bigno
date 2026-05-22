@@ -101,14 +101,6 @@ export const Analytics = () => {
                 holidayDate={data?.date}
               />
             </div>
-
-            <div
-              onClick={() => navigate("/settings")}
-              title="Go to Settings"
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center text-[#7c83fd] font-bold border border-indigo-100 shadow-sm shrink-0 cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all text-sm"
-            >
-              {(user?.fullname || user?.name || "U")[0].toUpperCase()}
-            </div>
           </div>
         </div>
 

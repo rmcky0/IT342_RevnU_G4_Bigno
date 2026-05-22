@@ -20,13 +20,6 @@ export const expensesAPI = {
     return response.data;
   },
 
-  getExpensesByDateRange: async (startDate, endDate) => {
-    const response = await api.get("/expenses/range", {
-      params: { startDate, endDate },
-    });
-    return response.data;
-  },
-
   updateExpense: async (id, expenseData) => {
     const response = await api.put(`/expenses/${id}`, expenseData);
     return response.data;

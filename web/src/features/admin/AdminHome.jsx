@@ -102,24 +102,26 @@ export const AdminHome = () => {
     load();
   }, []);
 
-  const tenants = useMemo(
-    () => users.filter((u) => u.role === "TENANT"),
+  const restaurateurs = useMemo(
+    () => users.filter((u) => u.role === "RESTAURATEUR"),
     [users],
   );
 
-  const setupComplete = tenants.filter((u) => u.restaurantName).length;
-  const setupPending = tenants.filter((u) => !u.restaurantName).length;
+  const setupComplete = restaurateurs.filter((u) => u.restaurantName).length;
+  const setupPending = restaurateurs.filter((u) => !u.restaurantName).length;
   const setupRate =
-    tenants.length > 0 ? Math.round((setupComplete / tenants.length) * 100) : 0;
+    restaurateurs.length > 0
+      ? Math.round((setupComplete / restaurateurs.length) * 100)
+      : 0;
 
   const pieData = useMemo(() => {
-    if (tenants.length === 0) return [];
+    if (restaurateurs.length === 0) return [];
 
-    const activeCount = tenants.filter(
+    const activeCount = restaurateurs.filter(
       (t) => !t.suspended && t.restaurantName,
     ).length;
-    const suspendedCount = tenants.filter((t) => t.suspended).length;
-    const pendingCount = tenants.filter(
+    const suspendedCount = restaurateurs.filter((t) => t.suspended).length;
+    const pendingCount = restaurateurs.filter(
       (t) => !t.suspended && !t.restaurantName,
     ).length;
 
@@ -128,9 +130,9 @@ export const AdminHome = () => {
       { name: "Suspended", value: suspendedCount, color: "#ef4444" },
       { name: "Setup pending", value: pendingCount, color: "#f59e0b" },
     ].filter((d) => d.value > 0);
-  }, [tenants]);
+  }, [restaurateurs]);
 
-  const recentTenants = tenants.slice(0, 8);
+  const recentRestaurateurs = restaurateurs.slice(0, 8);
 
   const getFormattedDate = () =>
     new Date().toLocaleDateString("en-GB", {
@@ -200,9 +202,9 @@ export const AdminHome = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 shrink-0">
           <KPICard
             icon={Users}
-            title="Total Tenants"
-            value={stats?.totalTenants ?? 0}
-            sub={`${stats?.newTenantsThisMonth ?? 0} joined this month`}
+            title="Total Restaurateurs"
+            value={stats?.totalRestaurateurs ?? 0}
+            sub={`${stats?.newRestaurateursThisMonth ?? 0} joined this month`}
             color="indigo"
           />
           <KPICard
@@ -214,36 +216,36 @@ export const AdminHome = () => {
           />
           <KPICard
             icon={UserCheck}
-            title="Active Tenants"
-            value={stats?.activeTenants ?? 0}
+            title="Active Restaurateurs"
+            value={stats?.activeRestaurateurs ?? 0}
             sub="Accounts in good standing"
             color="emerald"
           />
           <KPICard
             icon={UserX}
             title="Suspended"
-            value={stats?.suspendedTenants ?? 0}
+            value={stats?.suspendedRestaurateurs ?? 0}
             sub={
-              stats?.suspendedTenants > 0
+              stats?.suspendedRestaurateurs > 0
                 ? "Requires attention"
                 : "None suspended"
             }
-            color={stats?.suspendedTenants > 0 ? "red" : "emerald"}
+            color={stats?.suspendedRestaurateurs > 0 ? "red" : "emerald"}
           />
         </div>
 
         {/* New signups callout */}
-        {(stats?.newTenantsThisMonth ?? 0) > 0 && (
+        {(stats?.newRestaurateursThisMonth ?? 0) > 0 && (
           <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl px-5 py-3 text-sm text-[#1e1b4b] font-medium flex items-center gap-3 shrink-0 shadow-sm">
             <div className="p-1.5 bg-indigo-100 text-[#7c83fd] rounded-md">
               <UserPlus className="w-4 h-4" />
             </div>
             <p>
               <span className="font-black text-[#7c83fd]">
-                {stats.newTenantsThisMonth}
+                {stats.newRestaurateursThisMonth}
               </span>{" "}
-              new tenant{stats.newTenantsThisMonth !== 1 ? "s" : ""} registered
-              this month.
+              new restaurateur{stats.newRestaurateursThisMonth !== 1 ? "s" : ""}{" "}
+              registered this month.
             </p>
           </div>
         )}
@@ -257,13 +259,13 @@ export const AdminHome = () => {
                 Account Status
               </h3>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
-                Tenant breakdown
+                Restaurateur breakdown
               </p>
             </div>
             <div className="flex-1 p-5 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0">
                 {pieData.length === 0 ? (
-                  <EmptyChart message="No tenants registered yet." />
+                  <EmptyChart message="No restaurateurs registered yet." />
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -298,13 +300,13 @@ export const AdminHome = () => {
                 {[
                   {
                     label: "Active",
-                    count: stats?.activeTenants ?? 0,
+                    count: stats?.activeRestaurateurs ?? 0,
                     color: "#10b981",
                     bg: "bg-emerald-50 border-emerald-100",
                   },
                   {
                     label: "Suspended",
-                    count: stats?.suspendedTenants ?? 0,
+                    count: stats?.suspendedRestaurateurs ?? 0,
                     color: "#ef4444",
                     bg: "bg-red-50 border-red-100",
                   },
@@ -351,36 +353,38 @@ export const AdminHome = () => {
                   Recent Signups
                 </h3>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
-                  Last {recentTenants.length} registered tenants
+                  Last {recentRestaurateurs.length} registered restaurateurs
                 </p>
               </div>
               <span className="text-xs font-bold text-[#7c83fd] bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
-                {tenants.length} total
+                {restaurateurs.length} total
               </span>
             </div>
             <div className="flex-1 overflow-auto min-h-0">
-              {recentTenants.length === 0 ? (
+              {recentRestaurateurs.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
-                    No tenants yet.
+                    No restaurateurs yet.
                   </p>
                 </div>
               ) : (
                 <table className="w-full text-left border-collapse whitespace-nowrap">
                   <thead className="bg-gray-50/80 sticky top-0 z-10">
                     <tr>
-                      {["Tenant", "Restaurant", "Joined", "Status"].map((h) => (
-                        <th
-                          key={h}
-                          className="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100"
-                        >
-                          {h}
-                        </th>
-                      ))}
+                      {["Restaurateur", "Restaurant", "Joined", "Status"].map(
+                        (h) => (
+                          <th
+                            key={h}
+                            className="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100"
+                          >
+                            {h}
+                          </th>
+                        ),
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {recentTenants.map((u, i) => (
+                    {recentRestaurateurs.map((u, i) => (
                       <tr
                         key={u.id}
                         className={`transition-colors hover:bg-[#f8f9ff]/60 ${i % 2 === 0 ? "bg-white" : "bg-[#f8f9ff]/20"}`}
@@ -452,7 +456,7 @@ export const AdminHome = () => {
             {
               label: "Setup Rate",
               value: `${setupRate}%`,
-              sub: `${setupComplete} of ${tenants.length} tenants`,
+              sub: `${setupComplete} of ${restaurateurs.length} restaurateurs`,
               color:
                 setupRate >= 80
                   ? "text-emerald-600"
@@ -469,10 +473,10 @@ export const AdminHome = () => {
             {
               label: "Active Rate",
               value:
-                tenants.length > 0
-                  ? `${Math.round(((stats?.activeTenants ?? 0) / tenants.length) * 100)}%`
+                restaurateurs.length > 0
+                  ? `${Math.round(((stats?.activeRestaurateurs ?? 0) / restaurateurs.length) * 100)}%`
                   : "—",
-              sub: `${stats?.activeTenants ?? 0} active accounts`,
+              sub: `${stats?.activeRestaurateurs ?? 0} active accounts`,
               color: "text-emerald-600",
               bg: "bg-emerald-50 border-emerald-100",
             },
@@ -480,16 +484,16 @@ export const AdminHome = () => {
               label: "Avg. per Restaurant",
               value:
                 stats?.totalRestaurants > 0
-                  ? `${Math.round((tenants.length / stats.totalRestaurants) * 10) / 10} users`
+                  ? `${Math.round((restaurateurs.length / stats.totalRestaurants) * 10) / 10} users`
                   : "—",
-              sub: "Tenants per establishment",
+              sub: "Restaurateurs per establishment",
               color: "text-[#7c83fd]",
               bg: "bg-indigo-50 border-indigo-100",
             },
             {
               label: "New This Month",
-              value: stats?.newTenantsThisMonth ?? 0,
-              sub: "Tenant registrations",
+              value: stats?.newRestaurateursThisMonth ?? 0,
+              sub: "Restaurateur registrations",
               color: "text-[#7c83fd]",
               bg: "bg-indigo-50 border-indigo-100",
             },

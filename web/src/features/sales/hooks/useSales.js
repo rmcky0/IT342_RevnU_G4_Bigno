@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { salesAPI } from "../api/salesApi";
+import { categoriesAPI } from "../../categories/api/categoriesApi";
 import * as cache from "../../../shared/cache/dataCache";
 
 const CACHE_KEY = "sales_page_";
@@ -7,6 +8,7 @@ const ITEMS_PER_PAGE = 9;
 
 export const useSales = () => {
   const [sales, setSales] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -22,10 +24,16 @@ export const useSales = () => {
   });
   const [formData, setFormData] = useState({
     amount: "",
-    tagNames: [],
-    description: "",
+    categoryId: "",
+    notes: "",
   });
-  const [tagInput, setTagInput] = useState("");
+
+  useEffect(() => {
+    categoriesAPI
+      .getCategories("SALE")
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!success && !error) return;
@@ -100,8 +108,8 @@ export const useSales = () => {
       const s = searchTerm.toLowerCase();
       list = list.filter(
         (sale) =>
-          sale.tags?.some((tag) => tag.toLowerCase().includes(s)) ||
-          (sale.description || "").toLowerCase().includes(s) ||
+          (sale.categoryName || "").toLowerCase().includes(s) ||
+          (sale.notes || "").toLowerCase().includes(s) ||
           sale.amount?.toString().includes(s),
       );
     }
@@ -119,26 +127,6 @@ export const useSales = () => {
     0,
   );
 
-  const handleAddTag = (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    const newTag = tagInput.trim().toUpperCase();
-    if (newTag && !formData.tagNames.includes(newTag)) {
-      setFormData((prev) => ({
-        ...prev,
-        tagNames: [...prev.tagNames, newTag],
-      }));
-    }
-    setTagInput("");
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      tagNames: prev.tagNames.filter((t) => t !== tagToRemove),
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -147,8 +135,8 @@ export const useSales = () => {
     try {
       const payload = {
         amount: parseFloat(formData.amount),
-        tagNames: formData.tagNames,
-        description: formData.description,
+        categoryId: formData.categoryId,
+        notes: formData.notes,
       };
 
       let targetPage = currentPage;
@@ -182,8 +170,8 @@ export const useSales = () => {
   const handleEdit = (sale) => {
     setFormData({
       amount: sale.amount,
-      tagNames: sale.tags || [],
-      description: sale.description || "",
+      categoryId: sale.categoryId || "",
+      notes: sale.notes || "",
     });
     setEditingId(sale.id);
     setShowForm(true);
@@ -205,8 +193,7 @@ export const useSales = () => {
   };
 
   const resetForm = () => {
-    setFormData({ amount: "", tagNames: [], description: "" });
-    setTagInput("");
+    setFormData({ amount: "", categoryId: "", notes: "" });
     setEditingId(null);
     setShowForm(false);
   };
@@ -221,6 +208,7 @@ export const useSales = () => {
   return {
     sales: filteredSales,
     paginatedSales: filteredSales,
+    categories,
     currentPage,
     totalPages,
     totalRecords,
@@ -233,10 +221,6 @@ export const useSales = () => {
     setShowForm,
     formData,
     setFormData,
-    tagInput,
-    setTagInput,
-    handleAddTag,
-    handleRemoveTag,
     searchTerm,
     setSearchTerm,
     editingId,

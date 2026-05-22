@@ -45,13 +45,17 @@ export const Staff = () => {
     setShowSalaryForm,
     salaryFormData,
     setSalaryFormData,
+    editingId: editingSalaryId,
     handleSalarySubmit,
+    handleEditSalary,
+    handleDeleteSalary,
     resetSalaryForm,
     loadSalaryHistory,
   } = useSalary();
 
   const [showKPIs, setShowKPIs] = useState(true);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [salaryToDelete, setSalaryToDelete] = useState(null);
   const [staffToView, setStaffToView] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
@@ -199,6 +203,8 @@ export const Staff = () => {
               data={salaries}
               loading={salaryLoading}
               searchTerm={searchTerm}
+              onEdit={handleEditSalary}
+              onDelete={(salary) => setSalaryToDelete(salary)}
             />
           )}
         </div>
@@ -221,6 +227,16 @@ export const Staff = () => {
         type="staff member"
       />
 
+      <DeleteConfirmModal
+        item={salaryToDelete}
+        onClose={() => setSalaryToDelete(null)}
+        onConfirm={async (id) => {
+          await handleDeleteSalary(id);
+          setSalaryToDelete(null);
+        }}
+        type="salary record"
+      />
+
       <StaffFormModal
         isOpen={showStaffForm}
         onClose={resetStaffForm}
@@ -241,6 +257,7 @@ export const Staff = () => {
         loading={salaryLoading}
         error={salaryError}
         success={salarySuccess}
+        isEditing={!!editingSalaryId}
       />
     </div>
   );

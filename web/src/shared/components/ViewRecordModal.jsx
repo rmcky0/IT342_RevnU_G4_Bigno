@@ -57,31 +57,24 @@ export const ViewRecordModal = ({
           </div>
           <div>
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-              Tags
+              Category
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {item.tags && item.tags.length > 0 ? (
-                item.tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="px-2.5 py-1 bg-indigo-50 border border-indigo-100/50 text-[#7c83fd] text-xs font-bold uppercase rounded-md shadow-sm"
-                  >
-                    {tag}
-                  </span>
-                ))
-              ) : (
-                <span className="text-sm text-gray-500 italic">
-                  No tags associated
-                </span>
-              )}
-            </div>
+            {item.categoryName ? (
+              <span className="px-2.5 py-1 bg-indigo-50 border border-indigo-100/50 text-[#7c83fd] text-xs font-bold uppercase rounded-md shadow-sm">
+                {item.categoryName}
+              </span>
+            ) : (
+              <span className="text-sm text-gray-500 italic">
+                No category assigned
+              </span>
+            )}
           </div>
           <div>
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
               Notes
             </p>
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm text-gray-700 break-all whitespace-pre-wrap">
-              {item.description || "No description provided."}
+              {item.notes || "No notes provided."}
             </div>
           </div>
 

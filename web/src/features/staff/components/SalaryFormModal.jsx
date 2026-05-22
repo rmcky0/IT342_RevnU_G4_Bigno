@@ -11,6 +11,7 @@ export const SalaryFormModal = ({
   loading,
   error,
   success,
+  isEditing = false,
 }) => {
   if (!isOpen) return null;
 
@@ -20,10 +21,10 @@ export const SalaryFormModal = ({
         <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold text-[#1e1b4b]">
-              Record Salary Payment
+              {isEditing ? "Edit Salary Record" : "Record Salary Payment"}
             </h3>
             <p className="text-gray-500 text-xs mt-0.5">
-              Process a payroll transaction.
+              {isEditing ? "Update the amount or payment date." : "Process a payroll transaction."}
             </p>
           </div>
           <button
@@ -49,26 +50,28 @@ export const SalaryFormModal = ({
           )}
 
           <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                Select Employee
-              </label>
-              <select
-                value={formData.staffId}
-                onChange={(e) =>
-                  setFormData({ ...formData, staffId: e.target.value })
-                }
-                className="w-full px-3 py-2.5 bg-white rounded-lg border border-gray-200 focus:border-[#7c83fd] focus:ring-4 focus:ring-indigo-50 font-semibold text-[#1e1b4b] transition-all text-sm outline-none shadow-sm appearance-none"
-                required
-              >
-                <option value="">Choose...</option>
-                {staffList.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.fullname || "N/A"} ({s.position || "N/A"})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {!isEditing && (
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                  Select Employee
+                </label>
+                <select
+                  value={formData.staffId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, staffId: e.target.value })
+                  }
+                  className="w-full px-3 py-2.5 bg-white rounded-lg border border-gray-200 focus:border-[#7c83fd] focus:ring-4 focus:ring-indigo-50 font-semibold text-[#1e1b4b] transition-all text-sm outline-none shadow-sm appearance-none"
+                  required
+                >
+                  <option value="">Choose...</option>
+                  {staffList.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.fullname || "N/A"} ({s.position || "N/A"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -116,6 +119,10 @@ export const SalaryFormModal = ({
               >
                 {loading ? (
                   "Processing..."
+                ) : isEditing ? (
+                  <>
+                    <Wallet className="w-4 h-4" /> Update Record
+                  </>
                 ) : (
                   <>
                     <Wallet className="w-4 h-4" /> Record Payment

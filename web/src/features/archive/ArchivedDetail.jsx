@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { archiveApi } from "./api/archiveApi";
 import * as cache from "../../shared/cache/dataCache";
@@ -13,14 +13,23 @@ import {
   Inbox,
   FileText,
   ShoppingCart,
+  Download,
+  Eye,
+  X,
 } from "lucide-react";
+import { useAuth } from "../auth/context/AuthContext";
+import { useRestaurantProfile } from "../restaurant/hooks/useRestaurantProfile";
+import { downloadExcel, downloadPdf, previewPdfUrl } from "./utils/downloadUtils";
 
 export const ArchivedDetail = () => {
   const { date } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { profile: restaurantProfile } = useRestaurantProfile(user?.email);
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const CACHE_KEY = `archive:detail:${date}`;
 
@@ -49,6 +58,20 @@ export const ArchivedDetail = () => {
     };
     load();
   }, [date]);
+
+  const restaurantName = restaurantProfile?.restaurantName || "RevnU";
+  const ownerName = user?.fullname || "";
+
+  const openPreview = useCallback(() => {
+    if (!detail) return;
+    const url = previewPdfUrl(detail, date, restaurantName, ownerName);
+    setPreviewUrl(url);
+  }, [detail, date, restaurantName, ownerName]);
+
+  const closePreview = useCallback(() => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  }, [previewUrl]);
 
   const fmt = (n) =>
     parseFloat(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
@@ -140,6 +163,31 @@ export const ArchivedDetail = () => {
             {sales.length} sales · {expenses.length} expenses
             {summary?.reportSent && " · Email report sent ✓"}
           </p>
+        </div>
+
+        {/* Download / Preview buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => downloadExcel(detail, date, restaurantName, ownerName)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500 text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-emerald-600 hover:-translate-y-0.5 transition-all"
+            title="Download Excel"
+          >
+            <Download className="w-3.5 h-3.5" /> Excel
+          </button>
+          <button
+            onClick={openPreview}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#7c83fd] text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-[#6b72f5] hover:-translate-y-0.5 transition-all"
+            title="Preview PDF"
+          >
+            <Eye className="w-3.5 h-3.5" /> Preview PDF
+          </button>
+          <button
+            onClick={() => downloadPdf(detail, date, restaurantName, ownerName)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-red-500 text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-red-600 hover:-translate-y-0.5 transition-all"
+            title="Download PDF"
+          >
+            <Download className="w-3.5 h-3.5" /> PDF
+          </button>
         </div>
       </div>
 
@@ -295,7 +343,7 @@ export const ArchivedDetail = () => {
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-xs text-gray-500 max-w-[200px] truncate">
-                      {s.description || "—"}
+                      {s.notes || "—"}
                     </td>
                   </tr>
                 ))}
@@ -375,7 +423,7 @@ export const ArchivedDetail = () => {
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-xs text-gray-500 max-w-[200px] truncate">
-                      {e.description || "—"}
+                      {e.notes || "—"}
                     </td>
                   </tr>
                 ))}
@@ -401,6 +449,48 @@ export const ArchivedDetail = () => {
           </div>
         )}
       </div>
+
+      {/* PDF Preview Modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-[#1e1b4b]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={closePreview}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-4xl h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <p className="font-bold text-[#1e1b4b] text-sm">PDF Preview</p>
+                <p className="text-xs text-gray-400 mt-0.5">{restaurantName} · {date}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => downloadPdf(detail, date, restaurantName, ownerName)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-red-500 text-white rounded-lg font-semibold text-sm hover:bg-red-600 transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download PDF
+                </button>
+                <button
+                  onClick={closePreview}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* iframe preview */}
+            <iframe
+              src={previewUrl}
+              className="flex-1 w-full border-0"
+              title="PDF Preview"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

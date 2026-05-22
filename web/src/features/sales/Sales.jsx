@@ -36,14 +36,12 @@ export const Sales = () => {
     setShowForm,
     formData,
     setFormData,
-    tagInput,
-    setTagInput,
-    handleAddTag,
-    handleRemoveTag,
+    categories,
     searchTerm,
     setSearchTerm,
     editingId,
     totalSales,
+    totalRecords,
     handleSubmit,
     handleEdit,
     handleDelete,
@@ -52,8 +50,13 @@ export const Sales = () => {
     requestSort,
   } = useSales();
 
-  const { isLocked, lockLoading, lockError, handleLockRecords } =
-    useAnalytics();
+  const {
+    data: analyticsData,
+    isLocked,
+    lockLoading,
+    lockError,
+    handleLockRecords,
+  } = useAnalytics();
 
   const [showKPIs, setShowKPIs] = useState(true);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -90,7 +93,7 @@ export const Sales = () => {
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Sales</h2>
           <span className="px-2.5 py-0.5 bg-white text-[#7c83fd] text-xs font-bold rounded-md border border-gray-100 shadow-sm ml-2">
-            {sales.length} active records
+            {totalRecords} active records
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -142,8 +145,8 @@ export const Sales = () => {
       {/* 3. Extracted KPIs Component */}
       <SharedKPIs
         showKPIs={showKPIs}
-        total={totalSales}
-        count={sales.length}
+        total={analyticsData.totalSales}
+        count={totalRecords}
         todayDisplay={todayDisplay}
         type="sales"
       />
@@ -156,6 +159,7 @@ export const Sales = () => {
         handlePrevPage={handlePrevPage}
         handleNextPage={handleNextPage}
         onAddClick={() => setShowForm(true)}
+        isLocked={isLocked}
         type="sales"
       />
 
@@ -169,6 +173,7 @@ export const Sales = () => {
         onView={setItemToView}
         onEdit={handleEdit}
         onDelete={setItemToDelete}
+        isLocked={isLocked}
         type="sales"
       />
 
@@ -197,10 +202,7 @@ export const Sales = () => {
         onSubmit={handleSubmit}
         formData={formData}
         setFormData={setFormData}
-        tagInput={tagInput}
-        setTagInput={setTagInput}
-        handleAddTag={handleAddTag}
-        handleRemoveTag={handleRemoveTag}
+        categories={categories}
         isEditing={!!editingId}
         loading={loading}
         error={error}

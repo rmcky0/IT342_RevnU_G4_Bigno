@@ -21,6 +21,7 @@ export const SharedTable = ({
   onEdit,
   onDelete,
   onViewReceipt,
+  isLocked = false,
   type = "sales",
 }) => {
   const isExpense = type === "expenses";
@@ -78,7 +79,7 @@ export const SharedTable = ({
               <SortableHeader label="Date & Time" sortKey="date" />
               <SortableHeader label="Amount" sortKey="amount" align="right" />
               <th className="px-5 py-3 font-semibold text-xs tracking-wider uppercase w-48">
-                Tags
+                Category
               </th>
               <th className="px-5 py-3 font-semibold text-xs tracking-wider uppercase w-full">
                 Notes
@@ -160,32 +161,16 @@ export const SharedTable = ({
                     })}
                   </td>
                   <td className="px-5 py-4 max-w-[200px]">
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      {item.tags && item.tags.length > 0 ? (
-                        <>
-                          {item.tags.slice(0, 2).map((tag, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-0.5 bg-indigo-50 border border-indigo-100/50 text-[#7c83fd] text-[10px] font-bold uppercase rounded-md shadow-sm whitespace-nowrap"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {item.tags.length > 2 && (
-                            <span className="text-[10px] text-gray-400 font-semibold whitespace-nowrap">
-                              +{item.tags.length - 2}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">
-                          None
-                        </span>
-                      )}
-                    </div>
+                    {item.categoryName ? (
+                      <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-100/50 text-[#7c83fd] text-[10px] font-bold uppercase rounded-md shadow-sm whitespace-nowrap">
+                        {item.categoryName}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">None</span>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-500 truncate max-w-[200px] group-hover:text-gray-700 transition-colors">
-                    {item.description || "-"}
+                    {item.notes || "-"}
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0">
@@ -209,7 +194,7 @@ export const SharedTable = ({
                             >
                               <FileText className="w-4 h-4" />
                             </button>
-                          ) : (
+                          ) : !isLocked ? (
                             <button
                               onClick={() => onEdit(item)}
                               className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-md transition-colors"
@@ -217,26 +202,30 @@ export const SharedTable = ({
                             >
                               <FilePlus className="w-4 h-4" />
                             </button>
-                          )}
+                          ) : null}
                           <div className="w-px h-3 bg-gray-200 mx-1" />
                         </>
                       )}
 
-                      {/* Edit & Delete Actions */}
-                      <button
-                        onClick={() => onEdit(item)}
-                        className="p-1.5 text-gray-400 hover:text-[#7c83fd] hover:bg-indigo-50 rounded-md transition-colors"
-                        title="Edit"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => onDelete(item)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Edit & Delete Actions — hidden when EOD-locked */}
+                      {!isLocked && (
+                        <>
+                          <button
+                            onClick={() => onEdit(item)}
+                            className="p-1.5 text-gray-400 hover:text-[#7c83fd] hover:bg-indigo-50 rounded-md transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onDelete(item)}
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -1,6 +1,15 @@
 import { useSetupRestaurant } from "./hooks/useSetupRestaurant";
+import { useAuth } from "../auth/context/AuthContext";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const SetupRestaurant = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!user) navigate("/login");
+  }, [user, navigate]);
+
   const {
     form,
     loading,
@@ -20,7 +29,9 @@ export const SetupRestaurant = () => {
       <div className="relative z-10 w-full max-w-3xl px-6 py-12 flex flex-col items-center">
         {/* Header Text */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Welcome, Owner!</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome, {user?.fullname || "Workspace Owner"}!
+          </h1>
           <p className="text-gray-700 text-lg">
             Let's get your restaurant ready for its first shift.
           </p>
