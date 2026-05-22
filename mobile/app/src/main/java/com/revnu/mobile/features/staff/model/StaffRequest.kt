@@ -1,9 +1,10 @@
 package com.revnu.mobile.features.staff.model
 
-import java.math.BigDecimal
+import com.google.gson.annotations.SerializedName
 
 data class StaffRequest(
-    val fullname:   String,
-    val position:   String,
-    val salaryRate: BigDecimal
+    @SerializedName("fullname") val fullname: String,
+    @SerializedName("position") val position: String,
+    @SerializedName("salaryRate") val salaryRate: Double
 )
+

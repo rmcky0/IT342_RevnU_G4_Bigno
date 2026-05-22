@@ -1,14 +1,17 @@
 package com.revnu.mobile.features.staff.model
 
+import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 import java.math.BigDecimal
 
+
+
 data class SalaryResponse(
-    val id:           String,
-    val staffId:      String?,
-    val employeeName: String?,
-    val amount: BigDecimal,
-    val paymentDate:  String?,    // "yyyy-MM-dd" string from API
-    val status:       SalaryStatus?,
-    val createdAt:    String?
-) : Serializable
+    @SerializedName("id") val id: String,
+    @SerializedName("staffId") val staffId: String,
+    @SerializedName("staffName") val staffName: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("paymentDate") val paymentDate: String,
+    @SerializedName("status") val status: String,
+    @SerializedName("createdAt") val createdAt: String
+)
