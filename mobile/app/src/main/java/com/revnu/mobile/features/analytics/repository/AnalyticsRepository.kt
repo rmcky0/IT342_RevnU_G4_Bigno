@@ -8,7 +8,6 @@ import retrofit2.Response
 class AnalyticsRepository(private val apiService: ApiService) {
 
     suspend fun getDailyAnalytics(): Response<ApiResponse<DailyAnalyticsResponse>> {
-        // This calls the GET /revnu/analytics/daily endpoint
-        return apiService.getDailyAnalytics()
+        return apiService.getDailyStats()
     }
 }
