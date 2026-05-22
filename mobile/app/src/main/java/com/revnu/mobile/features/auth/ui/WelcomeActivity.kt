@@ -1,21 +1,27 @@
 package com.revnu.mobile.features.auth.ui
 
+import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import com.google.android.material.button.MaterialButton
 import com.revnu.mobile.R
 
 class WelcomeActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_welcome)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        val btnCreateAccount = findViewById<MaterialButton>(R.id.btnCreateAccount)
+        val btnGoLogin = findViewById<MaterialButton>(R.id.btnGoLogin)
+
+        btnCreateAccount.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+        btnGoLogin.setOnClickListener {
+            startActivity(Intent(this, LoginActivity::class.java))
         }
     }
 }

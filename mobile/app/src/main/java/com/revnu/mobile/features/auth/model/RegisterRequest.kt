@@ -1,7 +1,14 @@
 package com.revnu.mobile.features.auth.model
 
+import com.google.gson.annotations.SerializedName
+
 data class RegisterRequest(
-    val fullName: String,
+    @SerializedName("email")
     val email: String,
-    val password: String
+
+    @SerializedName("password")
+    val password: String,
+
+    @SerializedName("fullname")
+    val restaurantName: String
 )

@@ -1,18 +1,26 @@
-package com.revnu.mobile.features.auth
+package com.revnu.mobile.features.auth.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.util.Patterns
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.button.MaterialButton
 import com.revnu.mobile.R
 import com.revnu.mobile.core.network.RetrofitClient
+import com.revnu.mobile.core.session.SessionManager
+import com.revnu.mobile.features.auth.model.AuthState
 import com.revnu.mobile.features.auth.model.RegisterRequest
+import com.revnu.mobile.features.auth.repository.AuthRepository
+import com.revnu.mobile.features.auth.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
 class RegisterActivity : AppCompatActivity() {
@@ -22,16 +30,30 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var etPassword: EditText
     private lateinit var etConfirmPassword: EditText
     private lateinit var btnCreateAccount: MaterialButton
-    private lateinit var tvGoLogin: TextView
+    private lateinit var btnAuthBack: ImageButton
+
+    private lateinit var sessionManager: SessionManager
+    private lateinit var viewModel: AuthViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
         RetrofitClient.init(this)
+        sessionManager = SessionManager(this)
+
+        val factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val repository = AuthRepository(RetrofitClient.apiService, sessionManager)
+                @Suppress("UNCHECKED_CAST")
+                return AuthViewModel(repository) as T
+            }
+        }
+        viewModel = ViewModelProvider(this, factory)[AuthViewModel::class.java]
 
         bindViews()
         setupListeners()
+        observeViewModel()
     }
 
     private fun bindViews() {
@@ -40,26 +62,60 @@ class RegisterActivity : AppCompatActivity() {
         etPassword = findViewById(R.id.etPassword)
         etConfirmPassword = findViewById(R.id.etConfirmPassword)
         btnCreateAccount = findViewById(R.id.btnCreateAccount)
-        tvGoLogin = findViewById(R.id.tvSignin)
+        btnAuthBack = findViewById(R.id.btnAuthBack)
     }
 
     private fun setupListeners() {
         btnCreateAccount.setOnClickListener {
-            val fullName = etFullName.text.toString().trim()
+            val fullname = etFullName.text.toString().trim()
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
             val confirmPassword = etConfirmPassword.text.toString().trim()
 
-            if (!validateInputs(fullName, email, password, confirmPassword)) {
-                return@setOnClickListener
+            if (validateInputs(fullname, email, password, confirmPassword)) {
+                val request = RegisterRequest(
+                    email = email,
+                    password = password,
+                    restaurantName = fullname
+                )
+                viewModel.register(request)
             }
-
-            register(fullName, email, password)
         }
 
-        tvGoLogin.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
+
+        btnAuthBack.setOnClickListener { finish() }
+    }
+
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.authState.collect { state ->
+                    when (state) {
+                        is AuthState.Idle -> setLoading(false)
+                        is AuthState.Loading -> setLoading(true)
+                        is AuthState.Success -> {
+                            setLoading(false)
+                            Toast.makeText(this@RegisterActivity, "registration successful. please log in.", Toast.LENGTH_SHORT).show()
+
+                            // wipe the token so they are forced to log in
+                            viewModel.logout()
+
+                            startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
+                            finish()
+                        }
+                        is AuthState.AdminDetected -> {
+                            setLoading(false)
+                            Toast.makeText(this@RegisterActivity, "Admin accounts cannot be registered here.", Toast.LENGTH_LONG).show()
+                            viewModel.resetState()
+                        }
+                        is AuthState.Error -> {
+                            setLoading(false)
+                            Toast.makeText(this@RegisterActivity, state.message, Toast.LENGTH_LONG).show()
+                            viewModel.resetState()
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -70,7 +126,7 @@ class RegisterActivity : AppCompatActivity() {
         confirmPassword: String
     ): Boolean {
         if (fullName.isBlank()) {
-            etFullName.error = "Full name is required"
+            etFullName.error = "This field is required"
             etFullName.requestFocus()
             return false
         }
@@ -107,53 +163,8 @@ class RegisterActivity : AppCompatActivity() {
         return true
     }
 
-    private fun register(fullName: String, email: String, password: String) {
-        setLoading(true)
-
-        lifecycleScope.launch {
-            try {
-                val request = RegisterRequest(
-                    fullName = fullName,
-                    email = email,
-                    password = password
-                )
-
-                val response = RetrofitClient.apiService.register(request)
-
-                if (response.isSuccessful) {
-                    val body = response.body()
-
-                    if (body == null) {
-                        Toast.makeText(this@RegisterActivity, "Empty server response", Toast.LENGTH_LONG).show()
-                        return@launch
-                    }
-
-                    Toast.makeText(
-                        this@RegisterActivity,
-                        body.message ?: "Registration successful",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
-                    finish()
-
-                } else {
-                    val errorText = response.errorBody()?.string()
-                    val message = errorText?.ifBlank { "Registration failed" } ?: "Registration failed"
-                    Toast.makeText(this@RegisterActivity, message, Toast.LENGTH_LONG).show()
-                }
-
-            } catch (e: Exception) {
-                Log.e("REVNU_REGISTER", "Network or parsing crash", e)
-                Toast.makeText(this@RegisterActivity, "Network error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-            } finally {
-                setLoading(false)
-            }
-        }
-    }
-
     private fun setLoading(isLoading: Boolean) {
         btnCreateAccount.isEnabled = !isLoading
-        tvGoLogin.isEnabled = !isLoading
+        btnAuthBack.isEnabled = !isLoading
     }
 }
