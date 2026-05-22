@@ -1,5 +1,7 @@
 package com.revnu.mobile.features.sales.model
 
+import com.google.gson.annotations.SerializedName
+
 data class CloseDayRequest(
-    val date: String
+    @SerializedName("date") val date: String
 )

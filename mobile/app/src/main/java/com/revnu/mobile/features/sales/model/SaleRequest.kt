@@ -1,7 +1,9 @@
 package com.revnu.mobile.features.sales.model
 
+import com.google.gson.annotations.SerializedName
+
 data class SaleRequest(
-    val amount: Double,
-    val tagNames: List<String>? = emptyList(),
-    val description: String
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("notes") val notes: String?
 )

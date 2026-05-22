@@ -24,6 +24,8 @@ class SalesAdapter(
         notifyDataSetChanged()
     }
 
+    fun getItemAt(position: Int): SaleResponse = salesList[position]
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SalesViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_sale, parent, false)
@@ -46,9 +48,10 @@ class SalesAdapter(
         private val tvDateTime: TextView = itemView.findViewById(R.id.tvDateTime)
         private val tvAmount: TextView = itemView.findViewById(R.id.tvAmount)
         private val tvNotes: TextView = itemView.findViewById(R.id.tvNotes)
-        private val chipGroupTags: ChipGroup = itemView.findViewById(R.id.chipGroupTags)
+        private val tvCategory: TextView = itemView.findViewById(R.id.tvCategory)
 
         fun bind(sale: SaleResponse) {
+            // 1. Format the Date
             try {
                 val rawDateString = sale.createdAt.substringBefore(".")
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
@@ -67,22 +70,13 @@ class SalesAdapter(
 
             // 2. Format the Money
             tvAmount.text = "₱${String.format("%.2f", sale.amount)}"
-            tvNotes.text = sale.description ?: "No notes"
 
-            // 3. Handle the Tags
-            chipGroupTags.removeAllViews()
-            sale.tags?.forEach { tagName ->
-                val chip = Chip(itemView.context).apply {
-                    text = tagName.uppercase()
-                    chipBackgroundColor = ColorStateList.valueOf(Color.parseColor("#E0E7FF"))
-                    setTextColor(Color.parseColor("#818CF8"))
-                    // setChipMinHeightResource(R.dimen.small_chip_height) // Optional
-                    textSize = 10f
-                    isCheckable = false
-                    isEnabled = false
-                }
-                chipGroupTags.addView(chip)
-            }
+            // 3. Set the Notes
+            tvNotes.text = if (sale.notes.isNullOrBlank()) "No notes" else sale.notes
+
+            tvCategory.text = if (sale.categoryName.isNullOrBlank()) "UNCATEGORIZED" else sale.categoryName
+
+
         }
     }
 }
