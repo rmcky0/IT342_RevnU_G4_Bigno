@@ -1,21 +1,89 @@
 package com.revnu.mobile.core.ui
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import com.google.android.material.button.MaterialButton
 import com.revnu.mobile.R
+import com.revnu.mobile.core.session.SessionManager
+import com.revnu.mobile.features.auth.ui.LoginActivity
 
 class WebRedirectActivity : AppCompatActivity() {
+
+    companion object {
+        const val EXTRA_IS_ADMIN_LOGIN = "extra_is_admin_login"
+        const val WEB_APP_URL = "https://revnu.vercel.app" // Replace with your actual URL
+    }
+
+    private lateinit var tvTitle: TextView
+    private lateinit var tvMessage: TextView
+    private lateinit var ivQrCode: ImageView
+    private lateinit var btnOpenBrowser: MaterialButton
+    private lateinit var btnClose: MaterialButton
+
+    private lateinit var sessionManager: SessionManager
+    private var isAdminLogin: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_web_redirect)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        sessionManager = SessionManager(this)
+
+        // Check if they got here because an Admin just tried to log in
+        isAdminLogin = intent.getBooleanExtra(EXTRA_IS_ADMIN_LOGIN, false)
+
+        bindViews()
+        setupUI()
+        setupListeners()
+    }
+
+    private fun bindViews() {
+        tvTitle = findViewById(R.id.tvRedirectTitle)
+        tvMessage = findViewById(R.id.tvRedirectMessage)
+        ivQrCode = findViewById(R.id.ivQrCode)
+        btnOpenBrowser = findViewById(R.id.btnOpenBrowser)
+        btnClose = findViewById(R.id.btnClose)
+    }
+
+    private fun setupUI() {
+        if (isAdminLogin) {
+            tvTitle.text = "Admin Access Restricted"
+            tvMessage.text = "The mobile application is designed exclusively for Restaurateur floor operations (Sales & Expenses). Please log in to the web application to manage users and view platform analytics."
+            btnClose.text = "Back to Login"
+
+            // Note: In AuthViewModel we already cleared the token,
+            // but you could also call sessionManager.clearSession() here to be perfectly safe.
+        } else {
+            tvTitle.text = "Switch to Web"
+            tvMessage.text = "Configuration, Settings, and deep Analytics are managed on the Web Application. Please visit the portal on your computer or browser."
+            btnClose.text = "Return to Dashboard"
+        }
+
+        // TODO: Load your actual QR code drawable here
+        // ivQrCode.setImageResource(R.drawable.your_qr_code_image)
+    }
+
+    private fun setupListeners() {
+        // Opens the device's default web browser (Chrome, Samsung Internet, etc.)
+        btnOpenBrowser.setOnClickListener {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(WEB_APP_URL))
+            startActivity(browserIntent)
+        }
+
+        btnClose.setOnClickListener {
+            if (isAdminLogin) {
+                // If it was an admin login attempt, send them back to the Login screen
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+            } else {
+                // If it was a Restaurateur trying to access Settings, just close this activity
+                finish()
+            }
         }
     }
 }

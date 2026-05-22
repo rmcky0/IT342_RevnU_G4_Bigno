@@ -3,38 +3,42 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F4F6FA">
+    android:animateLayoutChanges="true"
+    android:background="#F8FAFC">
 
     <FrameLayout
         android:id="@+id/fragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/includeBottomBar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/fabNewRecord"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_fab_modern"
+        android:contentDescription="New Record"
+        android:elevation="8dp"
+        android:src="@drawable/ic_add"
+        android:stateListAnimator="@animator/fab_press_anim"
+        app:layout_constraintBottom_toTopOf="@id/includeBottomBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@android:color/white" />
 
     <include
         android:id="@+id/includeBottomBar"
         layout="@layout/bottom_nav_bar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <!-- Floating new-record button, bottom-right, just above the nav bar -->
-    <ImageButton
-        android:id="@+id/fabNewRecord"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="12dp"
-        android:background="@drawable/bg_fab_new_record"
-        android:contentDescription="New Record"
-        android:elevation="10dp"
-        android:src="@drawable/ic_add"
-        app:layout_constraintBottom_toTopOf="@id/includeBottomBar"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
