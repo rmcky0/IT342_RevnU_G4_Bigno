@@ -2,15 +2,13 @@ package com.revnu.backend.features.expenses.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.revnu.backend.features.categories.model.Category;
 import com.revnu.backend.features.files.model.FileRecord;
 import com.revnu.backend.features.restaurants.model.Restaurant;
-import com.revnu.backend.features.tags.model.Tag;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,8 +20,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -39,17 +35,15 @@ public class Expense {
     private BigDecimal amount;
 
     @Column(columnDefinition = "TEXT")
-    private String description;
+    private String notes;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "expense_tags",
-            joinColumns = @JoinColumn(name = "expense_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id"),
-            foreignKey = @ForeignKey(name = "fk_expenses_to_tags"),
-            inverseForeignKey = @ForeignKey(name = "fk_tags_to_expenses")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "category_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_expenses_category")
     )
-    private Set<Tag> tags = new HashSet<>();
+    private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -82,8 +76,8 @@ public class Expense {
 
         private UUID id;
         private BigDecimal amount;
-        private String description;
-        private Set<Tag> tags = new HashSet<>();
+        private String notes;
+        private Category category;
         private Restaurant restaurant;
         private FileRecord file;
         private ExpenseStatus status = ExpenseStatus.OPEN;
@@ -98,13 +92,13 @@ public class Expense {
             return this;
         }
 
-        public ExpenseBuilder description(String description) {
-            this.description = description;
+        public ExpenseBuilder notes(String notes) {
+            this.notes = notes;
             return this;
         }
 
-        public ExpenseBuilder tags(Set<Tag> tags) {
-            this.tags = tags;
+        public ExpenseBuilder category(Category category) {
+            this.category = category;
             return this;
         }
 
@@ -127,8 +121,8 @@ public class Expense {
             Expense expense = new Expense();
             expense.id = this.id;
             expense.amount = this.amount;
-            expense.description = this.description;
-            expense.tags = this.tags;
+            expense.notes = this.notes;
+            expense.category = this.category;
             expense.restaurant = this.restaurant;
             expense.file = this.file;
             expense.status = this.status;
@@ -136,7 +130,6 @@ public class Expense {
         }
     }
 
-    // --- Getters and Setters ---
     public UUID getId() {
         return id;
     }
@@ -153,20 +146,20 @@ public class Expense {
         this.amount = amount;
     }
 
-    public String getDescription() {
-        return description;
+    public String getNotes() {
+        return notes;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
-    public Set<Tag> getTags() {
-        return tags;
+    public Category getCategory() {
+        return category;
     }
 
-    public void setTags(Set<Tag> tags) {
-        this.tags = tags;
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
     public Restaurant getRestaurant() {

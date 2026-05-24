@@ -6,18 +6,13 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.revnu.backend.features.files.model.FileRecord;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -48,10 +43,6 @@ public class User {
 
     @Column(name = "provider", length = 50)
     private String provider = "local";
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "avatar_file_id", foreignKey = @ForeignKey(name = "fk_users_avatar_file"))
-    private FileRecord avatarFile;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -209,14 +200,6 @@ public class User {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public FileRecord getAvatarFile() {
-        return avatarFile;
-    }
-
-    public void setAvatarFile(FileRecord avatarFile) {
-        this.avatarFile = avatarFile;
     }
 
 }

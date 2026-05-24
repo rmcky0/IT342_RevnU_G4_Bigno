@@ -1,39 +1,89 @@
 package com.revnu.mobile.features.expenses.repository
 
-import com.revnu.mobile.core.network.RetrofitClient
+import com.revnu.mobile.core.network.ApiService
 import com.revnu.mobile.features.expenses.model.ExpenseRequest
 import com.revnu.mobile.features.expenses.model.ExpenseResponse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MultipartBody
 
-class ExpensesRepository {
-
-    suspend fun fetchExpenses(): Result<List<ExpenseResponse>> {
-        return try {
-            val response = RetrofitClient.apiService.getAllExpenses()
-            val body = response.body()
-
-            if (response.isSuccessful && body?.success == true && body.data != null) {
-                // Spring Boot's Page object stores the list inside 'content'
-                Result.success(body.data.content)
-            } else {
-                Result.failure(Exception(body?.message ?: "Failed to fetch expenses"))
+class ExpensesRepository(
+    private val apiService: ApiService
+) {
+    suspend fun getTodayExpenses(): Result<List<ExpenseResponse>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getAllExpenses() // Ensure you have default pagination (page=0, size=100) in ApiService
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val expensesList = response.body()!!.data?.content ?: emptyList()
+                    Result.success(expensesList)
+                } else {
+                    Result.failure(Exception(response.body()?.error?.message ?: "Failed to load expenses"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
-    suspend fun createExpense(request: ExpenseRequest): Result<ExpenseResponse> {
-        return try {
-            val response = RetrofitClient.apiService.recordExpense(request)
-            val body = response.body()
-
-            if (response.isSuccessful && body?.success == true && body.data != null) {
-                Result.success(body.data)
-            } else {
-                Result.failure(Exception(body?.message ?: "Failed to record expense"))
+    suspend fun deleteExpense(id: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.deleteExpense(id)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(response.body()?.error?.message ?: "Failed to delete expense"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            Result.failure(e)
+        }
+    }
+
+    suspend fun uploadReceipt(id: String, filePart: MultipartBody.Part): Result<ExpenseResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.uploadReceipt(id, filePart)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Result.success(response.body()!!.data!!)
+                } else {
+                    Result.failure(Exception(response.body()?.error?.message ?: "Failed to upload receipt"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    // You still need these because AddRecordViewModel calls them!
+    suspend fun recordExpense(request: ExpenseRequest): Result<ExpenseResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.recordExpense(request)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Result.success(response.body()!!.data!!)
+                } else {
+                    Result.failure(Exception(response.body()?.error?.message ?: "Failed to save"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun updateExpense(id: String, request: ExpenseRequest): Result<ExpenseResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.updateExpense(id, request)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Result.success(response.body()!!.data!!)
+                } else {
+                    Result.failure(Exception(response.body()?.error?.message ?: "Failed to update"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 }

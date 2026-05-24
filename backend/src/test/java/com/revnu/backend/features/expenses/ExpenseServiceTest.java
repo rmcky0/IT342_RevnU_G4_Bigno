@@ -1,240 +1,250 @@
 package com.revnu.backend.features.expenses;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import com.revnu.backend.features.auth.model.RoleType;
 import com.revnu.backend.features.auth.model.User;
 import com.revnu.backend.features.auth.repository.UserRepository;
+import com.revnu.backend.features.categories.model.Category;
+import com.revnu.backend.features.categories.repository.CategoryRepository;
 import com.revnu.backend.features.expenses.dto.ExpenseRequest;
-import com.revnu.backend.features.expenses.dto.ExpenseResponse;
 import com.revnu.backend.features.expenses.model.Expense;
 import com.revnu.backend.features.expenses.model.ExpenseStatus;
 import com.revnu.backend.features.expenses.repository.ExpenseRepository;
 import com.revnu.backend.features.expenses.service.ExpenseService;
+import com.revnu.backend.features.files.model.FileRecord;
 import com.revnu.backend.features.files.repository.FileRecordRepository;
+import com.revnu.backend.features.files.service.SupabaseStorageService;
 import com.revnu.backend.features.restaurants.model.Restaurant;
 import com.revnu.backend.features.restaurants.repository.RestaurantRepository;
-import com.revnu.backend.features.tags.repository.TagRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ExpenseService Tests")
+@DisplayName("ExpenseService Unit Tests")
 class ExpenseServiceTest {
 
-    @Mock
-    private ExpenseRepository expenseRepository;
-    @Mock
-    private FileRecordRepository fileRecordRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private RestaurantRepository restaurantRepository;
-    @Mock
-    private TagRepository tagRepository;
+    @Mock private ExpenseRepository expenseRepository;
+    @Mock private FileRecordRepository fileRecordRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private RestaurantRepository restaurantRepository;
+    @Mock private CategoryRepository categoryRepository;
+    @Mock private SupabaseStorageService supabaseStorageService;
 
     @InjectMocks
     private ExpenseService expenseService;
 
-    private User testUser;
-    private Restaurant testRestaurant;
-    private UUID testExpenseId;
+    private User owner;
+    private Restaurant restaurant;
+    private Restaurant otherRestaurant;
+    private Category expenseCategory;
+    private Category saleCategory;
 
     @BeforeEach
     void setUp() {
-        testExpenseId = UUID.randomUUID();
+        owner = User.builder().id(UUID.randomUUID()).email("owner@test.com").build();
+        restaurant = Restaurant.builder().id(UUID.randomUUID()).name("My Restaurant").owner(owner).build();
+        otherRestaurant = Restaurant.builder().id(UUID.randomUUID()).name("Other Restaurant").build();
 
-        testUser = new User();
-        testUser.setEmail("tenant@revnu.com");
-        testUser.setFullname("Test Tenant");
-        testUser.setRole(RoleType.TENANT);
+        expenseCategory = Category.builder()
+                .id(UUID.randomUUID()).name("Utilities").type("EXPENSE")
+                .restaurant(null).isDefault(true).build();
 
-        testRestaurant = new Restaurant();
-        testRestaurant.setId(UUID.randomUUID());
-        testRestaurant.setName("Test Restaurant");
-        testRestaurant.setOwner(testUser);
+        saleCategory = Category.builder()
+                .id(UUID.randomUUID()).name("Meals").type("SALE")
+                .restaurant(null).isDefault(true).build();
+
+        when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
+        when(restaurantRepository.findByOwner(owner)).thenReturn(Optional.of(restaurant));
     }
 
-    private Expense buildExpense(BigDecimal amount, ExpenseStatus status) {
-        Expense e = new Expense();
-        e.setId(testExpenseId);
-        e.setAmount(amount);
-        e.setDescription("Test expense");
-        e.setTags(Set.of());
-        e.setRestaurant(testRestaurant);
-        e.setStatus(status);
-        return e;
+    private Expense buildExpense(ExpenseStatus status, FileRecord file) {
+        Expense expense = new Expense();
+        expense.setId(UUID.randomUUID());
+        expense.setAmount(new BigDecimal("100.00"));
+        expense.setCategory(expenseCategory);
+        expense.setRestaurant(restaurant);
+        expense.setStatus(status);
+        expense.setFile(file);
+        return expense;
     }
 
-    private void stubUserAndRestaurant() {
-        when(userRepository.findByEmail("tenant@revnu.com"))
-                .thenReturn(Optional.of(testUser));
-        when(restaurantRepository.findByOwner(testUser))
-                .thenReturn(Optional.of(testRestaurant));
-    }
-
+    // ── Business Rule 4: Finalized expense cannot be updated ────────────────────
     @Test
-    @DisplayName("Record expense — saves and returns ExpenseResponse")
-    void recordExpense_validRequest_savesAndReturnsResponse() {
-        stubUserAndRestaurant();
-        ExpenseRequest request = new ExpenseRequest(
-                new BigDecimal("200.00"), List.of(), "Supplies");
+    @DisplayName("Rule 4 - updateExpense() throws for CLOSED expense")
+    void updateExpense_closedExpense_throwsIllegalState() {
+        UUID expenseId = UUID.randomUUID();
+        Expense closed = buildExpense(ExpenseStatus.CLOSED, null);
+        closed.setId(expenseId);
+        when(expenseRepository.findById(expenseId)).thenReturn(Optional.of(closed));
 
-        Expense saved = buildExpense(new BigDecimal("200.00"), ExpenseStatus.OPEN);
-        when(expenseRepository.save(any(Expense.class))).thenReturn(saved);
+        ExpenseRequest req = new ExpenseRequest(new BigDecimal("200.00"), expenseCategory.getId(), null);
 
-        ExpenseResponse result = expenseService.recordExpense("tenant@revnu.com", request);
-
-        assertNotNull(result, "Result should not be null");
-        assertEquals(0, new BigDecimal("200.00").compareTo(result.amount()),
-                "Amount should be 200.00");
-        assertEquals(ExpenseStatus.OPEN, result.status(), "New expense should be OPEN");
-
-        verify(expenseRepository, times(1)).save(any(Expense.class));
+        assertThatThrownBy(() -> expenseService.updateExpense("owner@test.com", expenseId, req))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("finalized");
     }
 
+    // ── Business Rule 4: Finalized expense cannot be deleted ────────────────────
     @Test
-    @DisplayName("Record expense — user not found throws exception")
-    void recordExpense_unknownUser_throwsRuntimeException() {
+    @DisplayName("Rule 4 - deleteExpense() throws for CLOSED expense")
+    void deleteExpense_closedExpense_throwsIllegalState() {
+        UUID expenseId = UUID.randomUUID();
+        Expense closed = buildExpense(ExpenseStatus.CLOSED, null);
+        closed.setId(expenseId);
+        when(expenseRepository.findById(expenseId)).thenReturn(Optional.of(closed));
 
-        when(userRepository.findByEmail("ghost@revnu.com"))
-                .thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, ()
-                -> expenseService.recordExpense("ghost@revnu.com",
-                        new ExpenseRequest(new BigDecimal("50.00"), List.of(), "Test"))
-        );
-
-        verify(expenseRepository, never()).save(any());
+        assertThatThrownBy(() -> expenseService.deleteExpense("owner@test.com", expenseId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("finalized");
     }
 
+    // ── Business Rule 9: Deleting expense also deletes attached file ─────────────
     @Test
-    @DisplayName("Get all expenses — returns paginated response")
-    void getAllExpenses_validOwner_returnsPage() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 9 - deleteExpense() deletes attached receipt file from storage")
+    void deleteExpense_withReceipt_deletesFileFromStorage() {
+        UUID expenseId = UUID.randomUUID();
+        FileRecord fileRecord = new FileRecord();
+        fileRecord.setId(UUID.randomUUID());
+        fileRecord.setFilepath("receipts/some-file.jpg");
+        Expense openExpense = buildExpense(ExpenseStatus.OPEN, fileRecord);
+        openExpense.setId(expenseId);
 
-        List<Expense> expenseList = List.of(
-                buildExpense(new BigDecimal("100.00"), ExpenseStatus.OPEN),
-                buildExpense(new BigDecimal("50.00"), ExpenseStatus.OPEN)
-        );
-        when(expenseRepository.findByRestaurant(eq(testRestaurant), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(expenseList));
+        when(expenseRepository.findById(expenseId)).thenReturn(Optional.of(openExpense));
+        when(expenseRepository.save(any(Expense.class))).thenReturn(openExpense);
 
-        Page<ExpenseResponse> result = expenseService.getAllExpenses("tenant@revnu.com", 0, 9);
+        expenseService.deleteExpense("owner@test.com", expenseId);
 
-        assertNotNull(result);
-        assertEquals(2, result.getContent().size(), "Should return 2 expenses");
+        verify(supabaseStorageService).deleteFile("receipts/some-file.jpg");
+        verify(fileRecordRepository).delete(fileRecord);
+        verify(expenseRepository).delete(openExpense);
     }
 
+    // ── Business Rule 9: Only jpg, png, pdf accepted for receipts ────────────────
     @Test
-    @DisplayName("Update open expense — changes amount successfully")
-    void updateExpense_openExpense_updatesSuccessfully() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 9 - uploadReceipt() rejects invalid file types (e.g. .exe)")
+    void uploadReceipt_invalidExtension_throwsBadRequest() {
+        UUID expenseId = UUID.randomUUID();
+        Expense openExpense = buildExpense(ExpenseStatus.OPEN, null);
+        openExpense.setId(expenseId);
+        when(expenseRepository.findById(expenseId)).thenReturn(Optional.of(openExpense));
 
-        Expense existing = buildExpense(new BigDecimal("100.00"), ExpenseStatus.OPEN);
-        when(expenseRepository.findById(testExpenseId)).thenReturn(Optional.of(existing));
+        MockMultipartFile maliciousFile = new MockMultipartFile(
+                "file", "malware.exe", "application/octet-stream", new byte[]{1, 2, 3});
 
-        Expense updated = buildExpense(new BigDecimal("300.00"), ExpenseStatus.OPEN);
-        when(expenseRepository.save(any(Expense.class))).thenReturn(updated);
-
-        ExpenseResponse result = expenseService.updateExpense("tenant@revnu.com", testExpenseId,
-                new ExpenseRequest(new BigDecimal("300.00"), List.of(), "Updated cost"));
-
-        assertNotNull(result);
-        assertEquals(0, new BigDecimal("300.00").compareTo(result.amount()));
-        verify(expenseRepository, times(1)).save(any(Expense.class));
+        assertThatThrownBy(() -> expenseService.uploadReceipt("owner@test.com", expenseId, maliciousFile))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.BAD_REQUEST));
     }
 
+    // ── Business Rule 13: Finalized expense receipt cannot be modified ────────────
     @Test
-    @DisplayName("Update CLOSED expense — throws IllegalStateException")
-    void updateExpense_closedExpense_throwsIllegalStateException() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 13 - uploadReceipt() throws for CLOSED (finalized) expense")
+    void uploadReceipt_finalizedExpense_throwsIllegalState() {
+        UUID expenseId = UUID.randomUUID();
+        Expense closedExpense = buildExpense(ExpenseStatus.CLOSED, null);
+        closedExpense.setId(expenseId);
+        when(expenseRepository.findById(expenseId)).thenReturn(Optional.of(closedExpense));
 
-        Expense closed = buildExpense(new BigDecimal("100.00"), ExpenseStatus.CLOSED);
-        when(expenseRepository.findById(testExpenseId)).thenReturn(Optional.of(closed));
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "receipt.jpg", "image/jpeg", new byte[]{1, 2, 3});
 
-        assertThrows(IllegalStateException.class, ()
-                -> expenseService.updateExpense("tenant@revnu.com", testExpenseId,
-                        new ExpenseRequest(new BigDecimal("300.00"), List.of(), "Try edit")),
-                "Should not allow editing finalized expense"
-        );
-
-        verify(expenseRepository, never()).save(any());
+        assertThatThrownBy(() -> expenseService.uploadReceipt("owner@test.com", expenseId, file))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("finalized");
     }
 
+    // ── Business Rule 13: New receipt overwrites existing one (1:1 mapping) ───────
     @Test
-    @DisplayName("Delete open expense — removes record")
-    void deleteExpense_openExpense_deletesSuccessfully() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 13 - uploadReceipt() deletes old file before uploading new one")
+    void uploadReceipt_existingFile_overwritesPreviousFile() {
+        UUID expenseId = UUID.randomUUID();
+        FileRecord oldFile = new FileRecord();
+        oldFile.setId(UUID.randomUUID());
+        oldFile.setFilepath("receipts/old.jpg");
+        Expense openExpense = buildExpense(ExpenseStatus.OPEN, oldFile);
+        openExpense.setId(expenseId);
 
-        Expense open = buildExpense(new BigDecimal("100.00"), ExpenseStatus.OPEN);
-        when(expenseRepository.findById(testExpenseId)).thenReturn(Optional.of(open));
+        when(expenseRepository.findById(expenseId)).thenReturn(Optional.of(openExpense));
+        when(expenseRepository.save(any(Expense.class))).thenReturn(openExpense);
+        when(supabaseStorageService.uploadFile(any(), anyString())).thenReturn("receipts/new.jpg");
+        FileRecord newFileRecord = new FileRecord();
+        newFileRecord.setId(UUID.randomUUID());
+        when(fileRecordRepository.save(any(FileRecord.class))).thenReturn(newFileRecord);
 
-        expenseService.deleteExpense("tenant@revnu.com", testExpenseId);
+        MockMultipartFile newFile = new MockMultipartFile(
+                "file", "new-receipt.jpg", "image/jpeg", new byte[]{1, 2, 3});
 
-        verify(expenseRepository, times(1)).delete(open);
+        expenseService.uploadReceipt("owner@test.com", expenseId, newFile);
+
+        verify(supabaseStorageService).deleteFile("receipts/old.jpg");
+        verify(fileRecordRepository).delete(oldFile);
+        verify(supabaseStorageService).uploadFile(any(), eq("receipts"));
     }
 
+    // ── Business Rule 12: Category type segregation — SALE category rejected ─────
     @Test
-    @DisplayName("Delete CLOSED expense — throws IllegalStateException")
-    void deleteExpense_closedExpense_throwsIllegalStateException() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 12 - recordExpense() rejects SALE category type")
+    void recordExpense_withSaleCategory_throwsBadRequest() {
+        when(categoryRepository.findById(saleCategory.getId())).thenReturn(Optional.of(saleCategory));
+        ExpenseRequest req = new ExpenseRequest(new BigDecimal("100.00"), saleCategory.getId(), null);
 
-        Expense closed = buildExpense(new BigDecimal("100.00"), ExpenseStatus.CLOSED);
-        when(expenseRepository.findById(testExpenseId)).thenReturn(Optional.of(closed));
-
-        assertThrows(IllegalStateException.class, ()
-                -> expenseService.deleteExpense("tenant@revnu.com", testExpenseId),
-                "Should not delete a finalized expense"
-        );
-
-        verify(expenseRepository, never()).delete(any());
+        assertThatThrownBy(() -> expenseService.recordExpense("owner@test.com", req))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.BAD_REQUEST));
     }
 
+    // ── Business Rule 2: Tenant Isolation ────────────────────────────────────────
     @Test
-    @DisplayName("Delete expense — wrong restaurant throws SecurityException")
-    void deleteExpense_wrongRestaurant_throwsSecurityException() {
-        stubUserAndRestaurant();
-
-        Restaurant otherRestaurant = new Restaurant();
-        otherRestaurant.setId(UUID.randomUUID());
-
-        Expense foreignExpense = new Expense();
-        foreignExpense.setId(testExpenseId);
-        foreignExpense.setAmount(new BigDecimal("100.00"));
+    @DisplayName("Rule 2 - deleteExpense() blocks access to another restaurant's record")
+    void deleteExpense_foreignRestaurant_throwsSecurityException() {
+        UUID expenseId = UUID.randomUUID();
+        Expense foreignExpense = buildExpense(ExpenseStatus.OPEN, null);
+        foreignExpense.setId(expenseId);
         foreignExpense.setRestaurant(otherRestaurant);
-        foreignExpense.setStatus(ExpenseStatus.OPEN);
 
-        when(expenseRepository.findById(testExpenseId))
-                .thenReturn(Optional.of(foreignExpense));
+        when(expenseRepository.findById(expenseId)).thenReturn(Optional.of(foreignExpense));
 
-        assertThrows(SecurityException.class, ()
-                -> expenseService.deleteExpense("tenant@revnu.com", testExpenseId),
-                "Should throw SecurityException for unauthorized delete"
-        );
+        assertThatThrownBy(() -> expenseService.deleteExpense("owner@test.com", expenseId))
+                .isInstanceOf(SecurityException.class);
+    }
 
-        verify(expenseRepository, never()).delete(any());
+    // ── Business Rule 9: Valid file types are accepted ───────────────────────────
+    @Test
+    @DisplayName("Rule 9 - uploadReceipt() accepts .jpg, .png, and .pdf files")
+    void uploadReceipt_validTypes_noException() {
+        UUID expenseId = UUID.randomUUID();
+        Expense openExpense = buildExpense(ExpenseStatus.OPEN, null);
+        openExpense.setId(expenseId);
+        when(expenseRepository.findById(expenseId)).thenReturn(Optional.of(openExpense));
+        when(supabaseStorageService.uploadFile(any(), anyString())).thenReturn("receipts/receipt.pdf");
+        FileRecord saved = new FileRecord();
+        saved.setId(UUID.randomUUID());
+        when(fileRecordRepository.save(any(FileRecord.class))).thenReturn(saved);
+        when(expenseRepository.save(any(Expense.class))).thenReturn(openExpense);
+
+        MockMultipartFile pdfFile = new MockMultipartFile(
+                "file", "receipt.pdf", "application/pdf", new byte[]{1, 2, 3});
+
+        expenseService.uploadReceipt("owner@test.com", expenseId, pdfFile);
+
+        verify(supabaseStorageService).uploadFile(any(), eq("receipts"));
     }
 }

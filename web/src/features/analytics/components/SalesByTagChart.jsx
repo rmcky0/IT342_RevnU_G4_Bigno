@@ -1,13 +1,25 @@
 import React from "react";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { EmptyChart } from "./EmptyChart";
 
+const CustomPieTooltip = ({ active, payload }) => {
+  if (!active || !payload || !payload.length) return null;
+  const data = payload[0];
+  return (
+    <div className="bg-white/95 backdrop-blur-md border border-gray-100 px-4 py-2.5 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center gap-3">
+      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: data.payload.color }} />
+      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{data.name}</span>
+      <span className="text-sm font-bold text-[#1e1b4b] tabular-nums ml-2">
+        ₱{Number(data.value).toLocaleString("en-PH")}
+      </span>
+    </div>
+  );
+};
+
 export const SalesByTagChart = ({ tags = [] }) => (
-  <div className="bg-white rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col min-h-0">
-    <div className="px-6 py-4 border-b border-gray-50 shrink-0">
-      <h3 className="text-sm font-bold text-[#1e1b4b] uppercase tracking-wider">
-        Sales by Tag
-      </h3>
+  <div className="bg-white rounded-xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col min-h-0">
+    <div className="px-5 py-3.5 border-b border-gray-100 shrink-0">
+      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sales by Tag</h3>
     </div>
 
     <div className="flex-1 p-5 min-h-0 flex flex-col">
@@ -17,54 +29,26 @@ export const SalesByTagChart = ({ tags = [] }) => (
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={tags}
-                innerRadius="60%"
-                outerRadius="80%"
-                paddingAngle={4}
-                dataKey="value"
-              >
+              <Pie data={tags} innerRadius="65%" outerRadius="85%" paddingAngle={6} dataKey="value" stroke="none">
                 {tags.map((entry, index) => (
-                  <Cell
-                    key={entry.name ?? index}
-                    fill={entry.color}
-                    stroke="none"
-                  />
+                  <Cell key={entry.name ?? index} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "1px solid #f1f5f9",
-                  boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-                  padding: "8px 12px",
-                }}
-                itemStyle={{
-                  fontWeight: "bold",
-                  color: "#1e1b4b",
-                  fontSize: "12px",
-                }}
-                formatter={(value) => [
-                  `₱${Number(value).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
-                ]}
-              />
+              <Tooltip content={<CustomPieTooltip />} />
             </PieChart>
           </ResponsiveContainer>
         )}
       </div>
 
       {tags.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 pt-4 shrink-0">
+        <div className="grid grid-cols-2 gap-1.5 pt-4 shrink-0">
           {tags.map((tag) => (
             <div
               key={tag.name}
-              className="flex items-center gap-2 bg-gray-50/80 px-2 py-1.5 rounded-lg border border-gray-100"
+              className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors"
             >
-              <div
-                className="w-2.5 h-2.5 rounded shrink-0 shadow-sm"
-                style={{ backgroundColor: tag.color }}
-              />
-              <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider truncate">
+              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest truncate">
                 {tag.name}
               </span>
             </div>

@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.revnu.backend.features.categories.model.Category;
 import com.revnu.backend.features.expenses.model.Expense;
 import com.revnu.backend.features.expenses.model.ExpenseStatus;
 import com.revnu.backend.features.restaurants.model.Restaurant;
@@ -20,6 +21,8 @@ import com.revnu.backend.features.restaurants.model.Restaurant;
 public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
     Page<Expense> findByRestaurant(Restaurant restaurant, Pageable pageable);
+
+    Page<Expense> findByRestaurantAndStatus(Restaurant restaurant, ExpenseStatus status, Pageable pageable);
 
     List<Expense> findByRestaurantAndCreatedAtBetween(Restaurant restaurant, LocalDateTime start, LocalDateTime end);
 
@@ -39,4 +42,6 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    boolean existsByCategory(Category category);
 }

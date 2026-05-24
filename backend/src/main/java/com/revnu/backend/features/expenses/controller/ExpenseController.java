@@ -24,12 +24,14 @@ import org.springframework.web.multipart.MultipartFile;
 import com.revnu.backend.features.expenses.dto.ExpenseRequest;
 import com.revnu.backend.features.expenses.dto.ExpenseResponse;
 import com.revnu.backend.features.expenses.service.ExpenseService;
+import com.revnu.backend.shared.exception.ApiResponse;
+import com.revnu.backend.shared.util.ResponseUtil;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/revnu/expenses")
-@PreAuthorize("hasRole('TENANT')")
+@PreAuthorize("hasRole('RESTAURATEUR')")
 public class ExpenseController {
 
     private final ExpenseService expenseService;
@@ -39,32 +41,32 @@ public class ExpenseController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> recordExpense(Principal principal, @Valid @RequestBody ExpenseRequest request) {
+    public ResponseEntity<ApiResponse> recordExpense(Principal principal, @Valid @RequestBody ExpenseRequest request) {
         ExpenseResponse response = expenseService.recordExpense(principal.getName(), request);
-        return ResponseEntity.ok(Map.of("success", true, "data", response));
+        return ResponseEntity.ok(ResponseUtil.success(response));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateExpense(
+    public ResponseEntity<ApiResponse> updateExpense(
             Principal principal,
             @PathVariable UUID id,
             @Valid @RequestBody ExpenseRequest request) {
         ExpenseResponse response = expenseService.updateExpense(principal.getName(), id, request);
-        return ResponseEntity.ok(Map.of("success", true, "data", response));
+        return ResponseEntity.ok(ResponseUtil.success(response));
     }
 
     @PostMapping("/{id}/upload")
-    public ResponseEntity<Map<String, Object>> uploadReceipt(
+    public ResponseEntity<ApiResponse> uploadReceipt(
             Principal principal,
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file) {
 
         ExpenseResponse response = expenseService.uploadReceipt(principal.getName(), id, file);
-        return ResponseEntity.ok(Map.of("success", true, "data", response));
+        return ResponseEntity.ok(ResponseUtil.success(response));
     }
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getExpenses(
+    public ResponseEntity<ApiResponse> getExpenses(
             Principal principal,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "0") int page,
@@ -72,18 +74,18 @@ public class ExpenseController {
 
         if (date != null) {
             List<ExpenseResponse> expenses = expenseService.getExpensesByDate(principal.getName(), date);
-            return ResponseEntity.ok(Map.of("success", true, "data", expenses));
+            return ResponseEntity.ok(ResponseUtil.success(expenses));
         } else {
             Page<ExpenseResponse> expensesPage = expenseService.getAllExpenses(principal.getName(), page, size);
-            return ResponseEntity.ok(Map.of("success", true, "data", expensesPage));
+            return ResponseEntity.ok(ResponseUtil.success(expensesPage));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> deleteExpense(
+    public ResponseEntity<ApiResponse> deleteExpense(
             Principal principal,
             @PathVariable UUID id) {
         expenseService.deleteExpense(principal.getName(), id);
-        return ResponseEntity.ok(Map.of("success", true, "message", "Expense deleted successfully"));
+        return ResponseEntity.ok(ResponseUtil.success(Map.of("message", "Expense deleted successfully")));
     }
 }

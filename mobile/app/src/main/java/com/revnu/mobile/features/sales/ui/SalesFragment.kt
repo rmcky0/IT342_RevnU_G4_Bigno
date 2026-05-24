@@ -1,21 +1,30 @@
 package com.revnu.mobile.features.sales.ui
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.textfield.TextInputEditText
 import com.revnu.mobile.R
+import com.revnu.mobile.core.network.RetrofitClient
+import com.revnu.mobile.features.entry.ui.AddRecordActivity
 import com.revnu.mobile.features.sales.model.SaleResponse
+import com.revnu.mobile.features.sales.repository.SalesRepository
 import com.revnu.mobile.features.sales.viewmodel.SalesViewModel
 import kotlinx.coroutines.launch
 
@@ -28,15 +37,28 @@ class SalesFragment : Fragment(R.layout.fragment_sales) {
     private lateinit var rvSales: RecyclerView
     private lateinit var tvTotalRevenue: TextView
 
+    private val editRecordLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) viewModel.loadSales()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel = ViewModelProvider(this)[SalesViewModel::class.java]
+        val factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val repository = SalesRepository(RetrofitClient.apiService)
+                @Suppress("UNCHECKED_CAST")
+                return SalesViewModel(repository) as T
+            }
+        }
+        viewModel = ViewModelProvider(this, factory)[SalesViewModel::class.java]
 
         bindViews(view)
         setupRecyclerView()
         setupListeners(view)
-        setupObservers()
+        setupObservers(view)
 
         viewModel.loadSales()
     }
@@ -48,67 +70,77 @@ class SalesFragment : Fragment(R.layout.fragment_sales) {
     }
 
     private fun setupListeners(view: View) {
-        val btnAddSale = view.findViewById<MaterialButton>(R.id.btnAddSale)
-        val btnLockRecords = view.findViewById<MaterialButton>(R.id.btnLockRecords)
-
-        btnAddSale.setOnClickListener {
-            showAddSaleModal()
-        }
-
-        btnLockRecords.setOnClickListener {
+        view.findViewById<MaterialButton>(R.id.btnLockRecords).setOnClickListener {
             showStrictLockConfirmation()
         }
     }
 
     private fun setupRecyclerView() {
-        // Pass the click behavior into the adapter
         adapter = SalesAdapter { clickedSale ->
-            handleSaleClick(clickedSale)
+            if (viewModel.isEodLocked.value) {
+                Toast.makeText(requireContext(), "Cannot modify records after EOD is locked.", Toast.LENGTH_SHORT).show()
+                return@SalesAdapter
+            }
+            showSaleDetail(clickedSale)
         }
         rvSales.layoutManager = LinearLayoutManager(requireContext())
         rvSales.adapter = adapter
-    }
 
+        val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            private val paint = Paint().apply { color = Color.parseColor("#EF4444") }
 
-    private fun setupObservers() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.sales.collect { salesList ->
-                // 1. Filter the list first
-                val activeSales = salesList.filter { it.status == "OPEN" }
-                // 2. Pass only the active sales to the adapter
-                adapter.updateData(activeSales)
+            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
 
-                // Toggle Empty State
-                if (activeSales.isEmpty()) {
-                    layoutEmptyState.visibility = View.VISIBLE
-                    rvSales.visibility = View.GONE
-                } else {
-                    layoutEmptyState.visibility = View.GONE
-                    rvSales.visibility = View.VISIBLE
+            override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
+                if (viewModel.isEodLocked.value) return 0
+                return super.getSwipeDirs(recyclerView, viewHolder)
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val sale = adapter.getItemAt(position)
+                adapter.notifyItemChanged(position)
+                confirmDelete(sale)
+            }
+
+            override fun onChildDraw(c: Canvas, rv: RecyclerView, vh: RecyclerView.ViewHolder,
+                dX: Float, dY: Float, actionState: Int, isActive: Boolean) {
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    val itemView = vh.itemView
+                    c.drawRect(
+                        itemView.right + dX, itemView.top.toFloat(),
+                        itemView.right.toFloat(), itemView.bottom.toFloat(), paint
+                    )
                 }
-
-                // Update the Big Total Revenue Card
-                val total = activeSales.sumOf { it.amount }
-                tvTotalRevenue.text = "₱${String.format("%.2f", total)}"
+                super.onChildDraw(c, rv, vh, dX, dY, actionState, isActive)
             }
         }
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(rvSales)
+    }
+
+    private fun setupObservers(view: View) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.sales.collect { salesList ->
+                val activeSales = salesList.filter { it.status == "OPEN" }
+                adapter.updateData(activeSales)
+                layoutEmptyState.visibility = if (activeSales.isEmpty()) View.VISIBLE else View.GONE
+                rvSales.visibility = if (activeSales.isEmpty()) View.GONE else View.VISIBLE
+                tvTotalRevenue.text = "₱${String.format("%.2f", activeSales.sumOf { it.amount })}"
+            }
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.isEodLocked.collect { isLocked ->
                 if (isLocked) {
-                    val btnAddSale = view?.findViewById<MaterialButton>(R.id.btnAddSale)
-                    val btnLockRecords = view?.findViewById<MaterialButton>(R.id.btnLockRecords)
-
-                    // Disable the buttons and change their appearance to look "locked"
-                    btnAddSale?.isEnabled = false
-                    btnAddSale?.alpha = 0.5f
-
-                    btnLockRecords?.isEnabled = false
-                    btnLockRecords?.text = "Locked"
-                    btnLockRecords?.alpha = 0.5f
+                    val btn = view.findViewById<MaterialButton>(R.id.btnLockRecords)
+                    btn?.isEnabled = false
+                    btn?.text = "Locked"
+                    btn?.alpha = 0.5f
                 }
             }
         }
     }
+
     private fun showStrictLockConfirmation() {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Lock End of Day?")
@@ -119,118 +151,35 @@ class SalesFragment : Fragment(R.layout.fragment_sales) {
                 Toast.makeText(requireContext(), "EOD Locked Successfully.", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
             .show()
     }
-    private fun showAddSaleModal() {
-        val dialog = BottomSheetDialog(requireContext())
-        val view = layoutInflater.inflate(R.layout.dialog_add_sale, null)
-        dialog.setContentView(view)
 
-        val etAmount = view.findViewById<TextInputEditText>(R.id.etSaleAmount)
-        val etNotes = view.findViewById<TextInputEditText>(R.id.etSaleNotes)
-        val etTags = view.findViewById<TextInputEditText>(R.id.etSaleTags)
-        val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveSale)
-
-        btnSave.setOnClickListener {
-            val amountText = etAmount.text.toString()
-            val notes = etNotes.text.toString()
-            val tagsText = etTags.text.toString()
-
-            if (amountText.isNotBlank()) {
-                val amount = amountText.toDoubleOrNull() ?: 0.0
-                val tagsList = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-
-                viewModel.addSale(amount, notes, tagsList)
-                dialog.dismiss()
-            } else {
-                etAmount.error = "Amount is required"
-            }
-        }
-
-        dialog.show()
-    }
-
-    private fun handleSaleClick(sale: SaleResponse) {
-        // 1. Check if the day is already locked!
-        if (viewModel.isEodLocked.value) {
-            Toast.makeText(requireContext(), "Cannot modify records after EOD is locked.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // 2. Show a quick Action Menu
-        val options = arrayOf("Edit Record", "Delete Record")
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Manage Sale: ₱${String.format("%.2f", sale.amount)}")
-            .setItems(options) { dialog, which ->
-                when (which) {
-                    0 -> {
-                        // Edit chosen
-                        showEditSaleModal(sale)
-                    }
-                    1 -> {
-                        // Delete chosen - ask for confirmation first!
-                        confirmDelete(sale)
-                    }
-                }
-            }
-            .show()
+    private fun showSaleDetail(sale: SaleResponse) {
+        val sheet = SaleDetailBottomSheet.newInstance(sale)
+        sheet.onEdit = { showEditSaleModal(sale) }
+        sheet.show(childFragmentManager, "sale_detail")
     }
 
     private fun showEditSaleModal(saleToEdit: SaleResponse) {
-        val dialog = BottomSheetDialog(requireContext())
-        val view = layoutInflater.inflate(R.layout.dialog_add_sale, null)
-        dialog.setContentView(view)
-
-        // Find the views
-        val tvTitle = view.findViewById<TextView>(R.id.tvSheetTitle) // Optional: change "New Sale" to "Edit Sale" if you give it an ID
-        val etAmount = view.findViewById<TextInputEditText>(R.id.etSaleAmount)
-        val etNotes = view.findViewById<TextInputEditText>(R.id.etSaleNotes)
-        val etTags = view.findViewById<TextInputEditText>(R.id.etSaleTags)
-        val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveSale)
-
-        // Pre-fill the data
-        tvTitle.setText("Edit Sale")
-        etAmount.setText(saleToEdit.amount.toString())
-        etNotes.setText(saleToEdit.description ?: "")
-
-        // Join the tags list back into a comma-separated string
-        val tagsString = saleToEdit.tags?.joinToString(", ") ?: ""
-        etTags.setText(tagsString)
-
-        btnSave.text = "Update Record"
-
-        btnSave.setOnClickListener {
-            val amountText = etAmount.text.toString()
-            val notes = etNotes.text.toString()
-            val tagsText = etTags.text.toString()
-
-            if (amountText.isNotBlank()) {
-                val amount = amountText.toDoubleOrNull() ?: 0.0
-                val tagsList = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-
-                viewModel.editSale(saleToEdit.id, amount, tagsList,notes )
-
-                dialog.dismiss()
-            } else {
-                etAmount.error = "Amount is required"
-            }
+        val intent = Intent(requireContext(), AddRecordActivity::class.java).apply {
+            putExtra(AddRecordActivity.EXTRA_IS_EDIT_MODE, true)
+            putExtra(AddRecordActivity.EXTRA_RECORD_ID, saleToEdit.id)
+            putExtra(AddRecordActivity.EXTRA_RECORD_TYPE, "sale")
+            putExtra(AddRecordActivity.EXTRA_AMOUNT, saleToEdit.amount)
+            putExtra(AddRecordActivity.EXTRA_DESCRIPTION, saleToEdit.notes ?: "")
+            putExtra(AddRecordActivity.EXTRA_CATEGORY_ID, saleToEdit.categoryId)
+            putExtra(AddRecordActivity.EXTRA_CATEGORY_NAME, saleToEdit.categoryName ?: "")
         }
-
-        dialog.show()
+        editRecordLauncher.launch(intent)
     }
+
     private fun confirmDelete(sale: SaleResponse) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Delete Record?")
             .setMessage("Are you sure you want to delete this sale for ₱${String.format("%.2f", sale.amount)}? This cannot be undone.")
             .setNegativeButton("Cancel", null)
-            .setPositiveButton("Delete") { _, _ ->
-                // Assume your SaleResponse has an 'id' field
-                viewModel.deleteSale(sale.id)
-            }
+            .setPositiveButton("Delete") { _, _ -> viewModel.deleteSale(sale.id) }
             .show()
     }
 }

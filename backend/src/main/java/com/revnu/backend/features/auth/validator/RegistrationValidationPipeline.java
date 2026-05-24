@@ -14,9 +14,11 @@ public class RegistrationValidationPipeline {
     }
 
     public void validateRegistration(RegisterRequest request) {
+        PasswordStrengthValidator passwordStrengthValidator = new PasswordStrengthValidator();
         EmailFormatValidator emailFormatValidator = new EmailFormatValidator();
         emailFormatValidator.setNext(emailExistsValidator);
-        emailFormatValidator.validate(request);
+        passwordStrengthValidator.setNext(emailFormatValidator);
+        passwordStrengthValidator.validate(request);
     }
 }
 

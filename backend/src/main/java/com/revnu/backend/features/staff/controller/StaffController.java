@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.revnu.backend.features.staff.dto.StaffProfileResponse;
 import com.revnu.backend.features.staff.dto.StaffRequest;
 import com.revnu.backend.features.staff.service.StaffService;
+import com.revnu.backend.shared.exception.ApiResponse;
+import com.revnu.backend.shared.util.ResponseUtil;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/revnu/staff")
-@PreAuthorize("hasRole('TENANT')")
+@PreAuthorize("hasRole('RESTAURATEUR')")
 public class StaffController {
 
     private final StaffService staffService;
@@ -33,31 +35,31 @@ public class StaffController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addStaff(Principal principal, @Valid @RequestBody StaffRequest request) {
-        return ResponseEntity.ok(Map.of("success", true, "data", staffService.addStaff(principal.getName(), request)));
+    public ResponseEntity<ApiResponse> addStaff(Principal principal, @Valid @RequestBody StaffRequest request) {
+        return ResponseEntity.ok(ResponseUtil.success(staffService.addStaff(principal.getName(), request)));
     }
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getStaff(Principal principal) {
-        return ResponseEntity.ok(Map.of("success", true, "data", staffService.getStaff(principal.getName())));
+    public ResponseEntity<ApiResponse> getStaff(Principal principal) {
+        return ResponseEntity.ok(ResponseUtil.success(staffService.getStaff(principal.getName())));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getStaffById(Principal principal, @PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> getStaffById(Principal principal, @PathVariable UUID id) {
         StaffProfileResponse profile = staffService.getStaffById(principal.getName(), id);
-        return ResponseEntity.ok(Map.of("success", true, "data", profile));
+        return ResponseEntity.ok(ResponseUtil.success(profile));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateStaff(
+    public ResponseEntity<ApiResponse> updateStaff(
             Principal principal, @PathVariable UUID id, @Valid @RequestBody StaffRequest request) {
-        return ResponseEntity.ok(Map.of("success", true, "data", staffService.updateStaff(principal.getName(), id, request)));
+        return ResponseEntity.ok(ResponseUtil.success(staffService.updateStaff(principal.getName(), id, request)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> deleteStaff(Principal principal, @PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> deleteStaff(Principal principal, @PathVariable UUID id) {
         staffService.deleteStaff(principal.getName(), id);
-        return ResponseEntity.ok(Map.of("success", true, "message", "Staff member deleted successfully"));
+        return ResponseEntity.ok(ResponseUtil.success(Map.of("message", "Staff member deleted successfully")));
     }
 
 }

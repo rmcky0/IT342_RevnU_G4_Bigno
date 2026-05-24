@@ -1,34 +1,9 @@
 package com.revnu.backend.features.sales;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-
-import com.revnu.backend.features.auth.model.RoleType;
 import com.revnu.backend.features.auth.model.User;
 import com.revnu.backend.features.auth.repository.UserRepository;
+import com.revnu.backend.features.categories.model.Category;
+import com.revnu.backend.features.categories.repository.CategoryRepository;
 import com.revnu.backend.features.restaurants.model.Restaurant;
 import com.revnu.backend.features.restaurants.repository.RestaurantRepository;
 import com.revnu.backend.features.sales.dto.SaleRequest;
@@ -37,222 +12,179 @@ import com.revnu.backend.features.sales.model.Sale;
 import com.revnu.backend.features.sales.model.SaleStatus;
 import com.revnu.backend.features.sales.repository.SaleRepository;
 import com.revnu.backend.features.sales.service.SaleService;
-import com.revnu.backend.features.tags.repository.TagRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("SaleService Tests")
+@DisplayName("SaleService Unit Tests")
 class SaleServiceTest {
 
-    @Mock
-    private SaleRepository saleRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private RestaurantRepository restaurantRepository;
-    @Mock
-    private TagRepository tagRepository;
+    @Mock private SaleRepository saleRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private RestaurantRepository restaurantRepository;
+    @Mock private CategoryRepository categoryRepository;
 
     @InjectMocks
     private SaleService saleService;
 
-    private User testUser;
-    private Restaurant testRestaurant;
-    private UUID testRestaurantId;
-    private UUID testSaleId;
+    private User owner;
+    private Restaurant restaurant;
+    private Restaurant otherRestaurant;
+    private Category saleCategory;
+    private Category expenseCategory;
 
     @BeforeEach
     void setUp() {
-        testRestaurantId = UUID.randomUUID();
-        testSaleId = UUID.randomUUID();
+        owner = User.builder().id(UUID.randomUUID()).email("owner@test.com").build();
+        restaurant = Restaurant.builder().id(UUID.randomUUID()).name("My Restaurant").owner(owner).build();
+        otherRestaurant = Restaurant.builder().id(UUID.randomUUID()).name("Other Restaurant").build();
 
-        testUser = new User();
-        testUser.setEmail("tenant@revnu.com");
-        testUser.setFullname("Test Tenant");
-        testUser.setRole(RoleType.TENANT);
+        saleCategory = Category.builder()
+                .id(UUID.randomUUID()).name("Meals").type("SALE")
+                .restaurant(null).isDefault(true).build();
 
-        testRestaurant = new Restaurant();
-        testRestaurant.setId(testRestaurantId);
-        testRestaurant.setName("Test Restaurant");
-        testRestaurant.setOwner(testUser);
+        expenseCategory = Category.builder()
+                .id(UUID.randomUUID()).name("Utilities").type("EXPENSE")
+                .restaurant(null).isDefault(true).build();
+
+        when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
+        when(restaurantRepository.findByOwner(owner)).thenReturn(Optional.of(restaurant));
     }
 
-    private Sale buildSale(BigDecimal amount, SaleStatus status) {
-        Sale sale = new Sale();
-        sale.setId(testSaleId);
-        sale.setAmount(amount);
-        sale.setDescription("Test sale");
-        sale.setTags(Set.of());
-        sale.setRestaurant(testRestaurant);
-        sale.setStatus(status);
-        return sale;
-    }
-
-    private void stubUserAndRestaurant() {
-        when(userRepository.findByEmail("tenant@revnu.com"))
-                .thenReturn(Optional.of(testUser));
-        when(restaurantRepository.findByOwner(testUser))
-                .thenReturn(Optional.of(testRestaurant));
-    }
-
+    // ── Business Rule 4: Records linked to valid category are created with OPEN status ──
     @Test
-    @DisplayName("Record sale — saves and returns SaleResponse")
-    void recordSale_validRequest_savesAndReturnsSaleResponse() {
-        stubUserAndRestaurant();
-        SaleRequest request = new SaleRequest(
-                new BigDecimal("150.00"), List.of(), "Lunch sale");
+    @DisplayName("Rule 4 - recordSale() creates a sale with OPEN status")
+    void recordSale_success_statusIsOpen() {
+        SaleRequest request = new SaleRequest(new BigDecimal("500.00"), saleCategory.getId(), "Lunch");
+        when(categoryRepository.findById(saleCategory.getId())).thenReturn(Optional.of(saleCategory));
+        Sale savedSale = Sale.builder()
+                .id(UUID.randomUUID()).amount(request.amount())
+                .category(saleCategory).restaurant(restaurant).status(SaleStatus.OPEN).build();
+        when(saleRepository.save(any(Sale.class))).thenReturn(savedSale);
 
-        Sale saved = buildSale(new BigDecimal("150.00"), SaleStatus.OPEN);
-        when(saleRepository.save(any(Sale.class))).thenReturn(saved);
+        SaleResponse response = saleService.recordSale("owner@test.com", request);
 
-        SaleResponse result = saleService.recordSale("tenant@revnu.com", request);
-
-        assertNotNull(result, "Result should not be null");
-        assertEquals(0, new BigDecimal("150.00").compareTo(result.amount()),
-                "Amount should be 150.00");
-        assertEquals(SaleStatus.OPEN, result.status(), "New sale should be OPEN");
-
-        verify(saleRepository, times(1)).save(any(Sale.class));
+        assertThat(response.status()).isEqualTo(SaleStatus.OPEN);
     }
 
+    // ── Business Rule 12: SALE category segregation — EXPENSE category rejected ─
     @Test
-    @DisplayName("Record sale — restaurant not found throws exception")
-    void recordSale_noRestaurant_throwsRuntimeException() {
-        when(userRepository.findByEmail("tenant@revnu.com"))
-                .thenReturn(Optional.of(testUser));
-        when(restaurantRepository.findByOwner(testUser))
-                .thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, ()
-                -> saleService.recordSale("tenant@revnu.com",
-                        new SaleRequest(new BigDecimal("100.00"), List.of(), "Test")),
-                "Should throw when restaurant not found"
-        );
+    @DisplayName("Rule 12 - recordSale() rejects EXPENSE category type")
+    void recordSale_withExpenseCategory_throwsBadRequest() {
+        SaleRequest request = new SaleRequest(new BigDecimal("200.00"), expenseCategory.getId(), null);
+        when(categoryRepository.findById(expenseCategory.getId())).thenReturn(Optional.of(expenseCategory));
 
-        verify(saleRepository, never()).save(any());
+        assertThatThrownBy(() -> saleService.recordSale("owner@test.com", request))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.BAD_REQUEST));
     }
 
+    // ── Business Rule 2: Tenant Isolation — category must belong to the restaurant ──
     @Test
-    @DisplayName("Record sale — user not found throws exception")
-    void recordSale_unknownUser_throwsRuntimeException() {
-        when(userRepository.findByEmail("ghost@revnu.com"))
-                .thenReturn(Optional.empty());
+    @DisplayName("Rule 2 - recordSale() rejects category belonging to another restaurant")
+    void recordSale_categoryFromAnotherRestaurant_throwsForbidden() {
+        Category foreignCategory = Category.builder()
+                .id(UUID.randomUUID()).name("Custom").type("SALE")
+                .restaurant(otherRestaurant).isDefault(false).build();
+        SaleRequest request = new SaleRequest(new BigDecimal("300.00"), foreignCategory.getId(), null);
+        when(categoryRepository.findById(foreignCategory.getId())).thenReturn(Optional.of(foreignCategory));
 
-        assertThrows(RuntimeException.class, ()
-                -> saleService.recordSale("ghost@revnu.com",
-                        new SaleRequest(new BigDecimal("100.00"), List.of(), "Test"))
-        );
+        assertThatThrownBy(() -> saleService.recordSale("owner@test.com", request))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.FORBIDDEN));
     }
 
+    // ── Business Rule 4: Finalized (CLOSED) sale cannot be edited ───────────────
     @Test
-    @DisplayName("Get all sales — returns paginated response")
-    void getAllSales_validOwner_returnsPage() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 4 - updateSale() throws IllegalStateException for CLOSED sale")
+    void updateSale_closedSale_throwsIllegalState() {
+        UUID saleId = UUID.randomUUID();
+        Sale closedSale = Sale.builder()
+                .id(saleId).amount(new BigDecimal("100.00"))
+                .category(saleCategory).restaurant(restaurant).status(SaleStatus.CLOSED).build();
+        SaleRequest updateRequest = new SaleRequest(new BigDecimal("200.00"), saleCategory.getId(), "edit");
 
-        List<Sale> saleList = List.of(
-                buildSale(new BigDecimal("100.00"), SaleStatus.OPEN),
-                buildSale(new BigDecimal("200.00"), SaleStatus.OPEN)
-        );
-        Page<Sale> salePage = new PageImpl<>(saleList);
-        when(saleRepository.findByRestaurant(eq(testRestaurant), any(Pageable.class)))
-                .thenReturn(salePage);
+        when(saleRepository.findById(saleId)).thenReturn(Optional.of(closedSale));
 
-        Page<SaleResponse> result = saleService.getAllSales("tenant@revnu.com", 0, 9);
-
-        assertNotNull(result, "Page should not be null");
-        assertEquals(2, result.getContent().size(), "Should return 2 sales");
+        assertThatThrownBy(() -> saleService.updateSale("owner@test.com", saleId, updateRequest))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("finalized");
     }
 
+    // ── Business Rule 4: Finalized (CLOSED) sale cannot be deleted ──────────────
     @Test
-    @DisplayName("Update sale — changes amount and returns updated response")
-    void updateSale_openSale_updatesAndReturns() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 4 - deleteSale() throws IllegalStateException for CLOSED sale")
+    void deleteSale_closedSale_throwsIllegalState() {
+        UUID saleId = UUID.randomUUID();
+        Sale closedSale = Sale.builder()
+                .id(saleId).amount(new BigDecimal("100.00"))
+                .category(saleCategory).restaurant(restaurant).status(SaleStatus.CLOSED).build();
 
-        Sale existingSale = buildSale(new BigDecimal("100.00"), SaleStatus.OPEN);
-        when(saleRepository.findById(testSaleId))
-                .thenReturn(Optional.of(existingSale));
+        when(saleRepository.findById(saleId)).thenReturn(Optional.of(closedSale));
 
-        Sale updatedSale = buildSale(new BigDecimal("250.00"), SaleStatus.OPEN);
-        when(saleRepository.save(any(Sale.class))).thenReturn(updatedSale);
-
-        SaleResponse result = saleService.updateSale("tenant@revnu.com", testSaleId,
-                new SaleRequest(new BigDecimal("250.00"), List.of(), "Updated"));
-
-        assertNotNull(result);
-        assertEquals(0, new BigDecimal("250.00").compareTo(result.amount()),
-                "Amount should be updated to 250.00");
-        verify(saleRepository, times(1)).save(any(Sale.class));
+        assertThatThrownBy(() -> saleService.deleteSale("owner@test.com", saleId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("finalized");
     }
 
+    // ── Business Rule 2: Tenant Isolation — cannot access another restaurant's sale ──
     @Test
-    @DisplayName("Update CLOSED sale — throws exception (finalized records locked)")
-    void updateSale_closedSale_throwsIllegalStateException() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 2 - deleteSale() blocks access to another restaurant's record")
+    void deleteSale_saleFromOtherRestaurant_throwsSecurityException() {
+        UUID saleId = UUID.randomUUID();
+        Sale foreignSale = Sale.builder()
+                .id(saleId).amount(new BigDecimal("150.00"))
+                .category(saleCategory).restaurant(otherRestaurant).status(SaleStatus.OPEN).build();
 
-        Sale closedSale = buildSale(new BigDecimal("100.00"), SaleStatus.CLOSED);
-        when(saleRepository.findById(testSaleId))
-                .thenReturn(Optional.of(closedSale));
+        when(saleRepository.findById(saleId)).thenReturn(Optional.of(foreignSale));
 
-        assertThrows(IllegalStateException.class, ()
-                -> saleService.updateSale("tenant@revnu.com", testSaleId,
-                        new SaleRequest(new BigDecimal("250.00"), List.of(), "Try update")),
-                "Should not allow editing finalized sale"
-        );
-
-        verify(saleRepository, never()).save(any());
+        assertThatThrownBy(() -> saleService.deleteSale("owner@test.com", saleId))
+                .isInstanceOf(SecurityException.class);
     }
 
+    // ── Business Rule 4: OPEN sale can be hard-deleted ──────────────────────────
     @Test
-    @DisplayName("Delete open sale — removes record")
-    void deleteSale_openSale_deletesSuccessfully() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 4 - deleteSale() hard-deletes an OPEN sale")
+    void deleteSale_openSale_isHardDeleted() {
+        UUID saleId = UUID.randomUUID();
+        Sale openSale = Sale.builder()
+                .id(saleId).amount(new BigDecimal("250.00"))
+                .category(saleCategory).restaurant(restaurant).status(SaleStatus.OPEN).build();
 
-        Sale openSale = buildSale(new BigDecimal("100.00"), SaleStatus.OPEN);
-        when(saleRepository.findById(testSaleId))
-                .thenReturn(Optional.of(openSale));
+        when(saleRepository.findById(saleId)).thenReturn(Optional.of(openSale));
 
-        saleService.deleteSale("tenant@revnu.com", testSaleId);
+        saleService.deleteSale("owner@test.com", saleId);
 
-        verify(saleRepository, times(1)).delete(openSale);
+        verify(saleRepository).delete(openSale);
     }
 
+    // ── Business Rule 8: Restaurant must be set up before recording sales ────────
     @Test
-    @DisplayName("Delete CLOSED sale — throws exception (finalized records locked)")
-    void deleteSale_closedSale_throwsIllegalStateException() {
-        stubUserAndRestaurant();
+    @DisplayName("Rule 8 - recordSale() throws when no restaurant profile exists")
+    void recordSale_noRestaurantProfile_throwsException() {
+        when(restaurantRepository.findByOwner(owner)).thenReturn(Optional.empty());
+        SaleRequest request = new SaleRequest(new BigDecimal("100.00"), UUID.randomUUID(), null);
 
-        Sale closedSale = buildSale(new BigDecimal("100.00"), SaleStatus.CLOSED);
-        when(saleRepository.findById(testSaleId))
-                .thenReturn(Optional.of(closedSale));
-
-        assertThrows(IllegalStateException.class, ()
-                -> saleService.deleteSale("tenant@revnu.com", testSaleId),
-                "Should not delete a finalized sale"
-        );
-
-        verify(saleRepository, never()).delete(any());
-    }
-
-    @Test
-    @DisplayName("Delete sale — wrong restaurant owner throws SecurityException")
-    void deleteSale_wrongOwner_throwsSecurityException() {
-        stubUserAndRestaurant();
-
-        Restaurant otherRestaurant = new Restaurant();
-        otherRestaurant.setId(UUID.randomUUID());
-
-        Sale saleFromOtherRestaurant = new Sale();
-        saleFromOtherRestaurant.setId(testSaleId);
-        saleFromOtherRestaurant.setAmount(new BigDecimal("100.00"));
-        saleFromOtherRestaurant.setRestaurant(otherRestaurant);
-        saleFromOtherRestaurant.setStatus(SaleStatus.OPEN);
-
-        when(saleRepository.findById(testSaleId))
-                .thenReturn(Optional.of(saleFromOtherRestaurant));
-
-        assertThrows(SecurityException.class, ()
-                -> saleService.deleteSale("tenant@revnu.com", testSaleId),
-                "Should throw SecurityException for unauthorized access"
-        );
-
-        verify(saleRepository, never()).delete(any());
+        assertThatThrownBy(() -> saleService.recordSale("owner@test.com", request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Restaurant profile not found");
     }
 }

@@ -2,6 +2,8 @@ package com.revnu.backend.features.files.service;
 
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class SupabaseStorageService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SupabaseStorageService.class);
 
     @Value("${supabase.url}")
     private String supabaseUrl;
@@ -49,5 +53,23 @@ public class SupabaseStorageService {
         }
 
         return supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + storagePath;
+    }
+
+    public void deleteFile(String publicUrl) {
+        String prefix = supabaseUrl + "/storage/v1/object/public/" + bucket + "/";
+        if (publicUrl == null || !publicUrl.startsWith(prefix)) {
+            return;
+        }
+        String storagePath = publicUrl.substring(prefix.length());
+        String deleteUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + storagePath;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + supabaseKey);
+
+        try {
+            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, new HttpEntity<>(headers), String.class);
+        } catch (Exception e) {
+            logger.warn("Failed to delete file from Supabase storage: {}", e.getMessage());
+        }
     }
 }

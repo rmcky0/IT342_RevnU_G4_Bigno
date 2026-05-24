@@ -1,40 +1,40 @@
 import { useState, useEffect, useMemo } from "react";
 import { salesAPI } from "../api/salesApi";
+import { categoriesAPI } from "../../categories/api/categoriesApi";
 import * as cache from "../../../shared/cache/dataCache";
+import { useToast } from "../../../shared/components/Toast";
 
 const CACHE_KEY = "sales_page_";
 const ITEMS_PER_PAGE = 9;
 
 export const useSales = () => {
+  const { showToast } = useToast();
   const [sales, setSales] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [pageOpenAmounts, setPageOpenAmounts] = useState({});
   const [sortConfig, setSortConfig] = useState({
     key: "date",
     direction: "desc",
   });
   const [formData, setFormData] = useState({
     amount: "",
-    tagNames: [],
-    description: "",
+    categoryId: "",
+    notes: "",
   });
-  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
-    if (!success && !error) return;
-    const t = setTimeout(() => {
-      setSuccess("");
-      setError("");
-    }, 3000);
-    return () => clearTimeout(t);
-  }, [success, error]);
+    categoriesAPI
+      .getCategories("SALE")
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     loadSales(currentPage);
@@ -54,12 +54,15 @@ export const useSales = () => {
         setSales(cached.content);
         setTotalPages(cached.totalPages);
         setTotalRecords(cached.totalElements);
+        const pageAmt = cached.content.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+        setPageOpenAmounts((prev) => ({ ...prev, [springPage]: pageAmt }));
         return;
       }
     }
 
+    if (forceRefresh) setPageOpenAmounts({});
+
     setLoading(true);
-    setError("");
     try {
       const res = await salesAPI.getAllSales(springPage, ITEMS_PER_PAGE);
 
@@ -69,10 +72,12 @@ export const useSales = () => {
         : [];
 
       const activeSales = rawContent.filter((sale) => sale.status !== "CLOSED");
+      const pageAmt = activeSales.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
 
       setSales(activeSales);
       setTotalPages(pageData.totalPages || 1);
       setTotalRecords(pageData.totalElements || 0);
+      setPageOpenAmounts((prev) => ({ ...prev, [springPage]: pageAmt }));
 
       cache.set(cacheKey, {
         content: activeSales,
@@ -80,7 +85,7 @@ export const useSales = () => {
         totalElements: pageData.totalElements || 0,
       });
     } catch (err) {
-      setError("Failed to load sales.");
+      showToast("error", "Failed to load sales.");
       console.error("loadSales error:", err);
     } finally {
       setTimeout(() => setLoading(false), 400);
@@ -100,8 +105,8 @@ export const useSales = () => {
       const s = searchTerm.toLowerCase();
       list = list.filter(
         (sale) =>
-          sale.tags?.some((tag) => tag.toLowerCase().includes(s)) ||
-          (sale.description || "").toLowerCase().includes(s) ||
+          (sale.categoryName || "").toLowerCase().includes(s) ||
+          (sale.notes || "").toLowerCase().includes(s) ||
           sale.amount?.toString().includes(s),
       );
     }
@@ -114,51 +119,26 @@ export const useSales = () => {
     });
   }, [sales, searchTerm, sortConfig]);
 
-  const pageTotalSales = filteredSales.reduce(
-    (sum, s) => sum + (parseFloat(s.amount) || 0),
-    0,
-  );
-
-  const handleAddTag = (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    const newTag = tagInput.trim().toUpperCase();
-    if (newTag && !formData.tagNames.includes(newTag)) {
-      setFormData((prev) => ({
-        ...prev,
-        tagNames: [...prev.tagNames, newTag],
-      }));
-    }
-    setTagInput("");
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      tagNames: prev.tagNames.filter((t) => t !== tagToRemove),
-    }));
-  };
+  const totalOpenSales = Object.values(pageOpenAmounts).reduce((sum, a) => sum + a, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
     setLoading(true);
     try {
       const payload = {
         amount: parseFloat(formData.amount),
-        tagNames: formData.tagNames,
-        description: formData.description,
+        categoryId: formData.categoryId,
+        notes: formData.notes,
       };
 
       let targetPage = currentPage;
 
       if (editingId) {
         await salesAPI.updateSale(editingId, payload);
-        setSuccess("Sale updated!");
+        showToast("success", "Sale updated!");
       } else {
         await salesAPI.createSale(payload);
-        setSuccess("Sale added!");
+        showToast("success", "Sale added!");
         setCurrentPage(1);
         targetPage = 1;
         setSortConfig({ key: "date", direction: "desc" });
@@ -168,7 +148,8 @@ export const useSales = () => {
       resetForm();
       await loadSales(targetPage, true);
     } catch (err) {
-      setError(
+      showToast(
+        "error",
         err?.response?.data?.error?.message ||
           err?.response?.data?.message ||
           "Save failed. Please try again.",
@@ -182,8 +163,8 @@ export const useSales = () => {
   const handleEdit = (sale) => {
     setFormData({
       amount: sale.amount,
-      tagNames: sale.tags || [],
-      description: sale.description || "",
+      categoryId: sale.categoryId || "",
+      notes: sale.notes || "",
     });
     setEditingId(sale.id);
     setShowForm(true);
@@ -192,11 +173,12 @@ export const useSales = () => {
   const handleDelete = async (id) => {
     try {
       await salesAPI.deleteSale(id);
-      setSuccess("Sale deleted!");
+      showToast("success", "Sale deleted!");
       cache.invalidatePrefix(CACHE_KEY);
       await loadSales(currentPage, true);
     } catch (err) {
-      setError(
+      showToast(
+        "error",
         err?.response?.data?.error?.message ||
           err?.response?.data?.message ||
           "Delete failed.",
@@ -205,8 +187,7 @@ export const useSales = () => {
   };
 
   const resetForm = () => {
-    setFormData({ amount: "", tagNames: [], description: "" });
-    setTagInput("");
+    setFormData({ amount: "", categoryId: "", notes: "" });
     setEditingId(null);
     setShowForm(false);
   };
@@ -221,26 +202,21 @@ export const useSales = () => {
   return {
     sales: filteredSales,
     paginatedSales: filteredSales,
+    categories,
     currentPage,
     totalPages,
     totalRecords,
     handleNextPage,
     handlePrevPage,
     loading,
-    error,
-    success,
     showForm,
     setShowForm,
     formData,
     setFormData,
-    tagInput,
-    setTagInput,
-    handleAddTag,
-    handleRemoveTag,
     searchTerm,
     setSearchTerm,
     editingId,
-    totalSales: pageTotalSales,
+    totalSales: totalOpenSales,
     handleSubmit,
     handleEdit,
     handleDelete,

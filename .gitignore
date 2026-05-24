@@ -1,0 +1,39 @@
+# ── Environment files (NEVER commit real secrets) ────────────────────────────
+.env
+.env.local
+.env.production
+.env.development
+backend/.env
+web/.env
+web/.env.local
+web/.env.production
+
+# ── Java / Maven ─────────────────────────────────────────────────────────────
+backend/target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# ── Node / Vite ───────────────────────────────────────────────────────────────
+web/node_modules/
+web/dist/
+web/.vite/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+.claude*

@@ -11,7 +11,8 @@ public record AuthResponse(
         AccountStatus status,
         String provider,
         boolean hasRestaurant,
-        String accessToken
+        String accessToken,
+        String refreshToken
         ) {
 
 }

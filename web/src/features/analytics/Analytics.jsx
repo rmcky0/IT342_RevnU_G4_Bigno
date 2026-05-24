@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "./hooks/useAnalytics";
 import { useAuth } from "../auth/context/AuthContext";
 import {
@@ -9,14 +8,15 @@ import {
   CreditCard,
   Wallet,
   ListOrdered,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { KPICard, RecordCountCard } from "./components/DashboardCard";
 import { CalendarModal } from "./components/CalendarModal";
 import { NotificationBell } from "../notifications/components/NotificationBell";
-import { LoadingSpinner } from "./components/LoadingSpinner";
-import { ErrorBanner } from "./components/ErrorBanner";
-import { SalaryInfoBanner } from "./components/SalaryInfoBanner";
+import { SalaryInfoBanner } from "./components/banners/SalaryInfoBanner";
+import { ErrorBanner } from "./components/banners/ErrorBanner";
+import { LoadingSpinner } from "./components/banners/LoadingSpinner";
 import { SalesTrendChart } from "./components/SalesTrendChart";
 import { SalesByTagChart } from "./components/SalesByTagChart";
 import { WeeklyProfitChart } from "./components/WeeklyProfitChart";
@@ -33,7 +33,6 @@ export const Analytics = () => {
     isEmpty,
     isLocked,
     lockLoading,
-    lockError,
     holidayName,
     salesDelta,
     expensesDelta,
@@ -43,7 +42,6 @@ export const Analytics = () => {
   } = useAnalytics();
 
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [showCalendar, setShowCalendar] = useState(false);
   const [showLockModal, setShowLockModal] = useState(false);
 
@@ -51,143 +49,130 @@ export const Analytics = () => {
     await handleLockRecords();
     setShowLockModal(false);
   };
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-0 overflow-y-auto overflow-x-hidden text-[#1e1b4b] custom-scrollbar">
-      <div className="flex flex-col flex-1 min-h-[700px] gap-5 pb-4 pr-1">
-        {showCalendar && (
-          <CalendarModal onClose={() => setShowCalendar(false)} />
-        )}
+    <div className="h-full flex flex-col text-[#1e1b4b] overflow-y-auto lg:overflow-hidden custom-scrollbar">
+      {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} />}
 
-        {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Dashboard Overview
+      {/* ── Header ── */}
+      <div className="shrink-0 flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 bg-[#7c83fd] rounded-xl flex items-center justify-center shrink-0">
+            <LayoutDashboard className="w-4.5 h-4.5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg font-bold tracking-tight truncate">
+                Dashboard
               </h1>
               {holidayName && (
-                <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
-                  <Calendar className="w-3 h-3" /> {holidayName}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-full border border-amber-200 uppercase tracking-wider shrink-0">
+                  <Calendar className="w-2.5 h-2.5" /> {holidayName}
                 </span>
               )}
             </div>
-            <p className="text-sm font-medium text-gray-500">
+            <p className="text-[11px] font-medium text-gray-400 mt-0.5">
               {getFormattedDate()}
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-              <button
-                onClick={refetch}
-                className="p-2 text-gray-400 hover:text-[#7c83fd] hover:bg-indigo-50 rounded-lg transition-colors"
-                title="Refresh Analytics"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-              <div className="w-px h-4 bg-gray-200 mx-1" />
-              <button
-                onClick={() => setShowCalendar(true)}
-                className="p-2 text-gray-400 hover:text-[#7c83fd] hover:bg-indigo-50 rounded-lg transition-colors"
-                title="View Calendar"
-              >
-                <Calendar className="w-4 h-4" />
-              </button>
-              <div className="w-px h-4 bg-gray-200 mx-1" />
-              <NotificationBell
-                holidayName={holidayName}
-                holidayDate={data?.date}
-              />
-            </div>
-
-            <div
-              onClick={() => navigate("/settings")}
-              title="Go to Settings"
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center text-[#7c83fd] font-bold border border-indigo-100 shadow-sm shrink-0 cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all text-sm"
-            >
-              {(user?.fullname || user?.name || "U")[0].toUpperCase()}
-            </div>
-          </div>
         </div>
 
-        {/* ── Error Banner ───────────────────────────────────────────────────── */}
-        <ErrorBanner error={error} onRetry={refetch} />
-
-        {/* ── Top KPIs ───────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 shrink-0">
-          <KPICard
-            title="Total Sales (Today)"
-            value={data.totalSales}
-            delta={salesDelta}
-            isEmpty={isEmpty}
-            emptyMessage="Waiting on your first sale."
-            icon={ShoppingCart}
-            color="indigo"
-          />
-          <KPICard
-            title="Total Expenses (Today)"
-            value={data.totalExpenses}
-            delta={expensesDelta}
-            isEmpty={isEmpty}
-            emptyMessage="Log expenses to see totals."
-            invertDelta
-            icon={CreditCard}
-            color="red"
-          />
-          <KPICard
-            title="Net Profit"
-            value={data.netProfit}
-            delta={profitDelta}
-            isEmpty={isEmpty}
-            emptyMessage="Profit appears once activity starts."
-            highlight
-            icon={Wallet}
-            color="emerald"
-          />
-        </div>
-
-        {/* ── Salary Info Banner ─────────────────────────────────────────────── */}
-        <SalaryInfoBanner amount={data.totalSalaries} />
-
-        {/* ── Middle Row: Charts ─────────────────────────────────────────────── */}
-        <div className="flex-[1.3] grid grid-cols-1 lg:grid-cols-3 gap-5 min-h-[300px]">
-          <SalesTrendChart
-            data={data.salesTrend}
-            yesterdayLabel={data.yesterdayLabel}
-          />
-          {/* Bug fix: was data.categories — normalized shape uses data.tags */}
-          <SalesByTagChart tags={data.tags} />
-        </div>
-
-        {/* ── Bottom Row: Records + Profit Area + Lock ───────────────────────── */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-5 min-h-[220px]">
-          <div className="flex flex-col gap-4 min-h-0">
-            <RecordCountCard
-              title="Sale Records"
-              count={data.saleRecordsCount}
-              icon={ListOrdered}
-            />
-            <RecordCountCard
-              title="Expense Records"
-              count={data.expenseRecordsCount}
-              icon={ListOrdered}
+        {/* Action pill */}
+        <div className="flex items-center bg-white rounded-xl border border-gray-200 shrink-0">
+          <button
+            onClick={refetch}
+            className="p-2.5 text-gray-400 hover:text-[#7c83fd] hover:bg-[#f0f1ff] rounded-l-xl transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <div className="w-px h-5 bg-gray-100" />
+          <button
+            onClick={() => setShowCalendar(true)}
+            className="p-2.5 text-gray-400 hover:text-[#7c83fd] hover:bg-[#f0f1ff] transition-colors"
+            title="Holidays"
+          >
+            <Calendar className="w-4 h-4" />
+          </button>
+          <div className="w-px h-5 bg-gray-100" />
+          <div className="px-1">
+            <NotificationBell
+              holidayName={holidayName}
+              holidayDate={data?.date}
             />
           </div>
-
-          <WeeklyProfitChart data={profitTrend} />
-
-          <EodLockCard
-            isLocked={isLocked}
-            lockLoading={lockLoading}
-            lockError={lockError}
-            onLock={() => setShowLockModal(true)}
-          />
         </div>
       </div>
 
-      {/* Insert the Strict Confirmation Modal */}
+      <ErrorBanner error={error} onRetry={refetch} />
+
+      {/* ── KPI Row ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0 mb-4">
+        <KPICard
+          title="Total Sales"
+          value={data.totalSales}
+          delta={salesDelta}
+          isEmpty={isEmpty}
+          emptyMessage="Waiting on first sale."
+          icon={ShoppingCart}
+          color="indigo"
+        />
+        <KPICard
+          title="Total Expenses"
+          value={data.totalExpenses}
+          delta={expensesDelta}
+          isEmpty={isEmpty}
+          emptyMessage="Log expenses to see totals."
+          invertDelta
+          icon={CreditCard}
+          color="red"
+          payroll={data.totalSalaries}
+        />
+        <KPICard
+          title="Net Profit"
+          value={data.netProfit}
+          delta={profitDelta}
+          isEmpty={isEmpty}
+          emptyMessage="Requires activity."
+          highlight
+          icon={Wallet}
+          color="emerald"
+        />
+      </div>
+
+      {/* ── Middle Row: Main Charts ── */}
+      <div className="flex-[1.5] min-h-[300px] grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+        <SalesTrendChart
+          data={data.salesTrend}
+          yesterdayLabel={data.yesterdayLabel}
+        />
+        <SalesByTagChart tags={data.tags} />
+      </div>
+
+      {/* ── Bottom Row: Mini Charts & Actions ── */}
+      <div className="flex-1 min-h-[220px] grid grid-cols-1 lg:grid-cols-4 gap-3 pb-4">
+        <div className="flex flex-col gap-3 min-h-0">
+          <RecordCountCard
+            title="Sale Records"
+            count={data.saleRecordsCount}
+            icon={ListOrdered}
+          />
+          <RecordCountCard
+            title="Expense Records"
+            count={data.expenseRecordsCount}
+            icon={ListOrdered}
+          />
+        </div>
+        <WeeklyProfitChart data={profitTrend} />
+        <EodLockCard
+          isLocked={isLocked}
+          lockLoading={lockLoading}
+          onLock={() => setShowLockModal(true)}
+        />
+      </div>
+
       <EODLockConfirmModal
         isOpen={showLockModal}
         onClose={() => setShowLockModal(false)}

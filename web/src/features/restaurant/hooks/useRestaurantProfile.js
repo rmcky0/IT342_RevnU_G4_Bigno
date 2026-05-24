@@ -27,7 +27,8 @@ export const useRestaurantProfile = (userEmail) => {
       setLoading(true);
       setError("");
       try {
-        const profileData = await restaurantApi.getRestaurantProfile();
+        const res = await restaurantApi.getRestaurantProfile();
+        const profileData = res?.data ?? null;
         setProfile(profileData);
         cache.set(cacheKey, profileData, CACHE_TTL);
       } catch (err) {

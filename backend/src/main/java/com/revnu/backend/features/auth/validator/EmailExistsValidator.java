@@ -15,8 +15,22 @@ public class EmailExistsValidator extends RegistrationValidator {
     }
 
     @Override
+    public void validate(RegisterRequest request) {
+        userRepository.findByEmail(request.email()).ifPresent(existing -> {
+            if ("google".equals(existing.getProvider())) {
+                throw new IllegalArgumentException(
+                    "This email is registered with Google Sign-In. Please use the 'Continue with Google' button to sign in.");
+            }
+            throw new IllegalArgumentException(getErrorMessage());
+        });
+        if (nextValidator != null) {
+            nextValidator.validate(request);
+        }
+    }
+
+    @Override
     protected boolean isValid(RegisterRequest request) {
-        return !userRepository.existsByEmail(request.email());
+        return userRepository.findByEmail(request.email()).isEmpty();
     }
 
     @Override
@@ -24,6 +38,3 @@ public class EmailExistsValidator extends RegistrationValidator {
         return "Email already taken";
     }
 }
-
-
-

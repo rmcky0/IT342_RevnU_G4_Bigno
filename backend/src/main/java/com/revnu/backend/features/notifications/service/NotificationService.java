@@ -146,7 +146,7 @@ public class NotificationService {
 
     @Transactional
     public void notifyAdminsUserRegistered(User user) {
-        String title = "New Tenant Registered";
+        String title = "New Restaurateur Registered";
         String message = user.getFullname() + " registered with " + user.getEmail() + ".";
         String eventKey = "ADMIN:USER_REGISTER:" + user.getId();
         notifyAdmins(title, message, eventKey, null);
@@ -162,7 +162,7 @@ public class NotificationService {
 
     @Transactional
     public void notifyAdminsUserSuspended(User user) {
-        String title = "Tenant Suspended";
+        String title = "Restaurateur Suspended";
         String message = user.getFullname() + " was suspended (" + user.getEmail() + ").";
         String eventKey = "ADMIN:USER_SUSPEND:" + user.getId();
         notifyAdmins(title, message, eventKey, null);
@@ -170,7 +170,7 @@ public class NotificationService {
 
     @Transactional
     public void notifyAdminsUserPromoted(User user) {
-        String title = "Tenant Promoted to Admin";
+        String title = "Restaurateur Promoted to Admin";
         String message = user.getFullname() + " was promoted to admin (" + user.getEmail() + ").";
         String eventKey = "ADMIN:USER_PROMOTE:" + user.getId();
         notifyAdmins(title, message, eventKey, null);
@@ -194,7 +194,7 @@ public class NotificationService {
         return emitter;
     }
 
-        private NotificationResponse createNotification(
+    private NotificationResponse createNotification(
             User user,
             Restaurant restaurant,
             NotificationType type,

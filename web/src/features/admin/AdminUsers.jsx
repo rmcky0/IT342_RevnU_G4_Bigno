@@ -12,15 +12,31 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
+  RefreshCw,
 } from "lucide-react";
+import { useToast } from "../../shared/components/Toast";
 
 const CACHE_KEY = "admin:users";
 const PAGE_SIZE = 12;
 
+const avatarSrc = (u) =>
+  u.avatarFileId
+    ? `${API_BASE_URL}/files/${u.avatarFileId}`
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname || u.email || "U")}&background=c7d2fe&color=4338ca&bold=true`;
+
+const ModalOverlay = ({ children, onClose }) => (
+  <div
+    className="fixed inset-0 bg-[#1e1b4b]/40 backdrop-blur-[3px] flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+    onClick={(e) => e.target === e.currentTarget && onClose()}
+  >
+    {children}
+  </div>
+);
+
 export const AdminUsers = () => {
+  const { showToast } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,7 +47,6 @@ export const AdminUsers = () => {
 
   const loadUsers = async (force = false) => {
     setLoading(true);
-    setError("");
     try {
       let u = !force ? cache.get(CACHE_KEY) : null;
       if (!u) {
@@ -40,25 +55,19 @@ export const AdminUsers = () => {
       }
       setUsers(Array.isArray(u) ? u : []);
     } catch {
-      setError("Failed to load tenants.");
+      showToast("error", "Failed to load restaurateurs.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterStatus]);
+  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, filterStatus]);
 
   const filtered = useMemo(() => {
     let list = users.filter((u) => u.role !== "ADMIN");
-
-    if (filterStatus === "active") list = list.filter((u) => !u.suspended);
+    if (filterStatus === "active")    list = list.filter((u) => !u.suspended);
     if (filterStatus === "suspended") list = list.filter((u) => u.suspended);
-
     if (searchTerm) {
       const s = searchTerm.toLowerCase();
       list = list.filter(
@@ -72,10 +81,7 @@ export const AdminUsers = () => {
   }, [users, searchTerm, filterStatus]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const act = async (id, fn) => {
     setActionLoading(id);
@@ -84,7 +90,7 @@ export const AdminUsers = () => {
       setUsers((prev) => prev.map((u) => (u.id === id ? updated : u)));
       cache.invalidate(CACHE_KEY, "admin:stats");
     } catch (e) {
-      setError(e?.response?.data?.error?.message ?? "Action failed.");
+      showToast("error", e?.response?.data?.error?.message ?? "Action failed.");
     } finally {
       setActionLoading(null);
     }
@@ -99,241 +105,219 @@ export const AdminUsers = () => {
       cache.invalidate(CACHE_KEY, "admin:stats");
       setConfirmDelete(null);
     } catch (e) {
-      setError(e?.response?.data?.error?.message ?? "Delete failed.");
+      showToast("error", e?.response?.data?.error?.message ?? "Delete failed.");
     } finally {
       setActionLoading(null);
     }
   };
 
+  const getConfirmTarget = (ca) => {
+    const email = ca?.user?.email || "";
+    return ca?.action === "suspend" ? `SUSPEND ${email}` : `PROMOTE ${email}`;
+  };
+
   const handleConfirmAction = async () => {
     if (!confirmAction) return;
-    const targetText = getConfirmTarget(confirmAction);
-    if (confirmText.trim().toLowerCase() !== targetText.toLowerCase()) {
-      setError("Confirmation text does not match.");
+    if (confirmText.trim().toLowerCase() !== getConfirmTarget(confirmAction).toLowerCase()) {
+      showToast("error", "Confirmation text does not match.");
       return;
     }
     const { user, action } = confirmAction;
-    const actionFn =
-      action === "suspend" ? adminApi.suspendUser : adminApi.promoteToAdmin;
-    await act(user.id, actionFn);
+    await act(user.id, action === "suspend" ? adminApi.suspendUser : adminApi.promoteToAdmin);
     setConfirmAction(null);
     setConfirmText("");
   };
 
-  const getConfirmTarget = (action) => {
-    const email = action?.user?.email || "";
-    return action?.action === "suspend"
-      ? `SUSPEND ${email}`
-      : `PROMOTE ${email}`;
-  };
-
   return (
-    <div className="space-y-6 text-[#1e1b4b]">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-gradient-to-br from-[#8f9df7] to-[#7c83fd] rounded-lg shadow-md shadow-indigo-200">
-          <Users className="w-5 h-5 text-white" />
+    <div className="flex flex-col gap-3 text-[#1e1b4b] h-full overflow-y-auto custom-scrollbar pb-4">
+
+      {/* ── Header ── */}
+      <div className="shrink-0 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 bg-[#7c83fd] rounded-xl flex items-center justify-center shrink-0">
+            <Users className="w-4.5 h-4.5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold tracking-tight truncate">Restaurateurs</h1>
+            <p className="text-[11px] font-medium text-gray-400 mt-0.5">
+              {filtered.length} {filterStatus !== "all" ? filterStatus : "total"} accounts
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tenants</h1>
-          <p className="text-xs text-gray-400 font-medium">
-            {filtered.length} {filterStatus !== "all" ? filterStatus : "total"}{" "}
-            accounts
-          </p>
-        </div>
+        <button
+          onClick={() => loadUsers(true)}
+          className="p-2.5 bg-white border border-gray-200 text-gray-400 hover:text-[#7c83fd] hover:bg-[#f0f1ff] rounded-xl transition-colors shrink-0"
+          title="Refresh"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </button>
       </div>
 
-      {error && (
-        <div className="px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium flex items-center gap-2">
-          {error}
-          <button onClick={() => setError("")} className="ml-auto">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Controls */}
-      <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-100 shadow-[0_2px_12px_rgb(0,0,0,0.02)]">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      {/* ── Control bar ── */}
+      <div className="shrink-0 flex items-center gap-2 flex-wrap">
+        {/* Search */}
+        <div className="relative flex-1 min-w-48">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search by name, email, restaurant..."
+            placeholder="Search by name, email, restaurant…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-8 py-2 rounded-lg border border-transparent bg-gray-50/50 text-sm text-[#1e1b4b] placeholder:text-gray-400 focus:bg-white focus:border-[#7c83fd] focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
+            className="w-full pl-9 pr-8 py-2.5 bg-white rounded-xl border border-gray-200 text-[13px] text-[#1e1b4b] placeholder:text-gray-400 focus:border-[#7c83fd] focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        <div className="flex gap-1 p-1 bg-gray-50/80 rounded-lg border border-gray-100">
-          {[
-            ["all", "All"],
-            ["active", "Active"],
-            ["suspended", "Suspended"],
-          ].map(([val, lbl]) => (
+        {/* Status filter */}
+        <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-1 shrink-0">
+          {[["all", "All"], ["active", "Active"], ["suspended", "Suspended"]].map(([val, lbl]) => (
             <button
               key={val}
               onClick={() => setFilterStatus(val)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all
-                ${filterStatus === val ? "bg-white text-[#7c83fd] shadow-sm border border-gray-100" : "text-gray-500 hover:text-[#1e1b4b]"}`}
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all ${
+                filterStatus === val
+                  ? "bg-white text-[#7c83fd] shadow-sm"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
             >
               {lbl}
             </button>
           ))}
         </div>
 
-        <div className="flex items-center ml-auto gap-1 bg-gray-50/50 rounded-lg border border-gray-100">
-          <span className="text-xs font-semibold text-gray-500 px-3 border-r border-gray-100 min-w-[4.5rem] text-center">
-            {currentPage} / {totalPages}
-          </span>
+        {/* Pagination */}
+        <div className="flex items-center bg-white rounded-xl border border-gray-200 shrink-0">
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="p-1.5 text-gray-400 hover:text-[#7c83fd] disabled:opacity-30 transition-colors"
+            className="p-2.5 text-gray-400 hover:text-[#7c83fd] hover:bg-[#f0f1ff] rounded-l-xl disabled:opacity-30 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
+          <span className="px-3.5 text-[12px] font-bold text-gray-500 border-x border-gray-200">
+            {currentPage} / {totalPages}
+          </span>
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="p-1.5 text-gray-400 hover:text-[#7c83fd] disabled:opacity-30 transition-colors rounded-r-lg"
+            className="p-2.5 text-gray-400 hover:text-[#7c83fd] hover:bg-[#f0f1ff] rounded-r-xl disabled:opacity-30 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden">
+      {/* ── Table ── */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_12px_rgb(0,0,0,0.04)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse whitespace-nowrap">
-            <thead className="bg-gradient-to-r from-[#8f9df7] to-[#9faaf5] text-white">
+            <thead className="bg-gray-50">
               <tr>
-                {[
-                  "Tenant",
-                  "Restaurant",
-                  "Joined",
-                  "Role",
-                  "Status",
-                  "Actions",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="px-6 py-3 font-semibold text-xs tracking-wider uppercase"
-                  >
+                {["Restaurateur", "Restaurant", "Joined", "Role", "Status", "Actions"].map((h) => (
+                  <th key={h} className="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody>
               {loading ? (
                 [...Array(6)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
+                  <tr key={i} className="animate-pulse border-b border-gray-50">
                     {[...Array(6)].map((_, j) => (
-                      <td key={j} className="px-6 py-4">
-                        <div className="h-3.5 bg-gray-100 rounded w-24" />
+                      <td key={j} className="px-5 py-4">
+                        <div className="h-3.5 bg-gray-100 rounded-full w-24" />
                       </td>
                     ))}
                   </tr>
                 ))
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-gray-400 text-sm font-medium"
-                  >
-                    No tenants found.
+                  <td colSpan={6} className="px-5 py-16 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                        <Users className="w-6 h-6 text-[#7c83fd]/40" />
+                      </div>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">No restaurateurs found</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                paginated.map((u, i) => {
+                paginated.map((u) => {
                   const busy = actionLoading === u.id;
                   return (
-                    <tr
-                      key={u.id}
-                      className={`group transition-colors ${i % 2 === 0 ? "bg-white" : "bg-[#f8f9ff]/40"} hover:bg-indigo-50/30`}
-                    >
-                      <td className="px-6 py-4">
+                    <tr key={u.id} className="group hover:bg-[#f8f9ff] transition-colors border-b border-gray-50 last:border-0">
+                      {/* Restaurateur */}
+                      <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full overflow-hidden bg-indigo-100 flex items-center justify-center text-[#7c83fd] font-black text-sm shrink-0">
+                          <div className="w-8 h-8 rounded-xl overflow-hidden bg-[#7c83fd]/10 shrink-0">
                             <img
-                              src={
-                                u.avatarFileId
-                                  ? `${API_BASE_URL}/files/${u.avatarFileId}`
-                                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname || u.email || "U")}&background=c7d2fe&color=4338ca&bold=true`
-                              }
+                              src={avatarSrc(u)}
                               alt="avatar"
                               className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname || u.email || "U")}&background=c7d2fe&color=4338ca&bold=true`;
-                              }}
+                              onError={(e) => { e.currentTarget.src = avatarSrc(u); }}
                             />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-[#1e1b4b]">
-                              {u.fullname || "—"}
-                            </p>
-                            <p className="text-xs text-gray-400">{u.email}</p>
+                            <p className="text-[13px] font-bold text-[#1e1b4b]">{u.fullname || "—"}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+
+                      {/* Restaurant */}
+                      <td className="px-5 py-3.5 text-[13px] font-medium text-gray-600">
                         {u.restaurantName || (
-                          <span className="text-gray-400 italic text-xs">
+                          <span className="inline-flex items-center text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
                             Setup pending
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-xs text-gray-500 font-medium">
-                        {new Date(u.createdAt).toLocaleDateString("en-PH", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+
+                      {/* Joined */}
+                      <td className="px-5 py-3.5 text-[12px] text-gray-400 font-medium">
+                        {new Date(u.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
                       </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide
-                          ${
-                            u.role === "ADMIN"
-                              ? "bg-indigo-50 text-[#7c83fd] border border-indigo-100"
-                              : "bg-gray-50 text-gray-600 border border-gray-100"
-                          }`}
-                        >
+
+                      {/* Role */}
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center text-[10px] font-bold rounded-full px-2.5 py-0.5 border uppercase tracking-wider ${
+                          u.role === "ADMIN"
+                            ? "bg-[#f0f1ff] text-[#7c83fd] border-[#d6d9ff]"
+                            : "bg-gray-50 text-gray-500 border-gray-200"
+                        }`}>
                           {u.role}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide
-                          ${
-                            u.suspended
-                              ? "bg-red-50 text-red-600 border border-red-100"
-                              : "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                          }`}
-                        >
+
+                      {/* Status */}
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center text-[10px] font-bold rounded-full px-2.5 py-0.5 border uppercase tracking-wider ${
+                          u.suspended
+                            ? "bg-red-50 text-red-600 border-red-100"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                        }`}>
                           {u.suspended ? "Suspended" : "Active"}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+
+                      {/* Actions */}
+                      <td className="px-5 py-3.5">
                         {u.role !== "ADMIN" && (
-                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {/* Suspend / Activate */}
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             {u.suspended ? (
                               <button
                                 disabled={busy}
                                 title="Activate"
                                 onClick={() => act(u.id, adminApi.activateUser)}
-                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors disabled:opacity-40"
+                                className="p-1.5 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-40"
                               >
                                 <ShieldCheck className="w-4 h-4" />
                               </button>
@@ -341,40 +325,26 @@ export const AdminUsers = () => {
                               <button
                                 disabled={busy}
                                 title="Suspend"
-                                onClick={() => {
-                                  setConfirmText("");
-                                  setConfirmAction({
-                                    user: u,
-                                    action: "suspend",
-                                  });
-                                }}
-                                className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors disabled:opacity-40"
+                                onClick={() => { setConfirmText(""); setConfirmAction({ user: u, action: "suspend" }); }}
+                                className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors disabled:opacity-40"
                               >
                                 <ShieldOff className="w-4 h-4" />
                               </button>
                             )}
-                            {/* Promote to Admin */}
                             <button
                               disabled={busy}
                               title="Promote to Admin"
-                              onClick={() => {
-                                setConfirmText("");
-                                setConfirmAction({
-                                  user: u,
-                                  action: "promote",
-                                });
-                              }}
-                              className="p-1.5 text-[#7c83fd] hover:bg-indigo-50 rounded-md transition-colors disabled:opacity-40"
+                              onClick={() => { setConfirmText(""); setConfirmAction({ user: u, action: "promote" }); }}
+                              className="p-1.5 text-[#7c83fd] hover:bg-[#f0f1ff] rounded-lg transition-colors disabled:opacity-40"
                             >
                               <ShieldAlert className="w-4 h-4" />
                             </button>
                             <div className="w-px h-3.5 bg-gray-200 mx-0.5" />
-                            {/* Delete */}
                             <button
                               disabled={busy}
                               title="Delete account"
                               onClick={() => setConfirmDelete(u)}
-                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40"
+                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -390,85 +360,92 @@ export const AdminUsers = () => {
         </div>
       </div>
 
-      {/* Delete confirm modal */}
+      {/* ── Delete confirm modal ── */}
       {confirmDelete && (
-        <div className="fixed inset-0 bg-[#1e1b4b]/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="p-6 text-center">
-              <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
-                <Trash2 className="w-7 h-7" />
+        <ModalOverlay onClose={() => setConfirmDelete(null)}>
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                <Trash2 className="w-4.5 h-4.5 text-red-500" />
               </div>
-              <h3 className="text-lg font-bold text-[#1e1b4b] mb-2">
-                Delete Account
-              </h3>
-              <p className="text-sm text-gray-500 mb-1">
+              <div>
+                <p className="text-[13px] font-bold text-[#1e1b4b]">Delete Account</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="p-5 flex flex-col gap-4">
+              <p className="text-[13px] text-gray-600">
                 Permanently delete{" "}
-                <span className="font-bold text-[#1e1b4b]">
-                  {confirmDelete.fullname || confirmDelete.email}
-                </span>
-                ?
+                <span className="font-bold text-[#1e1b4b]">{confirmDelete.fullname || confirmDelete.email}</span>?
+                This will also remove their restaurant and all associated records.
               </p>
-              <p className="text-xs text-red-500 font-semibold mb-6">
-                This will also delete their restaurant and ALL associated
-                records. This cannot be undone.
-              </p>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button
                   onClick={() => setConfirmDelete(null)}
-                  className="flex-1 py-2.5 bg-gray-50 text-gray-600 rounded-lg font-semibold text-sm hover:bg-gray-100 border border-gray-200 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[13px] font-bold text-gray-500 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={actionLoading === confirmDelete.id}
-                  className="flex-1 py-2.5 bg-red-500 text-white rounded-lg font-semibold text-sm hover:bg-red-600 shadow-md shadow-red-200 transition-colors disabled:opacity-60"
+                  className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-[13px] font-bold hover:bg-red-600 transition-colors disabled:opacity-60"
                 >
                   {actionLoading === confirmDelete.id ? "Deleting…" : "Delete"}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
+      {/* ── Suspend / Promote confirm modal ── */}
       {confirmAction && (
-        <div className="fixed inset-0 bg-[#1e1b4b]/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="p-6 text-center">
-              <div
-                className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 border ${confirmAction.action === "suspend" ? "bg-amber-50 text-amber-500 border-amber-100" : "bg-indigo-50 text-[#7c83fd] border-indigo-100"}`}
-              >
-                {confirmAction.action === "suspend" ? (
-                  <ShieldOff className="w-7 h-7" />
-                ) : (
-                  <ShieldAlert className="w-7 h-7" />
-                )}
+        <ModalOverlay onClose={() => { setConfirmAction(null); setConfirmText(""); }}>
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                confirmAction.action === "suspend" ? "bg-amber-50" : "bg-[#f0f1ff]"
+              }`}>
+                {confirmAction.action === "suspend"
+                  ? <ShieldOff className="w-4.5 h-4.5 text-amber-500" />
+                  : <ShieldAlert className="w-4.5 h-4.5 text-[#7c83fd]" />
+                }
               </div>
-              <h3 className="text-lg font-bold text-[#1e1b4b] mb-2">
+              <div>
+                <p className="text-[13px] font-bold text-[#1e1b4b]">
+                  {confirmAction.action === "suspend" ? "Suspend Account" : "Promote to Admin"}
+                </p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Confirm before proceeding.</p>
+              </div>
+            </div>
+            <div className="p-5 flex flex-col gap-4">
+              <p className="text-[13px] text-gray-600">
                 {confirmAction.action === "suspend"
-                  ? "Suspend Account"
-                  : "Promote to Admin"}
-              </h3>
-              <p className="text-sm text-gray-500 mb-1">
-                {confirmAction.action === "suspend" ? "Suspend" : "Promote"}{" "}
-                <span className="font-bold text-[#1e1b4b]">
-                  {confirmAction.user.fullname || confirmAction.user.email}
-                </span>
-                ?
+                  ? "This will block the restaurateur from accessing their account."
+                  : "This grants full admin access and removes restaurateur restrictions."}
               </p>
-              <p className="text-xs text-gray-500 font-semibold mb-6">
-                {confirmAction.action === "suspend"
-                  ? "This will block the tenant from accessing their account."
-                  : "This grants full admin access and removes tenant restrictions."}
-              </p>
-              <div className="flex gap-3">
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  Type to confirm
+                </label>
+                <p className="text-[11px] text-gray-500">
+                  Enter <span className="font-bold text-[#1e1b4b]">{getConfirmTarget(confirmAction)}</span>
+                </p>
+                <input
+                  type="text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder={getConfirmTarget(confirmAction)}
+                  className="w-full px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:border-[#7c83fd] focus:ring-4 focus:ring-indigo-50 text-[13px] text-[#1e1b4b] placeholder:text-gray-300 outline-none transition-all"
+                />
+              </div>
+
+              <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    setConfirmAction(null);
-                    setConfirmText("");
-                  }}
-                  className="flex-1 py-2.5 bg-gray-50 text-gray-600 rounded-lg font-semibold text-sm hover:bg-gray-100 border border-gray-200 transition-colors"
+                  onClick={() => { setConfirmAction(null); setConfirmText(""); }}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[13px] font-bold text-gray-500 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -476,37 +453,20 @@ export const AdminUsers = () => {
                   onClick={handleConfirmAction}
                   disabled={
                     actionLoading === confirmAction.user.id ||
-                    confirmText.trim().toLowerCase() !==
-                      getConfirmTarget(confirmAction).toLowerCase()
+                    confirmText.trim().toLowerCase() !== getConfirmTarget(confirmAction).toLowerCase()
                   }
-                  className={`flex-1 py-2.5 text-white rounded-lg font-semibold text-sm shadow-md transition-colors disabled:opacity-60 ${confirmAction.action === "suspend" ? "bg-amber-500 hover:bg-amber-600 shadow-amber-200" : "bg-[#7c83fd] hover:bg-[#6b72f5] shadow-indigo-200"}`}
+                  className={`flex-1 py-2.5 text-white rounded-xl text-[13px] font-bold transition-colors disabled:opacity-50 ${
+                    confirmAction.action === "suspend"
+                      ? "bg-amber-500 hover:bg-amber-600"
+                      : "bg-[#7c83fd] hover:bg-[#6b72f5]"
+                  }`}
                 >
-                  {actionLoading === confirmAction.user.id
-                    ? "Processing…"
-                    : "Confirm"}
+                  {actionLoading === confirmAction.user.id ? "Processing…" : "Confirm"}
                 </button>
               </div>
             </div>
-            <div className="px-6 pb-6">
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Type to confirm
-              </label>
-              <p className="text-xs text-gray-500 mb-2">
-                Enter{" "}
-                <span className="font-bold">
-                  {getConfirmTarget(confirmAction)}
-                </span>
-              </p>
-              <input
-                type="text"
-                value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-                placeholder={getConfirmTarget(confirmAction)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-[#1e1b4b] placeholder:text-gray-300 focus:border-[#7c83fd] focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
-              />
-            </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );

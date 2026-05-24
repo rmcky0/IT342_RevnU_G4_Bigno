@@ -3,10 +3,11 @@ package com.revnu.mobile.features.sales.model
 import com.google.gson.annotations.SerializedName
 
 data class SaleResponse(
-    val id: String,
-    val amount: Double,
-    @SerializedName("tags") val tags: List<String>?,
-    val description: String?,
-    val status: String,
-    val createdAt: String
+    @SerializedName("id") val id: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("categoryName") val categoryName: String?,
+    @SerializedName("notes") val notes: String?,
+    @SerializedName("status") val status: String,
+    @SerializedName("createdAt") val createdAt: String
 )

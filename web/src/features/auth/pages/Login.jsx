@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
-import { AuthLayout } from "../components/AuthLayout";
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useLogin } from "../hooks/useLogin";
-import { Notification } from "../components/Notification";
+import { PolicyModal } from "../components/PolicyModal";
+import revnuLogo from "../../../../public/revnu.svg";
 
 const GoogleIcon = () => (
   <svg
@@ -29,132 +30,133 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
+
 export const Login = () => {
-  const { form, loading, error, success, handleChange, handleSubmit } =
-    useLogin();
+  const { form, loading, handleChange, handleSubmit } = useLogin();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [modal, setModal] = useState(null);
+
+  const emailExistsInfo = searchParams.get("info") === "email_exists";
+  const emailHint = searchParams.get("hint") ?? "";
 
   const onFormSubmit = (e) => {
     handleSubmit(e, (data) => {
-      if (data.role === "ADMIN") {
-        navigate("/admin");
-      } else if (data.role === "TENANT") {
-        if (data.hasRestaurant) {
-          navigate("/dashboard");
-        } else {
-          navigate("/setup-restaurant");
-        }
-      } else {
-        navigate("/dashboard");
-      }
+      if (data.role === "ADMIN") navigate("/admin");
+      else if (data.role === "RESTAURATEUR") {
+        data.hasRestaurant
+          ? navigate("/dashboard")
+          : navigate("/setup-restaurant");
+      } else navigate("/dashboard");
     });
   };
 
-  const handleGoogleLogin = () => {
-    sessionStorage.setItem("oauth2_source", "/login");
-    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
-  };
   return (
-    <AuthLayout
-      title="Welcome Back to RevnU"
-      subtitle="Sign in to manage your restaurant's revenue and expenses."
-    >
-      {error && <Notification type="error">{error}</Notification>}
-      {success && <Notification type="success">{success}</Notification>}
-
-      {/* Google sign in */}
-      <button
-        type="button"
-        onClick={() => {
-          sessionStorage.setItem("oauth2_source", "/login");
-          window.location.href =
-            "http://localhost:8080/oauth2/authorization/google";
-        }}
-        className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors mb-4"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
-
-      {/* Divider */}
-      <div className="flex items-center gap-3 mb-4">
-        <hr className="flex-1 border-gray-200" />
-        <span className="text-xs text-gray-400 font-medium">— OR —</span>
-        <hr className="flex-1 border-gray-200" />
+    <div className="w-full flex flex-col">
+      <div className="text-center mb-8">
+        <div className="w-14 h-14 flex items-center justify-center bg-white rounded-2xl shadow-sm border border-gray-100 p-2.5 mx-auto mb-5 transition-transform hover:scale-105 duration-300">
+          <img
+            src={revnuLogo}
+            alt="RevnU Logo"
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-1.5 tracking-tight">
+          Welcome Back
+        </h2>
+        <p className="text-sm text-gray-500">
+          Sign in to manage your restaurant's revenue.
+        </p>
       </div>
-      <form onSubmit={onFormSubmit} className="space-y-5">
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email
-          </label>
-          <input
-            type="text"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="eg. staffname123 or 1234-56"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
-            required
-          />
-        </div>
 
-        {/* Password */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Password
-          </label>
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="eg. Password@123"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
-            required
-          />
-          <div className="text-right mt-1">
-            <Link
-              to="/forgot-password"
-              className="text-xs italic text-gray-500 hover:text-[#2563EB]"
-            >
-              Forgot Password?
-            </Link>
+      <div className="bg-white px-6 py-8 sm:px-10 sm:py-9 shadow-[0_4px_24px_rgb(0,0,0,0.03)] border border-gray-100/80 rounded-[1.5rem] w-full">
+        {emailExistsInfo && (
+          <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-[13px] text-amber-800 font-medium leading-snug">
+            An account for{emailHint ? <> <span className="font-bold">{emailHint}</span></> : " this email"} already exists. Please sign in with your email and password below.
           </div>
-        </div>
-
-        {/* Sign in button */}
+        )}
         <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 bg-[#2563EB] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg text-sm transition-colors"
+          type="button"
+          onClick={() => {
+            sessionStorage.setItem("oauth2_source", "/login");
+            window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
+          }}
+          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-white border border-gray-200 shadow-sm rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all mb-6 active:scale-[0.98]"
         >
-          {loading ? "Signing in…" : "Sign in"}
+          <GoogleIcon />
+          Continue with Google
         </button>
 
-        <p className="text-center text-xs text-gray-400 italic">
-          By signing in, you agree to our{" "}
-          <Link to="/terms" className="underline hover:text-gray-600">
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link to="/privacy" className="underline hover:text-gray-600">
-            Privacy Policy
-          </Link>
-          .
-        </p>
-      </form>
+        <div className="flex items-center gap-3 mb-6">
+          <hr className="flex-1 border-gray-100" />
+          <span className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest">
+            or sign in with email
+          </span>
+          <hr className="flex-1 border-gray-100" />
+        </div>
 
-      <p className="text-center text-sm text-gray-600 mt-6 font-medium">
-        Don't have an account?{" "}
-        <Link
-          to="/register"
-          className="text-[#2563EB] font-semibold hover:underline"
-        >
-          Register here
-        </Link>
-      </p>
-    </AuthLayout>
+        <form onSubmit={onFormSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Email
+            </label>
+            <input
+              type="text"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="owner@restaurant.com"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C6FF7]/20 focus:border-[#7C6FF7] transition-all duration-200"
+              required
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-[#7C6FF7] hover:text-[#6a5ee6]"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7C6FF7]/20 focus:border-[#7C6FF7] transition-all duration-200"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-[#7C6FF7] hover:bg-[#6a5ee6] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-[#7C6FF7]/20 active:scale-[0.98] mt-2"
+          >
+            {loading ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-gray-500 mt-8">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="text-[#7C6FF7] font-semibold hover:underline"
+          >
+            Register here
+          </Link>
+        </p>
+      </div>
+
+      {modal && <PolicyModal type={modal} onClose={() => setModal(null)} />}
+    </div>
   );
 };

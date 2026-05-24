@@ -1,31 +1,22 @@
 import { useEffect, useState } from "react";
 import { salaryApi } from "../api/salaryApi";
 import * as cache from "../../../shared/cache/dataCache";
+import { useToast } from "../../../shared/components/Toast";
 
 const SALARIES_CACHE_KEY = "salaries";
 
 export const useSalary = () => {
+  const { showToast } = useToast();
   const [salaries, setSalaries] = useState([]);
   const [salaryTotalPages, setSalaryTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showSalaryForm, setShowSalaryForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [salaryFormData, setSalaryFormData] = useState({
     staffId: "",
     amount: "",
     paymentDate: "",
   });
-
-  useEffect(() => {
-    if (success || error) {
-      const timer = setTimeout(() => {
-        setSuccess("");
-        setError("");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [success, error]);
 
   const loadSalaryHistory = async (
     page = 0,
@@ -44,7 +35,6 @@ export const useSalary = () => {
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const res = await salaryApi.getSalaryHistory(page, size);
@@ -57,7 +47,7 @@ export const useSalary = () => {
       setSalaryTotalPages(totalPages);
       cache.set(cacheKey, { content, totalPages });
     } catch (err) {
-      setError("Failed to load salary history.");
+      showToast("error", "Failed to load salary history.");
       console.error("Failed to load salary history:", err);
       setSalaries([]);
     } finally {
@@ -67,8 +57,6 @@ export const useSalary = () => {
 
   const handleSalarySubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
@@ -78,8 +66,13 @@ export const useSalary = () => {
         paymentDate: salaryFormData.paymentDate,
       };
 
-      await salaryApi.recordSalary(dataToSend);
-      setSuccess("Salary recorded!");
+      if (editingId) {
+        await salaryApi.updateSalary(editingId, dataToSend);
+        showToast("success", "Salary updated!");
+      } else {
+        await salaryApi.recordSalary(dataToSend);
+        showToast("success", "Salary recorded!");
+      }
 
       if (typeof cache.invalidate === "function")
         cache.invalidate(SALARIES_CACHE_KEY);
@@ -88,14 +81,48 @@ export const useSalary = () => {
       resetSalaryForm();
       await loadSalaryHistory(0, 8, true);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to record salary.");
+      showToast(
+        "error",
+        err.response?.data?.error?.message ||
+          err.response?.data?.message ||
+          "Failed to save salary record.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const handleEditSalary = (salary) => {
+    setSalaryFormData({
+      staffId: salary.staffId,
+      amount: salary.amount,
+      paymentDate: salary.paymentDate,
+    });
+    setEditingId(salary.id);
+    setShowSalaryForm(true);
+  };
+
+  const handleDeleteSalary = async (id) => {
+    try {
+      await salaryApi.deleteSalary(id);
+      showToast("success", "Salary record deleted!");
+      if (typeof cache.invalidate === "function")
+        cache.invalidate(SALARIES_CACHE_KEY);
+      else if (typeof cache.clear === "function") cache.clear();
+      await loadSalaryHistory(0, 8, true);
+    } catch (err) {
+      showToast(
+        "error",
+        err.response?.data?.error?.message ||
+          err.response?.data?.message ||
+          "Failed to delete salary record.",
+      );
+    }
+  };
+
   const resetSalaryForm = () => {
     setSalaryFormData({ staffId: "", amount: "", paymentDate: "" });
+    setEditingId(null);
     setShowSalaryForm(false);
   };
 
@@ -103,13 +130,14 @@ export const useSalary = () => {
     salaries,
     salaryTotalPages,
     loading,
-    error,
-    success,
     showSalaryForm,
     setShowSalaryForm,
     salaryFormData,
     setSalaryFormData,
+    editingId,
     handleSalarySubmit,
+    handleEditSalary,
+    handleDeleteSalary,
     resetSalaryForm,
     loadSalaryHistory,
   };

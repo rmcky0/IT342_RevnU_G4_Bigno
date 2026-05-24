@@ -10,6 +10,11 @@ export const salaryApi = {
     const response = await api.post("/salaries", salaryData);
     return response.data;
   },
+  getStaffSalaries: async (staffId) => {
+    const response = await api.get(`/salaries/staff/${staffId}`);
+    return response.data;
+  },
+
   updateSalary: async (id, salaryData) => {
     const response = await api.put(`/salaries/${id}`, salaryData);
     return response.data;

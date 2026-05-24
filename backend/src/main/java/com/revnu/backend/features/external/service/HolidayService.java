@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -14,6 +16,7 @@ import com.revnu.backend.features.external.dto.HolidayDto;
 @Service
 public class HolidayService {
 
+    private static final Logger logger = LoggerFactory.getLogger(HolidayService.class);
     private final RestTemplate restTemplate;
 
     public HolidayService() {
@@ -30,7 +33,7 @@ public class HolidayService {
                 return Arrays.asList(response);
             }
         } catch (RestClientException e) {
-            System.err.println("Failed to fetch holidays from external API: " + e.getMessage());
+            logger.warn("Failed to fetch holidays from external API: {}", e.getMessage());
         }
 
         return Collections.emptyList();

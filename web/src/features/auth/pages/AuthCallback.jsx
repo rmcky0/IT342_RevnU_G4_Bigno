@@ -26,13 +26,14 @@ export const AuthCallback = () => {
         fullname: decodeURIComponent(searchParams.get("name") ?? ""),
         role: decodeURIComponent(searchParams.get("role") ?? ""),
         hasRestaurant: searchParams.get("hasRestaurant") === "true",
+        provider: decodeURIComponent(searchParams.get("provider") ?? "google"),
       };
 
       login(sessionData);
 
       if (sessionData.role === "ADMIN") {
         navigate("/admin", { replace: true });
-      } else if (sessionData.role === "TENANT") {
+      } else if (sessionData.role === "RESTAURATEUR") {
         if (sessionData.hasRestaurant) {
           navigate("/dashboard", { replace: true });
         } else {

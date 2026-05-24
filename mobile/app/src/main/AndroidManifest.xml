@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -17,13 +18,7 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
-            android:name=".features.tenant.ui.TenantPortalActivity"
-            android:exported="false" />
-        <activity
-            android:name=".features.auth.RegisterActivity"
-            android:exported="false" />
-        <activity
-            android:name=".features.auth.LoginActivity"
+            android:name=".features.auth.ui.WelcomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,10 +26,41 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".features.entry.ui.AddRecordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".features.settings.ChangePasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".features.restaurant.ui.RestaurantSetupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".core.ui.WebRedirectActivity"
+            android:exported="false" />
+        <activity
+            android:name=".features.dashboard.ui.DashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".features.auth.ui.RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".features.auth.ui.ForgotPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".features.auth.ui.LoginActivity"
+            android:exported="false" />
 
-        <meta-data
-            android:name="preloaded_fonts"
-            android:resource="@array/preloaded_fonts" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
     </application>
 
 </manifest>

@@ -1,7 +1,10 @@
 package com.revnu.mobile.core.network
 
+import com.google.gson.annotations.SerializedName
+
 data class ApiResponse<T>(
-    val success: Boolean,
-    val message: String?,
-    val data: T?
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: T?,
+    @SerializedName("error") val error: ApiError?,
+    @SerializedName("timestamp") val timestamp: String?
 )

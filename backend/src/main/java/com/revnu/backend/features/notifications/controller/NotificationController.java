@@ -22,10 +22,12 @@ import com.revnu.backend.features.notifications.dto.HolidayNotificationRequest;
 import com.revnu.backend.features.notifications.dto.NotificationResponse;
 import com.revnu.backend.features.notifications.dto.SystemNotificationRequest;
 import com.revnu.backend.features.notifications.service.NotificationService;
+import com.revnu.backend.shared.exception.ApiResponse;
+import com.revnu.backend.shared.util.ResponseUtil;
 
 @RestController
 @RequestMapping("/revnu/notifications")
-@PreAuthorize("hasRole('TENANT')")
+@PreAuthorize("isAuthenticated()")
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -35,48 +37,48 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getNotifications(
+    public ResponseEntity<ApiResponse> getNotifications(
             Principal principal,
             @RequestParam(defaultValue = "15") int limit
     ) {
         List<NotificationResponse> notifications = notificationService.getRecent(principal.getName(), limit);
-        return ResponseEntity.ok(Map.of("success", true, "data", notifications));
+        return ResponseEntity.ok(ResponseUtil.success(notifications));
     }
 
     @GetMapping("/unread-count")
-    public ResponseEntity<Map<String, Object>> getUnreadCount(Principal principal) {
+    public ResponseEntity<ApiResponse> getUnreadCount(Principal principal) {
         long count = notificationService.getUnreadCount(principal.getName());
-        return ResponseEntity.ok(Map.of("success", true, "data", count));
+        return ResponseEntity.ok(ResponseUtil.success(count));
     }
 
     @PatchMapping("/{id}/read")
-    public ResponseEntity<Map<String, Object>> markRead(Principal principal, @PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> markRead(Principal principal, @PathVariable UUID id) {
         NotificationResponse response = notificationService.markRead(principal.getName(), id);
-        return ResponseEntity.ok(Map.of("success", true, "data", response));
+        return ResponseEntity.ok(ResponseUtil.success(response));
     }
 
     @PatchMapping("/read-all")
-    public ResponseEntity<Map<String, Object>> markAllRead(Principal principal) {
+    public ResponseEntity<ApiResponse> markAllRead(Principal principal) {
         int count = notificationService.markAllRead(principal.getName());
-        return ResponseEntity.ok(Map.of("success", true, "data", count));
+        return ResponseEntity.ok(ResponseUtil.success(count));
     }
 
     @PostMapping("/holiday")
-    public ResponseEntity<Map<String, Object>> createHolidayAlert(
+    public ResponseEntity<ApiResponse> createHolidayAlert(
             Principal principal,
             @RequestBody HolidayNotificationRequest request
     ) {
         NotificationResponse response = notificationService.createHolidayNotification(principal.getName(), request);
-        return ResponseEntity.ok(Map.of("success", true, "data", response));
+        return ResponseEntity.ok(ResponseUtil.success(response));
     }
 
     @PostMapping("/system")
-    public ResponseEntity<Map<String, Object>> createSystemAlert(
+    public ResponseEntity<ApiResponse> createSystemAlert(
             Principal principal,
             @RequestBody SystemNotificationRequest request
     ) {
         NotificationResponse response = notificationService.createSystemNotification(principal.getName(), request);
-        return ResponseEntity.ok(Map.of("success", true, "data", response));
+        return ResponseEntity.ok(ResponseUtil.success(response));
     }
 
     @GetMapping(path = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

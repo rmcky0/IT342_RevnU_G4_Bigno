@@ -17,7 +17,6 @@ import {
   Archive,
   BarChart2,
   ChevronDown,
-  AlertCircle,
 } from "lucide-react";
 
 export const Expenses = () => {
@@ -29,23 +28,19 @@ export const Expenses = () => {
     totalPages,
     handleNextPage,
     handlePrevPage,
-    error,
-    success,
     loading,
     showForm,
     setShowForm,
     formData,
     setFormData,
-    tagInput,
-    setTagInput,
-    handleAddTag,
-    handleRemoveTag,
+    categories,
     receiptFile,
     setReceiptFile,
     searchTerm,
     setSearchTerm,
     editingId,
     totalExpenses,
+    totalRecords,
     handleSubmit,
     handleEdit,
     handleDelete,
@@ -54,7 +49,7 @@ export const Expenses = () => {
     requestSort,
   } = useExpenses();
 
-  const { isLocked, lockLoading, lockError, handleLockRecords } =
+  const { data: analyticsData, isLocked, lockLoading, handleLockRecords } =
     useAnalytics();
 
   const [showKPIs, setShowKPIs] = useState(true);
@@ -80,73 +75,72 @@ export const Expenses = () => {
 
   return (
     <div
-      className="flex flex-col flex-1 h-full max-h-full space-y-4 overflow-hidden text-[#1e1b4b]"
+      className="flex flex-col flex-1 h-full max-h-full gap-3 overflow-hidden text-[#1e1b4b]"
       onWheel={handleWheel}
     >
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-[#8f9df7] to-[#7c83fd] rounded-lg shadow-md shadow-indigo-200">
-            <Receipt className="w-5 h-5 text-white" />
+      {/* ── Header ── */}
+      <div className="shrink-0 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 bg-[#7c83fd] rounded-xl flex items-center justify-center shrink-0">
+            <Receipt className="w-4.5 h-4.5 text-white" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Expenses</h2>
-          <span className="px-2.5 py-0.5 bg-white text-[#7c83fd] text-xs font-bold rounded-md border border-gray-100 shadow-sm ml-2">
-            {expenses.length} active records
+          <h2 className="text-lg font-bold tracking-tight truncate">Expenses</h2>
+          <span className="shrink-0 text-[10px] font-bold text-[#7c83fd] bg-[#f0f1ff] border border-[#d6d9ff] rounded-full px-2.5 py-0.5 uppercase tracking-wider">
+            {totalRecords} records
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {isLocked ? (
-            <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500/10 text-emerald-600 rounded-lg font-bold text-sm border border-emerald-500/20 shadow-sm cursor-default select-none">
-              <ShieldCheck className="w-4 h-4" /> EOD Finalized
-            </div>
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2 select-none">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              EOD Finalized
+            </span>
           ) : (
             <button
               onClick={() => setShowLockModal(true)}
               disabled={lockLoading || expenses.length === 0}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#7c83fd] text-white rounded-lg font-semibold text-sm shadow-md shadow-indigo-100 hover:bg-[#6b72f5] hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0"
+              className="inline-flex items-center gap-1.5 text-[13px] font-bold text-white bg-[#7c83fd] hover:bg-[#6b72f5] rounded-xl px-3.5 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ShieldCheck className="w-4 h-4" />
-              {lockLoading ? "Locking..." : "Lock EOD"}
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {lockLoading ? "Locking…" : "Lock EOD"}
             </button>
           )}
 
           <button
             onClick={() => navigate("/archived")}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 rounded-lg font-semibold text-sm border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-[#1e1b4b] transition-all"
+            className="inline-flex items-center gap-1.5 text-[13px] font-bold text-gray-500 bg-white hover:bg-gray-50 hover:text-[#1e1b4b] border border-gray-200 rounded-xl px-3.5 py-2 transition-colors"
           >
-            <Archive className="w-4 h-4" /> Archived
+            <Archive className="w-3.5 h-3.5" />
+            Archived
           </button>
         </div>
       </div>
 
-      {/* ── Banners ────────────────────────────────────────────────────────── */}
-      {lockError && (
-        <div className="shrink-0 px-4 py-3 rounded-lg text-sm font-medium shadow-sm animate-in fade-in slide-in-from-top-2 flex items-center gap-2 bg-red-50 text-red-600 border border-red-200">
-          <AlertCircle className="w-4 h-4 shrink-0" /> {lockError}
-        </div>
-      )}
-
+      {/* ── Show-metrics toggle ── */}
       {!showKPIs && (
-        <div className="shrink-0 flex justify-center animate-in fade-in slide-in-from-top-1">
+        <div className="shrink-0 flex justify-center animate-in fade-in slide-in-from-top-1 duration-200">
           <button
             onClick={() => setShowKPIs(true)}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-white rounded-full shadow-sm border border-gray-200 text-gray-400 hover:text-[#7c83fd] hover:border-indigo-100 transition-all text-xs font-bold uppercase tracking-wider group"
+            className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-white hover:text-[#7c83fd] border border-gray-200 rounded-full px-4 py-1.5 transition-colors"
           >
-            <BarChart2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />{" "}
-            Show Metrics <ChevronDown className="w-3.5 h-3.5" />
+            <BarChart2 className="w-3 h-3" />
+            Show metrics
+            <ChevronDown className="w-3 h-3" />
           </button>
         </div>
       )}
 
-      {/* ── Components ─────────────────────────────────────────────────────── */}
+      {/* ── KPI cards ── */}
       <SharedKPIs
         showKPIs={showKPIs}
         total={totalExpenses}
-        count={expenses.length}
+        count={totalRecords}
         todayDisplay={todayDisplay}
         type="expenses"
       />
+
+      {/* ── Control bar ── */}
       <SharedControlBar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -155,8 +149,11 @@ export const Expenses = () => {
         handlePrevPage={handlePrevPage}
         handleNextPage={handleNextPage}
         onAddClick={() => setShowForm(true)}
+        isLocked={isLocked}
         type="expenses"
       />
+
+      {/* ── Table ── */}
       <SharedTable
         data={paginatedExpenses}
         loading={loading}
@@ -168,18 +165,20 @@ export const Expenses = () => {
         onEdit={handleEdit}
         onDelete={setItemToDelete}
         onViewReceipt={setReceiptLightboxId}
+        isLocked={isLocked}
         type="expenses"
       />
 
-      {/* ── Modals ─────────────────────────────────────────────────────────── */}
+      {/* ── Modals ── */}
       <ViewRecordModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
         item={itemToView}
-        title="Expense Details"
+        title="Expense details"
         amountColor="text-red-500"
         onViewReceipt={setReceiptLightboxId}
       />
+
       <DeleteConfirmModal
         item={itemToDelete}
         onClose={() => setItemToDelete(null)}
@@ -189,19 +188,16 @@ export const Expenses = () => {
         }}
         type="expense"
       />
+
       <TransactionFormModal
         isOpen={showForm}
         onClose={resetForm}
         onSubmit={handleSubmit}
         formData={formData}
         setFormData={setFormData}
-        tagInput={tagInput}
-        setTagInput={setTagInput}
-        handleAddTag={handleAddTag}
-        handleRemoveTag={handleRemoveTag}
+        categories={categories}
         isEditing={!!editingId}
         loading={loading}
-        error={error}
         type="Expense"
         receiptFile={receiptFile}
         setReceiptFile={setReceiptFile}

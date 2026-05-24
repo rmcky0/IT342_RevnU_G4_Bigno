@@ -1,11 +1,14 @@
 package com.revnu.mobile.features.expenses.model
 
+import com.google.gson.annotations.SerializedName
+
 data class ExpenseResponse(
-    val id: String,
-    val amount: Double,
-    val tags: List<String>?,
-    val description: String?,
-    val fileId: String?, // Added fileId
-    val status: String,
-    val createdAt: String
+    @SerializedName("id") val id: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("categoryName") val categoryName: String?,
+    @SerializedName("notes") val notes: String?,
+    @SerializedName("fileId") val fileId: String?,
+    @SerializedName("status") val status: String,
+    @SerializedName("createdAt") val createdAt: String
 )

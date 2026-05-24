@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { staffApi } from "../api/staffApi";
 import * as cache from "../../../shared/cache/dataCache";
+import { useToast } from "../../../shared/components/Toast";
 
 const STAFF_CACHE_KEY = "staff";
 
 export const useStaff = () => {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState("directory");
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const [showStaffForm, setShowStaffForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -20,16 +20,6 @@ export const useStaff = () => {
     position: "",
     salaryRate: "",
   });
-
-  useEffect(() => {
-    if (success || error) {
-      const timer = setTimeout(() => {
-        setSuccess("");
-        setError("");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [success, error]);
 
   useEffect(() => {
     loadData();
@@ -45,7 +35,6 @@ export const useStaff = () => {
     }
 
     setLoading(true);
-    setError("");
     try {
       const staffRes = await staffApi.getAllStaff();
       const staffData = Array.isArray(staffRes?.data) ? staffRes.data : [];
@@ -53,7 +42,7 @@ export const useStaff = () => {
       setStaffList(staffData);
       cache.set(STAFF_CACHE_KEY, staffData);
     } catch (err) {
-      setError("Failed to load staff data.");
+      showToast("error", "Failed to load staff data.");
       console.error("Failed to load staff data:", err);
       setStaffList([]);
     } finally {
@@ -63,8 +52,6 @@ export const useStaff = () => {
 
   const handleStaffSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
@@ -76,10 +63,10 @@ export const useStaff = () => {
 
       if (editingId) {
         await staffApi.updateStaff(editingId, dataToSend);
-        setSuccess("Staff updated!");
+        showToast("success", "Staff updated!");
       } else {
         await staffApi.createStaff(dataToSend);
-        setSuccess("Staff added!");
+        showToast("success", "Staff added!");
       }
 
       if (typeof cache.invalidate === "function") {
@@ -95,7 +82,7 @@ export const useStaff = () => {
         err?.response?.data?.error?.message ??
         err?.response?.data?.message ??
         "Failed to save staff.";
-      setError(msg);
+      showToast("error", msg);
     } finally {
       setLoading(false);
     }
@@ -114,7 +101,7 @@ export const useStaff = () => {
   const handleDeleteStaff = async (id) => {
     try {
       await staffApi.deleteStaff(id);
-      setSuccess("Staff member deleted!");
+      showToast("success", "Staff member deleted!");
 
       if (typeof cache.invalidate === "function") {
         cache.invalidate(STAFF_CACHE_KEY);
@@ -124,7 +111,8 @@ export const useStaff = () => {
 
       await loadData(true);
     } catch (err) {
-      setError(
+      showToast(
+        "error",
         err?.response?.data?.error?.message ?? "Failed to delete staff.",
       );
     }
@@ -150,9 +138,8 @@ export const useStaff = () => {
     activeTab,
     setActiveTab,
     staffList: filteredStaff,
+    allStaff: staffList,
     loading,
-    error,
-    success,
     showStaffForm,
     setShowStaffForm,
     staffFormData,

@@ -8,27 +8,29 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_bottom_sheet"
         android:orientation="vertical"
         android:paddingBottom="32dp">
 
         <View
-            android:layout_width="40dp"
-            android:layout_height="4dp"
+            android:layout_width="48dp"
+            android:layout_height="5dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="12dp"
-            android:layout_marginBottom="20dp"
-            android:background="#E5E7EB" />
+            android:background="@drawable/bg_drag_handle" />
 
         <TextView
             android:id="@+id/tvFormTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="24dp"
-            android:layout_marginBottom="20dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
+            android:fontFamily="@font/prompt_bold"
+            android:letterSpacing="-0.01"
             android:text="Add Staff Member"
-            android:textColor="#111243"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textColor="#0F172A"
+            android:textSize="22sp" />
 
         <!-- Full Name -->
         <com.google.android.material.textfield.TextInputLayout
@@ -36,22 +38,23 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
+            android:layout_marginHorizontal="20dp"
             android:layout_marginBottom="14dp"
             android:hint="Full Name"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxStrokeColor="#E5E7EB"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:boxStrokeColor="#E2E8F0"
             app:hintTextColor="#9CA3AF">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etStaffName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/ubuntu"
                 android:inputType="textPersonName"
-                android:textColor="#111243"
+                android:textColor="#0F172A"
                 android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -61,22 +64,23 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
+            android:layout_marginHorizontal="20dp"
             android:layout_marginBottom="14dp"
             android:hint="Position / Role"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxStrokeColor="#E5E7EB"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:boxStrokeColor="#E2E8F0"
             app:hintTextColor="#9CA3AF">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etStaffPosition"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/ubuntu"
                 android:inputType="text"
-                android:textColor="#111243"
+                android:textColor="#0F172A"
                 android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -86,51 +90,55 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="28dp"
             android:hint="Salary Rate (₱)"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxStrokeColor="#E5E7EB"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
+            app:boxStrokeColor="#E2E8F0"
             app:hintTextColor="#9CA3AF">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etStaffRate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/ubuntu"
                 android:inputType="numberDecimal"
-                android:textColor="#111243"
+                android:textColor="#0F172A"
                 android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Buttons -->
+        <!-- Save -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFormSave"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginHorizontal="24dp"
+            android:layout_marginHorizontal="20dp"
             android:layout_marginBottom="10dp"
+            android:fontFamily="@font/ubuntu_bold"
             android:text="Add Staff"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:backgroundTint="#818CF8"
-            app:cornerRadius="14dp" />
+            android:textSize="15sp"
+            app:backgroundTint="#7C3AED"
+            app:cornerRadius="16dp"
+            app:elevation="0dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFormClose"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginHorizontal="24dp"
+            android:layout_marginHorizontal="20dp"
+            android:fontFamily="@font/ubuntu_bold"
             android:text="Cancel"
             android:textAllCaps="false"
-            android:textColor="#6B7280"
-            android:textSize="16sp"
-            app:cornerRadius="14dp"
-            app:strokeColor="#E5E7EB" />
+            android:textColor="#64748B"
+            android:textSize="15sp"
+            app:cornerRadius="16dp"
+            app:strokeColor="#E2E8F0"
+            app:strokeWidth="1.5dp" />
     </LinearLayout>
 </ScrollView>

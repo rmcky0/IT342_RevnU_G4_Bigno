@@ -150,6 +150,8 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
         tvOpsExpense.text     = formatPeso(opsExpense)
         tvPayrollExpense.text = formatPeso(data.totalSalaries)
 
+        // EOD status
+        updateEodCard(data.isClosed)
     }
     private fun updateEodCard(isLocked: Boolean) {
         if (isLocked) {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { authService } from "../services/authService";
 import * as cache from "../../../shared/cache/dataCache";
 
@@ -15,7 +15,7 @@ const saveSession = (user) => {
     fullname: user.fullname,
     role: user.role,
     hasRestaurant: user.hasRestaurant,
-    avatarFileId: user.avatarFileId ?? null,
+    provider: user.provider ?? null,
   };
   sessionStorage.setItem("user", JSON.stringify(userToStore));
 
@@ -23,11 +23,16 @@ const saveSession = (user) => {
   if (token) {
     sessionStorage.setItem("token", token);
   }
+
+  if (user?.refreshToken) {
+    sessionStorage.setItem("refreshToken", user.refreshToken);
+  }
 };
 
 const clearSession = () => {
   sessionStorage.removeItem("user");
   sessionStorage.removeItem("token");
+  sessionStorage.removeItem("refreshToken");
   cache.clear();
 };
 
@@ -49,7 +54,7 @@ export const AuthProvider = ({ children }) => {
             fullname: currentUser.fullname,
             role: currentUser.role,
             hasRestaurant: currentUser.hasRestaurant,
-            avatarFileId: storedUser.avatarFileId ?? null,
+            provider: currentUser.provider ?? storedUser.provider ?? null,
           };
           sessionStorage.setItem("user", JSON.stringify(updatedUser));
           setUser(updatedUser);
@@ -66,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, [token]);
 
-  const login = (data) => {
+  const login = useCallback((data) => {
     saveSession(data);
     setToken(data.accessToken ?? data.token);
     setUser({
@@ -75,17 +80,9 @@ export const AuthProvider = ({ children }) => {
       fullname: data.fullname,
       role: data.role,
       hasRestaurant: data.hasRestaurant,
+      provider: data.provider ?? null,
     });
-  };
-
-  const updateAvatar = (avatarFileId) => {
-    setUser((cur) => {
-      if (!cur) return cur;
-      const updated = { ...cur, avatarFileId };
-      sessionStorage.setItem("user", JSON.stringify(updated));
-      return updated;
-    });
-  };
+  }, []);
 
   const completeRestaurantSetup = () => {
     setUser((currentUser) => {
@@ -118,7 +115,6 @@ export const AuthProvider = ({ children }) => {
         logout,
         isLoading,
         completeRestaurantSetup,
-        updateAvatar,
       }}
     >
       {!isLoading && children}

@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Search,
-  X,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-} from "lucide-react";
+import { Search, X, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 export const SharedControlBar = ({
   searchTerm,
@@ -16,6 +9,7 @@ export const SharedControlBar = ({
   handlePrevPage,
   handleNextPage,
   onAddClick,
+  isLocked = false,
   type = "sales",
 }) => {
   const getButtonLabel = () => {
@@ -67,12 +61,6 @@ export const SharedControlBar = ({
             </button>
           )}
         </div>
-        <button
-          className="p-2 bg-gray-50/50 rounded-lg text-gray-400 hover:text-[#7c83fd] hover:bg-indigo-50 transition-colors border border-transparent"
-          title="Filter Options"
-        >
-          <Filter className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Pagination & Add Button Right Side */}
@@ -100,7 +88,8 @@ export const SharedControlBar = ({
         </div>
         <button
           onClick={onAddClick}
-          className="flex items-center gap-1.5 px-4 py-2 bg-[#7c83fd] text-white rounded-lg font-semibold text-sm shadow-md shadow-indigo-100 hover:bg-[#6b72f5] hover:-translate-y-0.5 transition-all"
+          disabled={isLocked}
+          className="flex items-center gap-1.5 px-4 py-2 bg-[#7c83fd] text-white rounded-lg font-semibold text-sm shadow-md shadow-indigo-100 hover:bg-[#6b72f5] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
           <Plus className="w-4 h-4" /> {addButtonLabel}
         </button>

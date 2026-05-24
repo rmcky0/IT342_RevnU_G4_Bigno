@@ -23,6 +23,7 @@ import com.revnu.backend.features.auth.model.RoleType;
 import com.revnu.backend.features.auth.model.User;
 import com.revnu.backend.features.auth.repository.UserRepository;
 import com.revnu.backend.features.notifications.service.NotificationService;
+import com.revnu.backend.features.reporting.service.EmailService;
 import com.revnu.backend.features.restaurants.model.Restaurant;
 import com.revnu.backend.features.restaurants.repository.RestaurantRepository;
 
@@ -32,31 +33,34 @@ public class AdminService {
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final NotificationService notificationService;
+    private final EmailService emailService;
 
     public AdminService(UserRepository userRepository,
             RestaurantRepository restaurantRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.restaurantRepository = restaurantRepository;
         this.notificationService = notificationService;
+        this.emailService = emailService;
     }
 
     @Transactional(readOnly = true)
     public AdminStatsResponse getPlatformStats() {
-        long totalTenants = userRepository.countByRole(RoleType.TENANT);
+        long totalRestaurateurs = userRepository.countByRole(RoleType.RESTAURATEUR);
         long totalRestaurants = restaurantRepository.count();
 
         LocalDateTime startOfMonth = LocalDateTime.now()
                 .withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        long newTenantsThisMonth = userRepository.countByRoleAndCreatedAtAfter(
-                RoleType.TENANT, startOfMonth);
+        long newRestaurateursThisMonth = userRepository.countByRoleAndCreatedAtAfter(
+                RoleType.RESTAURATEUR, startOfMonth);
 
-        long activeTenants = userRepository.countByRoleAndStatus(RoleType.TENANT, AccountStatus.ACTIVE);
-        long suspendedTenants = userRepository.countByRoleAndStatus(RoleType.TENANT, AccountStatus.SUSPENDED);
+        long activeRestaurateurs = userRepository.countByRoleAndStatus(RoleType.RESTAURATEUR, AccountStatus.ACTIVE);
+        long suspendedRestaurateurs = userRepository.countByRoleAndStatus(RoleType.RESTAURATEUR, AccountStatus.SUSPENDED);
 
         return new AdminStatsResponse(
-                totalTenants, totalRestaurants, newTenantsThisMonth,
-                activeTenants, suspendedTenants
+                totalRestaurateurs, totalRestaurants, newRestaurateursThisMonth,
+                activeRestaurateurs, suspendedRestaurateurs
         );
     }
 
@@ -82,11 +86,15 @@ public class AdminService {
         }
 
         boolean suspendAction = request.status() == AccountStatus.SUSPENDED;
+        boolean reactivateAction = request.status() == AccountStatus.ACTIVE;
         user.setStatus(request.status());
         userRepository.save(user);
         Restaurant r = restaurantRepository.findByOwner(user).orElse(null);
         if (suspendAction) {
             notificationService.notifyAdminsUserSuspended(user);
+            emailService.sendSuspensionEmail(user.getEmail(), user.getFullname());
+        } else if (reactivateAction) {
+            emailService.sendReactivationEmail(user.getEmail(), user.getFullname());
         }
         return toUserResponse(user, r);
     }
@@ -128,9 +136,32 @@ public class AdminService {
                 r.getOwner().getFullname(),
                 r.getOwner().getEmail(),
                 r.getOwner().getStatus(),
-                r.getLogoFile() != null ? r.getLogoFile().getId() : null,
-                r.getOwner().getAvatarFile() != null ? r.getOwner().getAvatarFile().getId() : null
+                r.getLogoFile() != null ? r.getLogoFile().getId() : null
         ));
+    }
+
+    @Transactional
+    public AdminUserResponse suspendUser(UUID userId) {
+        User user = getUser(userId);
+        if (user.getRole() == RoleType.ADMIN) {
+            throw new IllegalStateException("Cannot suspend an admin account.");
+        }
+        user.setStatus(AccountStatus.SUSPENDED);
+        userRepository.save(user);
+        notificationService.notifyAdminsUserSuspended(user);
+        emailService.sendSuspensionEmail(user.getEmail(), user.getFullname());
+        Restaurant r = restaurantRepository.findByOwner(user).orElse(null);
+        return toUserResponse(user, r);
+    }
+
+    @Transactional
+    public AdminUserResponse reactivateUser(UUID userId) {
+        User user = getUser(userId);
+        user.setStatus(AccountStatus.ACTIVE);
+        userRepository.save(user);
+        emailService.sendReactivationEmail(user.getEmail(), user.getFullname());
+        Restaurant r = restaurantRepository.findByOwner(user).orElse(null);
+        return toUserResponse(user, r);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -148,8 +179,7 @@ public class AdminService {
                 user.getStatus(),
                 user.getCreatedAt(),
                 r != null ? r.getId() : null,
-                r != null ? r.getName() : null,
-                user.getAvatarFile() != null ? user.getAvatarFile().getId() : null
+                r != null ? r.getName() : null
         );
     }
 }

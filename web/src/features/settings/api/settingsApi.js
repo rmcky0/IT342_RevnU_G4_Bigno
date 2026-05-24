@@ -11,13 +11,6 @@ export const settingsApi = {
     return response.data;
   },
 
-  updateProfilePicture: async (formData) => {
-    const response = await api.patch("/settings/profile/avatar", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
-  },
-
   changePassword: async (currentPassword, newPassword) => {
     const response = await api.put("/settings/change-password", {
       currentPassword,
@@ -43,13 +36,4 @@ export const settingsApi = {
     return response.data;
   },
 
-  getSystemSettings: async () => {
-    const response = await api.get("/settings/system");
-    return response.data;
-  },
-
-  updateSystemSettings: async (settingsData) => {
-    const response = await api.put("/settings/system", settingsData);
-    return response.data;
-  },
 };

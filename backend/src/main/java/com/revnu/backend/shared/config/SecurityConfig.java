@@ -9,12 +9,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -23,6 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.revnu.backend.shared.security.JwtAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Value("${app.frontend-url}")
@@ -82,12 +86,22 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                )
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/revnu/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/revnu/auth/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/google").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/logout").permitAll()
                 .requestMatchers(HttpMethod.POST, "/revnu/auth/link-google").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/forgot-password").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/verify-otp").permitAll()
+                .requestMatchers(HttpMethod.POST, "/revnu/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/revnu/files/**").permitAll()
+                .requestMatchers("/revnu/admin/**").hasRole("ADMIN")
                 .requestMatchers("/revnu/settings/**").authenticated()
                 .requestMatchers("/revnu/auth/me").authenticated()
                 .requestMatchers("/revnu/sales/**").authenticated()

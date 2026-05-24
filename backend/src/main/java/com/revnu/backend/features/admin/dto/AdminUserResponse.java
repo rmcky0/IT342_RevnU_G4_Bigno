@@ -14,8 +14,7 @@ public record AdminUserResponse(
         AccountStatus status,
         LocalDateTime createdAt,
         UUID restaurantId,
-        String restaurantName,
-        UUID avatarFileId
+        String restaurantName
         ) {
 
 }
