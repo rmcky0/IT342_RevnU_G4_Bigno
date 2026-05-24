@@ -1,7 +1,9 @@
 package com.revnu.mobile.core.config
 
 object Constants {
-    const val BASE_URL = "http://10.0.2.2:8080/api/v1/revnu/"
+    const val BASE_URL_DEBUG = "https://it342-revnu-g4-bigno.onrender.com/api/v1/revnu/"
+    // const val BASE_URL_DEBUG = "http://10.0.2.2:8080/api/v1/revnu/" // emulator only
+    const val BASE_URL_RELEASE = "https://it342-revnu-g4-bigno.onrender.com/api/v1/revnu/"
     const val WEB_APP_URL_DEBUG = "http://10.0.2.2:5173/login"
     const val WEB_APP_URL_RELEASE = "https://revnu-bigno.vercel.app/login"
 

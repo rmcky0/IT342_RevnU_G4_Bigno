@@ -56,6 +56,23 @@ class ExpensesRepository(
         }
     }
 
+    suspend fun closeDay(date: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.closeDay(
+                    com.revnu.mobile.features.sales.model.CloseDayRequest(date)
+                )
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(response.body()?.error?.message ?: "Failed to lock day"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
     // You still need these because AddRecordViewModel calls them!
     suspend fun recordExpense(request: ExpenseRequest): Result<ExpenseResponse> {
         return withContext(Dispatchers.IO) {

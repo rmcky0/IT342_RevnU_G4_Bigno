@@ -48,9 +48,17 @@ class DashboardActivity : AppCompatActivity() {
 
     private var currentTab = "home"
 
-    // Modern Colors matching your new UI
-    private val selectedColor = Color.parseColor("#6366F1") // Indigo
-    private val unselectedColor = Color.parseColor("#94A3B8") // Slate Gray
+    private val selectedColor = Color.parseColor("#6366F1")
+    private val unselectedColor = Color.parseColor("#94A3B8")
+
+    // Fragment instances — resolved from the fragment manager to survive recreation
+    private lateinit var analyticsFragment: AnalyticsFragment
+    private lateinit var salesFragment: SalesFragment
+    private lateinit var expensesFragment: ExpensesFragment
+    private lateinit var staffFragment: StaffFragment
+    private lateinit var settingsFragment: SettingsFragment
+
+    private lateinit var activeFragment: Fragment
 
     private val newRecordLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -58,14 +66,10 @@ class DashboardActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             val savedType = result.data?.getStringExtra(AddRecordActivity.EXTRA_SAVED_TYPE)
             val isEdit = result.data?.getBooleanExtra("is_edit", false) ?: false
-            val msg = if (isEdit) "Record updated" else "Record saved"
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-            if (savedType == "sale") {
-                loadFragment(SalesFragment())
-                selectTab("sales")
-            } else if (savedType == "expense") {
-                loadFragment(ExpensesFragment())
-                selectTab("expenses")
+            Toast.makeText(this, if (isEdit) "Record updated" else "Record saved", Toast.LENGTH_SHORT).show()
+            when (savedType) {
+                "sale" -> { showFragment(salesFragment); selectTab("sales"); salesFragment.refresh() }
+                "expense" -> { showFragment(expensesFragment); selectTab("expenses"); expensesFragment.refresh() }
             }
         }
     }
@@ -75,126 +79,133 @@ class DashboardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_dashboard)
 
         sessionManager = SessionManager(this)
-
         bindViews()
         setupBottomNav()
         setupFab()
+        resolveFragments(savedInstanceState)
+    }
+
+    private fun resolveFragments(savedInstanceState: Bundle?) {
+        val fm = supportFragmentManager
+
+        // On recreation the fragment manager already has the fragments — find them by tag.
+        // On fresh start they won't exist yet, so create new instances.
+        analyticsFragment = fm.findFragmentByTag(TAB_HOME) as? AnalyticsFragment ?: AnalyticsFragment()
+        salesFragment     = fm.findFragmentByTag(TAB_SALES) as? SalesFragment ?: SalesFragment()
+        expensesFragment  = fm.findFragmentByTag(TAB_EXPENSES) as? ExpensesFragment ?: ExpensesFragment()
+        staffFragment     = fm.findFragmentByTag(TAB_STAFF) as? StaffFragment ?: StaffFragment()
+        settingsFragment  = fm.findFragmentByTag(TAB_SETTINGS) as? SettingsFragment ?: SettingsFragment()
 
         if (savedInstanceState == null) {
-            loadFragment(AnalyticsFragment())
-            selectTab("home")
+            fm.beginTransaction()
+                .add(R.id.fragmentContainer, settingsFragment, TAB_SETTINGS).hide(settingsFragment)
+                .add(R.id.fragmentContainer, staffFragment, TAB_STAFF).hide(staffFragment)
+                .add(R.id.fragmentContainer, expensesFragment, TAB_EXPENSES).hide(expensesFragment)
+                .add(R.id.fragmentContainer, salesFragment, TAB_SALES).hide(salesFragment)
+                .add(R.id.fragmentContainer, analyticsFragment, TAB_HOME)
+                .commitNow()
+            activeFragment = analyticsFragment
+            selectTab(TAB_HOME)
+        } else {
+            // Restore active tab from saved state; derive activeFragment from the tag
+            val restoredTab = savedInstanceState.getString(KEY_ACTIVE_TAB, TAB_HOME) ?: TAB_HOME
+            currentTab = restoredTab
+            activeFragment = fragmentForTab(restoredTab)
+            selectTab(restoredTab)
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(KEY_ACTIVE_TAB, currentTab)
     }
 
     private fun bindViews() {
-        fabNewRecord = findViewById(R.id.fabNewRecord)
-
-        navSales = findViewById(R.id.navSales)
-        navExpenses = findViewById(R.id.navExpenses)
-        navHome = findViewById(R.id.navHome)
-        navStaff = findViewById(R.id.navStaff)
-        navSettings = findViewById(R.id.navSettings)
-
-        iconSales = findViewById(R.id.iconSales)
-        iconExpenses = findViewById(R.id.iconExpenses)
-        iconHome = findViewById(R.id.iconHome)
-        iconStaff = findViewById(R.id.iconStaff)
-        iconSettings = findViewById(R.id.iconSettings)
-
-        textSales = findViewById(R.id.textSales)
-        textExpenses = findViewById(R.id.textExpenses)
-        textHome = findViewById(R.id.textHome)
-        textStaff = findViewById(R.id.textStaff)
-        textSettings = findViewById(R.id.textSettings)
+        fabNewRecord  = findViewById(R.id.fabNewRecord)
+        navSales      = findViewById(R.id.navSales)
+        navExpenses   = findViewById(R.id.navExpenses)
+        navHome       = findViewById(R.id.navHome)
+        navStaff      = findViewById(R.id.navStaff)
+        navSettings   = findViewById(R.id.navSettings)
+        iconSales     = findViewById(R.id.iconSales)
+        iconExpenses  = findViewById(R.id.iconExpenses)
+        iconHome      = findViewById(R.id.iconHome)
+        iconStaff     = findViewById(R.id.iconStaff)
+        iconSettings  = findViewById(R.id.iconSettings)
+        textSales     = findViewById(R.id.textSales)
+        textExpenses  = findViewById(R.id.textExpenses)
+        textHome      = findViewById(R.id.textHome)
+        textStaff     = findViewById(R.id.textStaff)
+        textSettings  = findViewById(R.id.textSettings)
     }
 
     private fun setupBottomNav() {
-        navSales.setOnClickListener {
-            loadFragment(SalesFragment())
-            selectTab("sales")
-        }
-        navExpenses.setOnClickListener {
-            loadFragment(ExpensesFragment())
-            selectTab("expenses")
-        }
-        navHome.setOnClickListener {
-            loadFragment(AnalyticsFragment())
-            selectTab("home")
-        }
-        navStaff.setOnClickListener {
-            loadFragment(StaffFragment())
-            selectTab("staff")
-        }
-        navSettings.setOnClickListener {
-            loadFragment(SettingsFragment())
-            selectTab("settings")
-        }
+        navSales.setOnClickListener    { showFragment(salesFragment);     selectTab(TAB_SALES) }
+        navExpenses.setOnClickListener { showFragment(expensesFragment);  selectTab(TAB_EXPENSES) }
+        navHome.setOnClickListener     { showFragment(analyticsFragment); selectTab(TAB_HOME) }
+        navStaff.setOnClickListener    { showFragment(staffFragment);     selectTab(TAB_STAFF) }
+        navSettings.setOnClickListener { showFragment(settingsFragment);  selectTab(TAB_SETTINGS) }
     }
 
     private fun setupFab() {
         fabNewRecord.setOnClickListener {
             val intent = Intent(this, AddRecordActivity::class.java).apply {
-                if (currentTab == "expenses") putExtra(AddRecordActivity.EXTRA_START_TAB, "expense")
+                if (currentTab == TAB_EXPENSES) putExtra(AddRecordActivity.EXTRA_START_TAB, "expense")
             }
             newRecordLauncher.launch(intent)
         }
     }
 
-
-    private fun loadFragment(fragment: Fragment) {
+    private fun showFragment(target: Fragment) {
+        // Guard against no-op using actual fragment state, not a tracked variable
+        if (!target.isHidden) return
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .commit()
+            .hide(activeFragment)
+            .show(target)
+            .commitNow()
+        activeFragment = target
     }
 
     private fun selectTab(selected: String) {
         currentTab = selected
-        setTabStyle(textSales, iconSales, false)
-        setTabStyle(textExpenses, iconExpenses, false)
-        setTabStyle(textHome, iconHome, false)
-        setTabStyle(textStaff, iconStaff, false)
-        setTabStyle(textSettings, iconSettings, false)
+        listOf(textSales to iconSales, textExpenses to iconExpenses, textHome to iconHome,
+            textStaff to iconStaff, textSettings to iconSettings)
+            .forEach { (tv, iv) -> setTabStyle(tv, iv, false) }
 
         when (selected) {
-            "sales" -> {
-                setTabStyle(textSales, iconSales, true)
-                fabVisibility(false)
-            }
-            "expenses" -> {
-                setTabStyle(textExpenses, iconExpenses, true)
-                fabVisibility(false)}
-            "home" -> {
-                setTabStyle(textHome, iconHome, true)
-                fabVisibility(false)
-            }
-            "staff" -> {
-                setTabStyle(textStaff, iconStaff, true)
-                fabVisibility(true)
-            }
-            "settings" -> {
-                setTabStyle(textSettings, iconSettings, true)
-                fabVisibility(true)
-            }
-        }
-
-    }
-
-    private fun fabVisibility(isHidden: Boolean){
-        if (isHidden) {
-            fabNewRecord.visibility = View.GONE
-        }else {
-            fabNewRecord.visibility = View.VISIBLE
+            TAB_SALES     -> { setTabStyle(textSales, iconSales, true);       fabVisibility(false) }
+            TAB_EXPENSES  -> { setTabStyle(textExpenses, iconExpenses, true);  fabVisibility(false) }
+            TAB_HOME      -> { setTabStyle(textHome, iconHome, true);          fabVisibility(false) }
+            TAB_STAFF     -> { setTabStyle(textStaff, iconStaff, true);        fabVisibility(true) }
+            TAB_SETTINGS  -> { setTabStyle(textSettings, iconSettings, true);  fabVisibility(true) }
         }
     }
+
+    private fun fabVisibility(isHidden: Boolean) {
+        fabNewRecord.visibility = if (isHidden) View.GONE else View.VISIBLE
+    }
+
     private fun setTabStyle(text: TextView, icon: ImageView, isSelected: Boolean) {
-        if (isSelected) {
-            text.setTextColor(selectedColor)
-            ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(selectedColor))
-            text.visibility = View.VISIBLE
-        } else {
-            text.setTextColor(unselectedColor)
-            ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(unselectedColor))
-            text.visibility = View.GONE
-        }
+        val color = if (isSelected) selectedColor else unselectedColor
+        text.setTextColor(color)
+        ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(color))
+        text.visibility = if (isSelected) View.VISIBLE else View.GONE
+    }
+
+    private fun fragmentForTab(tab: String): Fragment = when (tab) {
+        TAB_SALES    -> salesFragment
+        TAB_EXPENSES -> expensesFragment
+        TAB_STAFF    -> staffFragment
+        TAB_SETTINGS -> settingsFragment
+        else         -> analyticsFragment
+    }
+
+    companion object {
+        private const val TAB_HOME     = "home"
+        private const val TAB_SALES    = "sales"
+        private const val TAB_EXPENSES = "expenses"
+        private const val TAB_STAFF    = "staff"
+        private const val TAB_SETTINGS = "settings"
+        private const val KEY_ACTIVE_TAB = "active_tab"
     }
 }

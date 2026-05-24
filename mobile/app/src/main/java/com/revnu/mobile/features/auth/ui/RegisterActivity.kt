@@ -1,20 +1,24 @@
 package com.revnu.mobile.features.auth.ui
 
 import android.animation.ObjectAnimator
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.android.material.button.MaterialButton
 import com.revnu.mobile.R
 import com.revnu.mobile.core.network.RetrofitClient
@@ -23,6 +27,8 @@ import com.revnu.mobile.features.auth.model.AuthState
 import com.revnu.mobile.features.auth.model.RegisterRequest
 import com.revnu.mobile.features.auth.repository.AuthRepository
 import com.revnu.mobile.features.auth.viewmodel.AuthViewModel
+import com.revnu.mobile.features.dashboard.ui.DashboardActivity
+import com.revnu.mobile.features.restaurant.ui.RestaurantSetupActivity
 import kotlinx.coroutines.launch
 
 class RegisterActivity : AppCompatActivity() {
@@ -32,10 +38,31 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var etPassword: EditText
     private lateinit var etConfirmPassword: EditText
     private lateinit var btnCreateAccount: MaterialButton
+    private lateinit var btnGoogleSignIn: MaterialButton
     private lateinit var btnAuthBack: ImageButton
 
     private lateinit var sessionManager: SessionManager
     private lateinit var viewModel: AuthViewModel
+    private var isGoogleFlow = false
+
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                val account = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                    .getResult(ApiException::class.java)
+                val idToken = account.idToken
+                if (idToken != null) {
+                    viewModel.loginWithGoogle(idToken)
+                } else {
+                    Toast.makeText(this, "Google sign-in failed: no ID token", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: ApiException) {
+                Toast.makeText(this, "Google sign-in failed: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,6 +97,7 @@ class RegisterActivity : AppCompatActivity() {
         etPassword = findViewById(R.id.etPassword)
         etConfirmPassword = findViewById(R.id.etConfirmPassword)
         btnCreateAccount = findViewById(R.id.btnCreateAccount)
+        btnGoogleSignIn = findViewById(R.id.btnGoogleSignIn)
         btnAuthBack = findViewById(R.id.btnAuthBack)
     }
 
@@ -91,6 +119,11 @@ class RegisterActivity : AppCompatActivity() {
         }
 
 
+        btnGoogleSignIn.setOnClickListener {
+            isGoogleFlow = true
+            launchGoogleSignIn()
+        }
+
         btnAuthBack.setOnClickListener { finish() }
     }
 
@@ -103,12 +136,17 @@ class RegisterActivity : AppCompatActivity() {
                         is AuthState.Loading -> setLoading(true)
                         is AuthState.Success -> {
                             setLoading(false)
-                            Toast.makeText(this@RegisterActivity, "registration successful. please log in.", Toast.LENGTH_SHORT).show()
-
-                            // wipe the token so they are forced to log in
-                            viewModel.logout()
-
-                            startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
+                            if (isGoogleFlow) {
+                                if (state.hasRestaurant) {
+                                    startActivity(Intent(this@RegisterActivity, DashboardActivity::class.java))
+                                } else {
+                                    startActivity(Intent(this@RegisterActivity, RestaurantSetupActivity::class.java))
+                                }
+                            } else {
+                                Toast.makeText(this@RegisterActivity, "Registration successful. Please log in.", Toast.LENGTH_SHORT).show()
+                                viewModel.logout()
+                                startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
+                            }
                             finish()
                         }
                         is AuthState.AdminDetected -> {
@@ -180,8 +218,21 @@ class RegisterActivity : AppCompatActivity() {
         return true
     }
 
+    private fun launchGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.google_web_client_id))
+            .requestEmail()
+            .build()
+        val client = GoogleSignIn.getClient(this, gso)
+        client.signOut().addOnCompleteListener {
+            googleSignInLauncher.launch(client.signInIntent)
+        }
+    }
+
     private fun setLoading(isLoading: Boolean) {
         btnCreateAccount.isEnabled = !isLoading
         btnAuthBack.isEnabled = !isLoading
+        btnGoogleSignIn.isEnabled = !isLoading
+        btnGoogleSignIn.text = if (isLoading) "Signing in..." else "Continue with Google"
     }
 }

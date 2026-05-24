@@ -12,6 +12,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.revnu.mobile.R
+import com.revnu.mobile.BuildConfig
 import com.revnu.mobile.core.config.Constants
 import com.revnu.mobile.core.session.SessionManager
 import com.revnu.mobile.features.expenses.model.ExpenseResponse
@@ -92,7 +93,8 @@ class ExpenseDetailBottomSheet : BottomSheetDialogFragment() {
 
     private fun loadReceiptImage(fileId: String, imageView: ImageView) {
         val token = SessionManager(requireContext()).fetchAccessToken() ?: return
-        val url = "${Constants.BASE_URL}files/$fileId"
+        val baseUrl = if (BuildConfig.DEBUG) Constants.BASE_URL_DEBUG else Constants.BASE_URL_RELEASE
+        val url = "${baseUrl}files/$fileId"
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val client = OkHttpClient()

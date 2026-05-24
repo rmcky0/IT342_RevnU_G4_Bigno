@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">RevnU</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="google_web_client_id">458547423271-g6jgp8t0dftv3p41hphp3hh9qv1mm4ti.apps.googleusercontent.com</string>
 </resources>

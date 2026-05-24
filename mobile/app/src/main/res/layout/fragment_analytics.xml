@@ -347,6 +347,18 @@
                     android:textColor="#F87171"
                     android:textSize="13sp" />
             </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLockEod"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lock EOD"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                app:backgroundTint="#DC2626"
+                app:cornerRadius="10dp"
+                app:elevation="0dp" />
+
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

@@ -16,32 +16,34 @@ class SalesViewModel(
     private val repository: SalesRepository
 ) : ViewModel() {
 
-    // 1. Expose the list of sales directly for the UI to observe
     private val _sales = MutableStateFlow<List<SaleResponse>>(emptyList())
     val sales: StateFlow<List<SaleResponse>> = _sales.asStateFlow()
 
-    // 2. Expose the EOD lock state
     private val _isEodLocked = MutableStateFlow(false)
     val isEodLocked: StateFlow<Boolean> = _isEodLocked.asStateFlow()
 
-    fun loadSales() {
+    private var lastFetchedAt = 0L
+
+    fun loadSales(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && lastFetchedAt > 0 && (now - lastFetchedAt) < CACHE_TTL_MS && _sales.value.isNotEmpty()) return
+
         viewModelScope.launch {
             val result = repository.getTodaySales()
-
             result.fold(
                 onSuccess = { salesList ->
                     _sales.value = salesList
-
-                    // Note: If your backend returns the EOD status when you fetch sales,
-                    // you can automatically update _isEodLocked.value here.
+                    lastFetchedAt = System.currentTimeMillis()
                 },
-                onFailure = { error ->
-                    // For a production app, you might want to expose a SharedFlow to show error toasts.
-                    // For now, it just fails silently or logs the error.
-                    error.printStackTrace()
-                }
+                onFailure = { it.printStackTrace() }
             )
         }
+    }
+
+    fun forceRefresh() = loadSales(force = true)
+
+    companion object {
+        private const val CACHE_TTL_MS = 5 * 60 * 1000L
     }
 
     fun deleteSale(id: String) {

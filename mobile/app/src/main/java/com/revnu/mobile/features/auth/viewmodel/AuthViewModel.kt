@@ -58,6 +58,28 @@ class AuthViewModel(
         }
     }
 
+    fun loginWithGoogle(idToken: String) {
+        _authState.value = AuthState.Loading
+
+        viewModelScope.launch {
+            val result = repository.loginWithGoogle(idToken)
+
+            result.fold(
+                onSuccess = { response ->
+                    if (response.role == "ADMIN") {
+                        repository.logout()
+                        _authState.value = AuthState.AdminDetected
+                    } else {
+                        _authState.value = AuthState.Success(response.role, response.hasRestaurant)
+                    }
+                },
+                onFailure = { error ->
+                    _authState.value = AuthState.Error(error.message ?: "Google sign-in failed")
+                }
+            )
+        }
+    }
+
     fun logout() {
         repository.logout()
     }

@@ -32,6 +32,13 @@ class WelcomeActivity : AppCompatActivity() {
         RetrofitClient.init(this)
         val sessionManager = SessionManager(this)
 
+        // Fire-and-forget ping so Render wakes up before the user reaches the login screen
+        lifecycleScope.launch(Dispatchers.IO) {
+            try { RetrofitClient.apiService.getMe() } catch (_: Exception) {}
+        }
+
+        setupClickListeners()
+
         val savedToken = sessionManager.fetchAccessToken()
         val savedRole = sessionManager.fetchRole()
         if (!savedToken.isNullOrBlank() && savedRole == "RESTAURATEUR") {
@@ -54,13 +61,9 @@ class WelcomeActivity : AppCompatActivity() {
                     finish()
                 } else {
                     sessionManager.clearSession()
-                    setupClickListeners()
                 }
             }
-            return
         }
-
-        setupClickListeners()
     }
 
     private fun setupClickListeners() {

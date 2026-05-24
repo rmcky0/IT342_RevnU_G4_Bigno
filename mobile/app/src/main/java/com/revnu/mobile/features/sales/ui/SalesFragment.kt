@@ -40,7 +40,7 @@ class SalesFragment : Fragment(R.layout.fragment_sales) {
     private val editRecordLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) viewModel.loadSales()
+        if (result.resultCode == Activity.RESULT_OK) viewModel.forceRefresh()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -181,5 +181,9 @@ class SalesFragment : Fragment(R.layout.fragment_sales) {
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Delete") { _, _ -> viewModel.deleteSale(sale.id) }
             .show()
+    }
+
+    fun refresh() {
+        if (::viewModel.isInitialized) viewModel.forceRefresh()
     }
 }

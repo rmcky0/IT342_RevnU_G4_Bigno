@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.revnu.mobile.R
 import com.revnu.mobile.core.network.RetrofitClient
@@ -69,7 +70,8 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
 
         bindViews(view)
         setupRecyclerView()
-        setupObservers()
+        setupListeners(view)
+        setupObservers(view)
 
         viewModel.loadExpenses()
     }
@@ -78,6 +80,12 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
         layoutEmptyState = view.findViewById(R.id.layoutEmptyState)
         rvExpenses = view.findViewById(R.id.rvExpenses)
         tvTotalExpenses = view.findViewById(R.id.tvTotalExpenses)
+    }
+
+    private fun setupListeners(view: View) {
+        view.findViewById<MaterialButton>(R.id.btnLockRecords).setOnClickListener {
+            showLockConfirmation()
+        }
     }
 
     private fun setupRecyclerView() {
@@ -114,7 +122,7 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
         ItemTouchHelper(swipeCallback).attachToRecyclerView(rvExpenses)
     }
 
-    private fun setupObservers() {
+    private fun setupObservers(view: View) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.expenses.collect { expensesList ->
                 val activeExpenses = expensesList.filter { it.status == "OPEN" }
@@ -124,6 +132,31 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
                 tvTotalExpenses.text = "₱${String.format("%.2f", activeExpenses.sumOf { it.amount })}"
             }
         }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.isEodLocked.collect { isLocked ->
+                if (isLocked) {
+                    val btn = view.findViewById<MaterialButton>(R.id.btnLockRecords)
+                    btn?.isEnabled = false
+                    btn?.text = "Locked"
+                    btn?.alpha = 0.5f
+                }
+            }
+        }
+    }
+
+    private fun showLockConfirmation() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Lock End of Day?")
+            .setMessage("Are you absolutely sure you want to lock today's expense records?\n\nYou will NOT be able to add or edit any more expenses for today once locked.")
+            .setCancelable(false)
+            .setPositiveButton("Yes, Lock EOD") { dialog, _ ->
+                viewModel.lockEod()
+                Toast.makeText(requireContext(), "EOD Locked Successfully.", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
     private fun showExpenseDetail(expense: ExpenseResponse) {
@@ -171,5 +204,9 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
         } finally {
             pendingUploadExpenseId = null
         }
+    }
+
+    fun refresh() {
+        if (::viewModel.isInitialized) viewModel.forceRefresh()
     }
 }

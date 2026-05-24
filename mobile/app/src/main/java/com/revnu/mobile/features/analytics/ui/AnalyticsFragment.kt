@@ -11,7 +11,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.revnu.mobile.R
 import com.revnu.mobile.core.network.RetrofitClient
 import com.revnu.mobile.features.analytics.model.DailyAnalyticsResponse
@@ -45,6 +47,7 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
     private lateinit var ivLockIcon: ImageView
     private lateinit var tvEodStatus: TextView
     private lateinit var tvEodSub: TextView
+    private lateinit var btnLockEod: MaterialButton
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -59,6 +62,7 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
 
         bindViews(view)
         setDateHeader()
+        setupListeners()
         observeViewModel()
     }
 
@@ -78,6 +82,22 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
         ivLockIcon       = view.findViewById(R.id.ivLockIcon)
         tvEodStatus      = view.findViewById(R.id.tvEodStatus)
         tvEodSub         = view.findViewById(R.id.tvEodSub)
+        btnLockEod       = view.findViewById(R.id.btnLockEod)
+    }
+
+    private fun setupListeners() {
+        btnLockEod.setOnClickListener {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Lock End of Day?")
+                .setMessage("Are you absolutely sure you want to lock today's records?\n\nYou will NOT be able to add or edit any sales or expenses for today once locked.")
+                .setCancelable(false)
+                .setPositiveButton("Yes, Lock EOD") { dialog, _ ->
+                    viewModel.lockEod()
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+                .show()
+        }
     }
 
     private fun setDateHeader() {
@@ -161,6 +181,7 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
             tvEodStatus.setTextColor(Color.parseColor("#16A34A"))
             tvEodSub.text = "Today's records are finalized"
             tvEodSub.setTextColor(Color.parseColor("#86EFAC"))
+            btnLockEod.visibility = View.GONE
         } else {
             cardEodStatus.setCardBackgroundColor(Color.parseColor("#FEE2E2"))
             ivLockIcon.setColorFilter(Color.parseColor("#EF4444"))
@@ -168,6 +189,7 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
             tvEodStatus.setTextColor(Color.parseColor("#EF4444"))
             tvEodSub.text = "Today's records are still open"
             tvEodSub.setTextColor(Color.parseColor("#FCA5A5"))
+            btnLockEod.visibility = View.VISIBLE
         }
     }
 
