@@ -2,6 +2,7 @@ package com.revnu.mobile.core.network
 
 import android.content.Context
 import android.content.Intent
+import com.revnu.mobile.BuildConfig
 import com.revnu.mobile.core.config.Constants
 import com.revnu.mobile.core.session.SessionManager
 import com.revnu.mobile.features.auth.ui.LoginActivity
@@ -103,14 +104,15 @@ object RetrofitClient {
             .addInterceptor(authInterceptor)
             .addInterceptor(refreshInterceptor)
             .addInterceptor(loggingInterceptor)
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
             .build()
     }
 
     val apiService: ApiService by lazy {
+        val baseUrl = if (BuildConfig.DEBUG) Constants.BASE_URL_DEBUG else Constants.BASE_URL_RELEASE
         Retrofit.Builder()
-            .baseUrl(Constants.BASE_URL)
+            .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

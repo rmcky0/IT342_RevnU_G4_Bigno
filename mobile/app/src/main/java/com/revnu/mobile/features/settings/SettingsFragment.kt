@@ -1,7 +1,9 @@
 package com.revnu.mobile.features.settings
 
+import android.Manifest
 import android.app.TimePickerDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -10,6 +12,8 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
@@ -20,6 +24,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.revnu.mobile.R
+import com.revnu.mobile.BuildConfig
 import com.revnu.mobile.core.config.Constants
 import com.revnu.mobile.core.network.RetrofitClient
 import com.revnu.mobile.core.session.SessionManager
@@ -56,6 +61,26 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var tvUserFullName: TextView
 
     private var currentRestaurantProfile: RestaurantProfileResponse? = null
+    private var cameraLogoFile: File? = null
+
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) launchCamera()
+        else Toast.makeText(requireContext(), "Camera permission is required to take a photo", Toast.LENGTH_SHORT).show()
+    }
+
+    private val cameraLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            cameraLogoFile?.let { file ->
+                val body = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                val part = MultipartBody.Part.createFormData("file", file.name, body)
+                viewModel.uploadLogo(part)
+            }
+        }
+    }
 
     private val logoPickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -94,7 +119,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupClickListeners(view: View) {
-        val logoTap = View.OnClickListener { logoPickerLauncher.launch("image/*") }
+        val logoTap = View.OnClickListener { showLogoSourceDialog() }
         ivRestaurantLogo.setOnClickListener(logoTap)
         view.findViewById<View>(R.id.btnChangeLogo).setOnClickListener(logoTap)
 
@@ -212,7 +237,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun loadLogoFromId(fileId: String) {
-        val url = "${Constants.BASE_URL}files/$fileId"
+        val baseUrl = if (BuildConfig.DEBUG) Constants.BASE_URL_DEBUG else Constants.BASE_URL_RELEASE
+        val url = "${baseUrl}files/$fileId"
         val token = sessionManager.fetchAccessToken() ?: return
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -239,6 +265,39 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         } catch (e: Exception) {
             Toast.makeText(requireContext(), "Failed to process image", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showLogoSourceDialog() {
+        val options = arrayOf("Take Photo", "Choose from Gallery")
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Change Logo")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                            == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            launchCamera()
+                        } else {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
+                    1 -> logoPickerLauncher.launch("image/*")
+                }
+            }
+            .show()
+    }
+
+    private fun launchCamera() {
+        val logosDir = File(requireContext().cacheDir, "logos").also { it.mkdirs() }
+        val file = File(logosDir, "logo_${System.currentTimeMillis()}.jpg")
+        cameraLogoFile = file
+        val uri = FileProvider.getUriForFile(
+            requireContext(),
+            "${requireContext().packageName}.fileprovider",
+            file
+        )
+        cameraLauncher.launch(uri)
     }
 
     private fun confirmLogout() {

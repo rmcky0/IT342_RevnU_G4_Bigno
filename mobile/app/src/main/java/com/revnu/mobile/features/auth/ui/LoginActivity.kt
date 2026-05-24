@@ -1,6 +1,8 @@
 package com.revnu.mobile.features.auth.ui
 
 import android.animation.ObjectAnimator
+import android.util.Log
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
@@ -9,12 +11,16 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.android.material.button.MaterialButton
 import com.revnu.mobile.R
 import com.revnu.mobile.core.network.RetrofitClient
@@ -39,6 +45,31 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
     private lateinit var viewModel: AuthViewModel
+
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        Log.d("GoogleAuth", "resultCode=${result.resultCode}")
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                val account = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                    .getResult(ApiException::class.java)
+                val idToken = account.idToken
+                Log.d("GoogleAuth", "email=${account.email} idToken=${if (idToken != null) "present(${idToken.length} chars)" else "NULL"}")
+                if (idToken != null) {
+                    viewModel.loginWithGoogle(idToken)
+                } else {
+                    Log.e("GoogleAuth", "ID token is null — wrong client ID or requestIdToken not set")
+                    Toast.makeText(this, "Google sign-in failed: no ID token", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: ApiException) {
+                Log.e("GoogleAuth", "ApiException statusCode=${e.statusCode}", e)
+                Toast.makeText(this, "Google sign-in failed: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Log.w("GoogleAuth", "Sign-in cancelled or failed, resultCode=${result.resultCode}")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,7 +125,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btnGoogleSignIn.setOnClickListener {
-            Toast.makeText(this, "Google sign-in coming soon", Toast.LENGTH_SHORT).show()
+            launchGoogleSignIn()
         }
     }
 
@@ -152,6 +183,19 @@ class LoginActivity : AppCompatActivity() {
     private fun setLoading(isLoading: Boolean) {
         btnLogin.isEnabled = !isLoading
         btnBack.isEnabled = !isLoading
+        btnGoogleSignIn.isEnabled = !isLoading
+        btnGoogleSignIn.text = if (isLoading) "Signing in..." else "Google"
+    }
+
+    private fun launchGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.google_web_client_id))
+            .requestEmail()
+            .build()
+        val client = GoogleSignIn.getClient(this, gso)
+        client.signOut().addOnCompleteListener {
+            googleSignInLauncher.launch(client.signInIntent)
+        }
     }
 
     private fun showAdminRedirect() {

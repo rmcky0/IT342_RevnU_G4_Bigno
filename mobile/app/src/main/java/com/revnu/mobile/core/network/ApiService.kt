@@ -3,6 +3,7 @@ package com.revnu.mobile.core.network
 import com.revnu.mobile.features.analytics.model.DailyAnalyticsResponse
 import com.revnu.mobile.features.auth.model.AuthResponse
 import com.revnu.mobile.features.categories.model.CategoryResponse
+import com.revnu.mobile.features.auth.model.GoogleAuthRequest
 import com.revnu.mobile.features.auth.model.LoginRequest
 import com.revnu.mobile.features.auth.model.RegisterRequest
 import com.revnu.mobile.features.expenses.model.ExpenseRequest
@@ -49,6 +50,9 @@ interface ApiService {
 
     @POST("auth/reset-password")
     suspend fun resetPassword(@Body request: Map<String, String>): Response<ApiResponse<Any>>
+
+    @POST("auth/google")
+    suspend fun googleAuth(@Body request: GoogleAuthRequest): Response<ApiResponse<AuthResponse>>
 
     @POST("auth/link-google")
     suspend fun linkGoogle(@Body request: Map<String, String>): Response<ApiResponse<Any>>

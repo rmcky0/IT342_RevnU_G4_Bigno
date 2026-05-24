@@ -14,10 +14,24 @@ class StaffViewModel(private val repository: StaffRepository) : ViewModel() {
     private val _staffList = MutableStateFlow<List<StaffResponse>>(emptyList())
     val staffList: StateFlow<List<StaffResponse>> = _staffList.asStateFlow()
 
-    fun loadStaff() {
+    private var lastFetchedAt = 0L
+
+    fun loadStaff(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && lastFetchedAt > 0 && (now - lastFetchedAt) < CACHE_TTL_MS && _staffList.value.isNotEmpty()) return
+
         viewModelScope.launch {
-            repository.getAllStaff().onSuccess { _staffList.value = it }
+            repository.getAllStaff().onSuccess {
+                _staffList.value = it
+                lastFetchedAt = System.currentTimeMillis()
+            }
         }
+    }
+
+    fun forceRefresh() = loadStaff(force = true)
+
+    companion object {
+        private const val CACHE_TTL_MS = 5 * 60 * 1000L
     }
 
     fun addStaff(request: StaffRequest) {

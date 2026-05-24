@@ -8,30 +8,35 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class AnalyticsViewModel(private val repository: AnalyticsRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
+    private var lastFetchedAt = 0L
+
     init {
         loadAnalytics()
     }
 
-    fun loadAnalytics() {
+    fun loadAnalytics(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && lastFetchedAt > 0 && (now - lastFetchedAt) < CACHE_TTL_MS && _uiState.value is UiState.Success) return
+
         viewModelScope.launch {
             _uiState.value = UiState.Loading
             try {
                 val response = repository.getDailyAnalytics()
 
                 if (response.isSuccessful && response.body() != null) {
-                    val apiResponse = response.body()!!
-
-                    // Since your backend wraps data in a "data" field
-                    val data = apiResponse.data
-
+                    val data = response.body()!!.data
                     if (data != null) {
                         _uiState.value = UiState.Success(data)
+                        lastFetchedAt = System.currentTimeMillis()
                     } else {
                         _uiState.value = UiState.Error("No data available for today.")
                     }
@@ -42,6 +47,22 @@ class AnalyticsViewModel(private val repository: AnalyticsRepository) : ViewMode
                 _uiState.value = UiState.Error("Connection failed. Check your internet.")
             }
         }
+    }
+
+    fun forceRefresh() = loadAnalytics(force = true)
+
+    fun lockEod() {
+        viewModelScope.launch {
+            val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            repository.closeDay(date).onSuccess {
+                // Refresh analytics so the EOD card updates to locked state
+                forceRefresh()
+            }
+        }
+    }
+
+    companion object {
+        private const val CACHE_TTL_MS = 5 * 60 * 1000L
     }
 
     sealed class UiState {
