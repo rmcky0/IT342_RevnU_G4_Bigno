@@ -93,6 +93,12 @@ public class AuthService {
             throw new SecurityException("Account is suspended.");
         }
 
+        if ("google".equals(user.getProvider()) &&
+                (user.getPasswordHash() == null || user.getPasswordHash().isBlank())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "This account uses Google Sign-In. Please use the 'Continue with Google' button to sign in.");
+        }
+
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
@@ -129,7 +135,7 @@ public class AuthService {
         }
 
         if (user.getOauthId() == null) {
-            throw new IllegalArgumentException("existing_account_requires_link");
+            throw new IllegalArgumentException("use_email_password");
         }
 
         if (user.getStatus() == AccountStatus.SUSPENDED) {
@@ -287,7 +293,8 @@ public class AuthService {
             notificationService.notifyAdminsUserRegistered(user);
             emailService.sendWelcomeEmail(user.getEmail(), user.getFullname());
         } else if (user.getOauthId() == null) {
-            throw new IllegalArgumentException("existing_account_requires_link");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This email is already registered with email and password. Please sign in with your email and password instead.");
         }
 
         if (user.getStatus() == AccountStatus.SUSPENDED) {

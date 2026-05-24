@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-        } else if ("/revnu/notifications/stream".equals(request.getRequestURI())) {
+        } else if (request.getRequestURI().endsWith("/notifications/stream")) {
             String queryToken = request.getParameter("token");
             if (queryToken != null && !queryToken.isBlank()) {
                 token = queryToken;

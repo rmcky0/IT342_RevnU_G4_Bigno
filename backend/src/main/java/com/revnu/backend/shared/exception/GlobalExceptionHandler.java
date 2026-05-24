@@ -5,7 +5,10 @@ import java.util.logging.Logger;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -94,6 +97,25 @@ public class GlobalExceptionHandler {
         ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
 
         return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse> handleValidation(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .findFirst()
+                .orElse("Validation failed");
+        ErrorDetail detail = new ErrorDetail("VALID-001", "Validation failed", message);
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        ErrorDetail detail = new ErrorDetail("AUTH-003", "Insufficient permissions",
+                "You don't have permission to perform this action.");
+        ApiResponse response = new ApiResponse(false, null, detail, getCurrentTimestamp());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     @ExceptionHandler(Exception.class)

@@ -27,7 +27,7 @@ import com.revnu.backend.shared.util.ResponseUtil;
 
 @RestController
 @RequestMapping("/revnu/notifications")
-@PreAuthorize("hasRole('RESTAURATEUR')")
+@PreAuthorize("isAuthenticated()")
 public class NotificationController {
 
     private final NotificationService notificationService;

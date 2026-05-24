@@ -60,15 +60,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         } catch (SecurityException ex) {
             response.sendRedirect(frontendUrl + "/suspended");
         } catch (IllegalArgumentException ex) {
-            if ("existing_account_requires_link".equals(ex.getMessage())) {
+            if ("use_email_password".equals(ex.getMessage())) {
                 String email = oAuth2User.getAttribute("email");
-                String googleId = oAuth2User.getAttribute("sub");
                 String encodedEmail = URLEncoder.encode(email != null ? email : "", StandardCharsets.UTF_8);
-                String encodedGoogleId = URLEncoder.encode(googleId != null ? googleId : "", StandardCharsets.UTF_8);
-
-                response.sendRedirect(frontendUrl
-                        + "/auth/link-google?email=" + encodedEmail
-                        + "&googleId=" + encodedGoogleId);
+                response.sendRedirect(frontendUrl + "/login?info=email_exists&hint=" + encodedEmail);
             } else {
                 String encodedMessage = URLEncoder.encode(ex.getMessage(), StandardCharsets.UTF_8);
                 response.sendRedirect(frontendUrl + "/auth/callback?error=" + encodedMessage);
