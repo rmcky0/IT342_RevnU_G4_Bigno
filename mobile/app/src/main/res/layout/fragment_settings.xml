@@ -12,7 +12,7 @@
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
         android:paddingTop="32dp"
-        android:paddingBottom="100dp">
+        android:paddingBottom="120dp">
 
         <!-- Page title -->
         <TextView

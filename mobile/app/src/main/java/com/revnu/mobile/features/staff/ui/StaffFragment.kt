@@ -16,8 +16,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.tabs.TabLayout
 import com.revnu.mobile.R
 import com.revnu.mobile.core.network.RetrofitClient
@@ -42,7 +42,11 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
 
     private lateinit var tabLayout: TabLayout
     private lateinit var recyclerView: RecyclerView
-    private lateinit var fabAdd: FloatingActionButton
+    private lateinit var fabAdd: ImageButton
+
+    private lateinit var cardDirectorySummary: MaterialCardView
+    private lateinit var tvStaffCount: TextView
+    private lateinit var tvSectionLabel: TextView
 
     private lateinit var payrollHeader: View
     private lateinit var tvCurrentMonth: TextView
@@ -50,6 +54,9 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
     private lateinit var tvPayrollCount: TextView
     private lateinit var btnPrevMonth: ImageButton
     private lateinit var btnNextMonth: ImageButton
+
+    private lateinit var layoutEmptyDirectory: View
+    private lateinit var layoutEmptyPayroll: View
 
     private var isDirectoryTab = true
 
@@ -85,12 +92,20 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
         tabLayout = view.findViewById(R.id.tabLayoutStaff)
         recyclerView = view.findViewById(R.id.rvSharedStaff)
         fabAdd = view.findViewById(R.id.fabAddStaffRecord)
+
+        cardDirectorySummary = view.findViewById(R.id.cardDirectorySummary)
+        tvStaffCount = view.findViewById(R.id.tvStaffCount)
+        tvSectionLabel = view.findViewById(R.id.tvSectionLabel)
+
         payrollHeader = view.findViewById(R.id.payrollHeader)
         tvCurrentMonth = view.findViewById(R.id.tvCurrentMonth)
         tvTotalPayroll = view.findViewById(R.id.tvTotalPayroll)
         tvPayrollCount = view.findViewById(R.id.tvPayrollCount)
         btnPrevMonth = view.findViewById(R.id.btnPrevMonth)
         btnNextMonth = view.findViewById(R.id.btnNextMonth)
+
+        layoutEmptyDirectory = view.findViewById(R.id.layoutEmptyDirectory)
+        layoutEmptyPayroll = view.findViewById(R.id.layoutEmptyPayroll)
     }
 
     private fun setupAdapters() {
@@ -153,8 +168,7 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 isDirectoryTab = (tab?.position == 0)
-                recyclerView.adapter = if (isDirectoryTab) staffAdapter else salaryAdapter
-                payrollHeader.visibility = if (isDirectoryTab) View.GONE else View.VISIBLE
+                switchTab()
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
@@ -169,6 +183,26 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
         btnNextMonth.setOnClickListener { shiftMonth(1) }
     }
 
+    private fun switchTab() {
+        if (isDirectoryTab) {
+            recyclerView.adapter = staffAdapter
+            cardDirectorySummary.visibility = View.VISIBLE
+            payrollHeader.visibility = View.GONE
+            tvSectionLabel.text = "Team Members"
+            val list = staffViewModel.staffList.value
+            updateDirectoryEmpty(list.isEmpty())
+            layoutEmptyPayroll.visibility = View.GONE
+        } else {
+            recyclerView.adapter = salaryAdapter
+            cardDirectorySummary.visibility = View.GONE
+            payrollHeader.visibility = View.VISIBLE
+            tvSectionLabel.text = "Salary Records"
+            val list = salaryViewModel.filteredPayroll.value
+            updatePayrollEmpty(list.isEmpty())
+            layoutEmptyDirectory.visibility = View.GONE
+        }
+    }
+
     private fun shiftMonth(delta: Int) {
         val current = salaryViewModel.currentFilterMonth.value
         val sdf = SimpleDateFormat("yyyy-MM", Locale.getDefault())
@@ -180,17 +214,33 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
         salaryViewModel.setMonthFilter(sdf.format(cal.time))
     }
 
+    private fun updateDirectoryEmpty(isEmpty: Boolean) {
+        layoutEmptyDirectory.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        recyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+    }
+
+    private fun updatePayrollEmpty(isEmpty: Boolean) {
+        layoutEmptyPayroll.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        recyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+    }
+
     private fun setupObservers() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch { staffViewModel.staffList.collect { staffAdapter.submitList(it) } }
+                launch {
+                    staffViewModel.staffList.collect { list ->
+                        staffAdapter.submitList(list)
+                        tvStaffCount.text = list.size.toString()
+                        if (isDirectoryTab) updateDirectoryEmpty(list.isEmpty())
+                    }
+                }
 
                 launch {
                     salaryViewModel.filteredPayroll.collect { list ->
                         salaryAdapter.submitList(list)
-                        val total = list.sumOf { it.amount }
-                        tvTotalPayroll.text = "₱${String.format("%,.2f", total)}"
+                        tvTotalPayroll.text = "₱${String.format("%,.2f", list.sumOf { it.amount })}"
                         tvPayrollCount.text = list.size.toString()
+                        if (!isDirectoryTab) updatePayrollEmpty(list.isEmpty())
                     }
                 }
 
@@ -211,9 +261,7 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
         } catch (_: Exception) { yearMonth }
     }
 
-    // ==========================================
-    // STAFF ACTIONS
-    // ==========================================
+    // ── Staff actions ──────────────────────────────────────────────────────────
 
     private fun showStaffDetail(staff: StaffResponse) {
         val sheet = StaffDetailBottomSheet.newInstance(staff)
@@ -239,9 +287,7 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
         sheet.show(childFragmentManager, "staff_form")
     }
 
-    // ==========================================
-    // SALARY ACTIONS
-    // ==========================================
+    // ── Salary actions ─────────────────────────────────────────────────────────
 
     private fun showSalaryDetail(salary: SalaryResponse) {
         val sheet = SalaryDetailBottomSheet.newInstance(salary)

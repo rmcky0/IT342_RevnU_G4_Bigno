@@ -46,6 +46,7 @@ class AddRecordActivity : AppCompatActivity() {
         const val EXTRA_DESCRIPTION = "record_desc"
         const val EXTRA_CATEGORY_ID = "record_category_id"
         const val EXTRA_CATEGORY_NAME = "record_category_name"
+        const val EXTRA_START_TAB = "start_tab"
     }
 
     private lateinit var mainBackground: ConstraintLayout
@@ -108,6 +109,10 @@ class AddRecordActivity : AppCompatActivity() {
 
         bindViews()
         checkEditMode()
+        if (!isEditMode && intent.getStringExtra(EXTRA_START_TAB) == "expense") {
+            isSaleMode = false
+            tabLayout.getTabAt(1)?.select()
+        }
         setupKeypad()
         setupListeners()
         observeViewModel()

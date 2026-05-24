@@ -1,6 +1,7 @@
 package com.revnu.mobile.core.ui
 
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.net.Uri
 import android.os.Bundle
 import android.widget.ImageView
@@ -8,6 +9,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.revnu.mobile.R
+import com.revnu.mobile.core.config.Constants
 import com.revnu.mobile.core.session.SessionManager
 import com.revnu.mobile.features.auth.ui.LoginActivity
 
@@ -15,7 +17,6 @@ class WebRedirectActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_IS_ADMIN_LOGIN = "extra_is_admin_login"
-        const val WEB_APP_URL = "https://revnu.vercel.app" // Replace with your actual URL
     }
 
     private lateinit var tvTitle: TextView
@@ -26,6 +27,13 @@ class WebRedirectActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
     private var isAdminLogin: Boolean = false
+
+    private val webAppUrl: String
+        get() = if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            Constants.WEB_APP_URL_DEBUG
+        } else {
+            Constants.WEB_APP_URL_RELEASE
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,28 +63,23 @@ class WebRedirectActivity : AppCompatActivity() {
             tvMessage.text = "The mobile application is designed exclusively for Restaurateur floor operations (Sales & Expenses). Please log in to the web application to manage users and view platform analytics."
             btnClose.text = "Back to Login"
 
-            // Note: In AuthViewModel we already cleared the token,
-            // but you could also call sessionManager.clearSession() here to be perfectly safe.
-        } else {
+            } else {
             tvTitle.text = "Switch to Web"
             tvMessage.text = "Configuration, Settings, and deep Analytics are managed on the Web Application. Please visit the portal on your computer or browser."
             btnClose.text = "Return to Dashboard"
         }
 
-        // TODO: Load your actual QR code drawable here
-        // ivQrCode.setImageResource(R.drawable.your_qr_code_image)
+        ivQrCode.setImageResource(R.drawable.revnu_qr_code)
     }
 
     private fun setupListeners() {
-        // Opens the device's default web browser (Chrome, Samsung Internet, etc.)
         btnOpenBrowser.setOnClickListener {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(WEB_APP_URL))
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(webAppUrl))
             startActivity(browserIntent)
         }
 
         btnClose.setOnClickListener {
             if (isAdminLogin) {
-                // If it was an admin login attempt, send them back to the Login screen
                 val intent = Intent(this, LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)

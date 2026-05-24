@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 
 class RestaurantSetupViewModel(
     private val repository: RestaurantRepository
@@ -17,7 +18,7 @@ class RestaurantSetupViewModel(
     private val _setupState = MutableStateFlow<RestaurantSetupState>(RestaurantSetupState.Idle)
     val setupState: StateFlow<RestaurantSetupState> = _setupState.asStateFlow()
 
-    fun completeSetup(name: String, location: String, opening: String, closing: String) {
+    fun completeSetup(name: String, location: String, opening: String, closing: String, logo: MultipartBody.Part? = null) {
         _setupState.value = RestaurantSetupState.Loading
 
         viewModelScope.launch {
@@ -28,7 +29,7 @@ class RestaurantSetupViewModel(
                 closingHrs = closing
             )
 
-            val result = repository.setupRestaurant(request)
+            val result = repository.setupRestaurant(request, logo)
 
             result.fold(
                 onSuccess = {

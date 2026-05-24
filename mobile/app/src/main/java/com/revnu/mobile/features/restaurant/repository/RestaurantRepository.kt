@@ -6,17 +6,18 @@ import com.revnu.mobile.features.restaurant.model.RestaurantSetupRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class RestaurantRepository(
     private val apiService: ApiService
 ) {
-    suspend fun setupRestaurant(request: RestaurantSetupRequest): Result<Unit> {
+    suspend fun setupRestaurant(request: RestaurantSetupRequest, logo: MultipartBody.Part? = null): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 val json = Gson().toJson(request)
                 val dataPart = json.toRequestBody("application/json".toMediaType())
-                val response = apiService.setupRestaurant(data = dataPart, logo = null)
+                val response = apiService.setupRestaurant(data = dataPart, logo = logo)
 
                 if (response.isSuccessful && response.body()?.success == true) {
                     Result.success(Unit)

@@ -3,82 +3,178 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet"
     android:orientation="vertical"
     android:paddingBottom="32dp">
 
     <View
-        android:layout_width="40dp"
-        android:layout_height="4dp"
+        android:layout_width="48dp"
+        android:layout_height="5dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="12dp"
-        android:layout_marginBottom="24dp"
-        android:background="#E5E7EB" />
+        android:background="@drawable/bg_drag_handle" />
 
+    <!-- Hero amount -->
     <TextView
         android:id="@+id/tvExpDetailAmount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginBottom="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/prompt_bold"
+        android:letterSpacing="-0.02"
         android:text="₱0.00"
         android:textColor="#EF4444"
-        android:textSize="36sp"
-        android:textStyle="bold" />
+        android:textSize="40sp" />
 
-    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F3F4F6" android:layout_marginBottom="8dp"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="24dp"
+        android:fontFamily="@font/ubuntu"
+        android:letterSpacing="0.06"
+        android:text="EXPENSE AMOUNT"
+        android:textColor="#FCA5A5"
+        android:textSize="11sp" />
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingHorizontal="24dp" android:paddingVertical="14dp">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="Category" android:textColor="#9CA3AF" android:textSize="14sp" />
-        <TextView android:id="@+id/tvExpDetailCategory" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="—"
-            android:textColor="#111243" android:textSize="14sp" android:textStyle="bold" />
-    </LinearLayout>
+    <!-- Details card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="20dp"
+        app:cardBackgroundColor="#F8FAFC"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#E2E8F0"
+        app:strokeWidth="1dp">
 
-    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F3F4F6" android:layout_marginHorizontal="24dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingHorizontal="24dp" android:paddingVertical="14dp">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="Date" android:textColor="#9CA3AF" android:textSize="14sp" />
-        <TextView android:id="@+id/tvExpDetailDate" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="—"
-            android:textColor="#111243" android:textSize="14sp" android:textStyle="bold" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/ubuntu"
+                    android:text="Category"
+                    android:textColor="#9CA3AF"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvExpDetailCategory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ubuntu_bold"
+                    android:text="—"
+                    android:textColor="#0F172A"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
-    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F3F4F6" android:layout_marginHorizontal="24dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E2E8F0" android:layout_marginHorizontal="20dp" />
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingHorizontal="24dp" android:paddingVertical="14dp">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="Notes" android:textColor="#9CA3AF" android:textSize="14sp" />
-        <TextView android:id="@+id/tvExpDetailNotes" android:layout_width="0dp"
-            android:layout_height="wrap_content" android:layout_weight="2"
-            android:gravity="end" android:text="—"
-            android:textColor="#6B7280" android:textSize="14sp" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/ubuntu"
+                    android:text="Date"
+                    android:textColor="#9CA3AF"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvExpDetailDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ubuntu_bold"
+                    android:text="—"
+                    android:textColor="#0F172A"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
-    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F3F4F6" android:layout_marginHorizontal="24dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E2E8F0" android:layout_marginHorizontal="20dp" />
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingHorizontal="24dp" android:paddingVertical="14dp">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="Receipt" android:textColor="#9CA3AF" android:textSize="14sp" />
-        <TextView android:id="@+id/tvExpDetailReceipt" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="None"
-            android:textColor="#6B7280" android:textSize="14sp" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/ubuntu"
+                    android:text="Notes"
+                    android:textColor="#9CA3AF"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvExpDetailNotes"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:fontFamily="@font/ubuntu"
+                    android:gravity="end"
+                    android:text="—"
+                    android:textColor="#64748B"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
-    <!-- Receipt image thumbnail (visible only when fileId present) -->
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E2E8F0" android:layout_marginHorizontal="20dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/ubuntu"
+                    android:text="Receipt"
+                    android:textColor="#9CA3AF"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvExpDetailReceipt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ubuntu"
+                    android:text="None"
+                    android:textColor="#64748B"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Receipt image thumbnail -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardReceiptImage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginBottom="12dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="20dp"
         android:visibility="gone"
-        app:cardCornerRadius="12dp"
+        app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
         app:strokeColor="#E2E8F0"
         app:strokeWidth="1dp">
@@ -90,8 +186,12 @@
             android:scaleType="centerCrop" />
     </com.google.android.material.card.MaterialCardView>
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingHorizontal="24dp" android:paddingTop="16dp">
+    <!-- Action buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnExpDetailEdit"
@@ -100,12 +200,12 @@
             android:layout_height="52dp"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
+            android:fontFamily="@font/ubuntu_bold"
             android:text="Edit"
             android:textAllCaps="false"
             android:textColor="#EF4444"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="14dp"
+            android:textSize="15sp"
+            app:cornerRadius="16dp"
             app:strokeColor="#EF4444"
             app:strokeWidth="1.5dp" />
 
@@ -114,12 +214,13 @@
             android:layout_width="0dp"
             android:layout_height="52dp"
             android:layout_weight="1"
+            android:fontFamily="@font/ubuntu_bold"
             android:text="Close"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
+            android:textSize="15sp"
             app:backgroundTint="#EF4444"
-            app:cornerRadius="14dp" />
+            app:cornerRadius="16dp"
+            app:elevation="0dp" />
     </LinearLayout>
 </LinearLayout>

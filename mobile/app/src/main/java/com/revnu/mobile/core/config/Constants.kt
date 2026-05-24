@@ -1,8 +1,9 @@
 package com.revnu.mobile.core.config
 
 object Constants {
-    // 10.0.2.2 points to your laptop's localhost from the Android emulator
     const val BASE_URL = "http://10.0.2.2:8080/api/v1/revnu/"
+    const val WEB_APP_URL_DEBUG = "http://10.0.2.2:5173/login"
+    const val WEB_APP_URL_RELEASE = "https://revnu-bigno.vercel.app/login"
 
     const val PREFS_NAME = "RevnU_Preferences"
     const val KEY_TOKEN = "access_token"

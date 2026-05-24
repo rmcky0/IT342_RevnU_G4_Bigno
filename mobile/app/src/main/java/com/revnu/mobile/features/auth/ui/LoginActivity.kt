@@ -1,8 +1,10 @@
 package com.revnu.mobile.features.auth.ui
 
+import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
@@ -24,9 +26,7 @@ import com.revnu.mobile.features.auth.viewmodel.AuthViewModel
 import com.revnu.mobile.features.restaurant.ui.RestaurantSetupActivity
 import com.revnu.mobile.core.ui.WebRedirectActivity
 import com.revnu.mobile.features.dashboard.ui.DashboardActivity
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class LoginActivity : AppCompatActivity() {
 
@@ -43,7 +43,13 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-
+        val glassCard = findViewById<View>(R.id.bgGlassCard)
+        ObjectAnimator.ofFloat(glassCard, "translationY", 0f, -30f).apply {
+            duration = 4000 // 4 seconds up, 4 seconds down (8s total like your JSX)
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+            start()
+        }
         RetrofitClient.init(this)
         sessionManager = SessionManager(this)
 
@@ -55,35 +61,6 @@ class LoginActivity : AppCompatActivity() {
             }
         }
         viewModel = ViewModelProvider(this, factory)[AuthViewModel::class.java]
-
-        val savedToken = sessionManager.fetchAccessToken()
-        val savedRole = sessionManager.fetchRole()
-        if (!savedToken.isNullOrBlank() && savedRole == "RESTAURATEUR") {
-            lifecycleScope.launch {
-                val valid = withContext(Dispatchers.IO) {
-                    try {
-                        val response = RetrofitClient.apiService.getMe()
-                        response.isSuccessful && response.body()?.success == true
-                    } catch (e: Exception) {
-                        false
-                    }
-                }
-                if (valid) {
-                    if (sessionManager.fetchHasRestaurant()) {
-                        routeToDashboard()
-                    } else {
-                        startActivity(Intent(this@LoginActivity, RestaurantSetupActivity::class.java))
-                        finish()
-                    }
-                } else {
-                    sessionManager.clearSession()
-                    bindViews()
-                    setupListeners()
-                    observeViewModel()
-                }
-            }
-            return
-        }
 
         bindViews()
         setupListeners()
@@ -175,12 +152,6 @@ class LoginActivity : AppCompatActivity() {
     private fun setLoading(isLoading: Boolean) {
         btnLogin.isEnabled = !isLoading
         btnBack.isEnabled = !isLoading
-    }
-
-    private fun routeToDashboard() {
-        val intent = Intent(this, DashboardActivity::class.java)
-        startActivity(intent)
-        finish()
     }
 
     private fun showAdminRedirect() {

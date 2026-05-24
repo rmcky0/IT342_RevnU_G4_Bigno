@@ -1,8 +1,10 @@
 package com.revnu.mobile.features.auth.ui
 
+import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
@@ -38,7 +40,13 @@ class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
-
+        val glassCard = findViewById<View>(R.id.bgGlassCard)
+        ObjectAnimator.ofFloat(glassCard, "translationY", 0f, -30f).apply {
+            duration = 4000 // 4 seconds up, 4 seconds down (8s total like your JSX)
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+            start()
+        }
         RetrofitClient.init(this)
         sessionManager = SessionManager(this)
 
@@ -145,8 +153,8 @@ class RegisterActivity : AppCompatActivity() {
             etPassword.requestFocus()
             return false
         }
-        if (password.length < 8) {
-            etPassword.error = "Password must be at least 8 characters"
+        if (!isPasswordStrong(password)) {
+            etPassword.error = "Must be 8+ chars with uppercase, lowercase, number, and special character"
             etPassword.requestFocus()
             return false
         }
@@ -160,6 +168,15 @@ class RegisterActivity : AppCompatActivity() {
             etConfirmPassword.requestFocus()
             return false
         }
+        return true
+    }
+
+    private fun isPasswordStrong(password: String): Boolean {
+        if (password.length < 8) return false
+        if (!password.any { it.isUpperCase() }) return false
+        if (!password.any { it.isLowerCase() }) return false
+        if (!password.any { it.isDigit() }) return false
+        if (!password.any { !it.isLetterOrDigit() }) return false
         return true
     }
 

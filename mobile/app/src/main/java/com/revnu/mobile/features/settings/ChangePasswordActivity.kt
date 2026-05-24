@@ -66,10 +66,22 @@ class ChangePasswordActivity : AppCompatActivity() {
             val confirm = etConfirm.text.toString().trim()
 
             if (current.isEmpty()) { etCurrent.error = "Required"; return@setOnClickListener }
-            if (newPwd.length < 8) { etNew.error = "Minimum 8 characters"; return@setOnClickListener }
+            if (!isPasswordStrong(newPwd)) {
+                etNew.error = "Must be 8+ chars with uppercase, lowercase, number, and special character"
+                return@setOnClickListener
+            }
             if (newPwd != confirm) { etConfirm.error = "Passwords do not match"; return@setOnClickListener }
 
             viewModel.changePassword(current, newPwd)
         }
+    }
+
+    private fun isPasswordStrong(password: String): Boolean {
+        if (password.length < 8) return false
+        if (!password.any { it.isUpperCase() }) return false
+        if (!password.any { it.isLowerCase() }) return false
+        if (!password.any { it.isDigit() }) return false
+        if (!password.any { !it.isLetterOrDigit() }) return false
+        return true
     }
 }

@@ -4,91 +4,158 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet"
     android:orientation="vertical"
     android:paddingBottom="32dp">
 
     <View
-        android:layout_width="40dp"
-        android:layout_height="4dp"
+        android:layout_width="48dp"
+        android:layout_height="5dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="12dp"
-        android:layout_marginBottom="24dp"
-        android:background="#E5E7EB" />
+        android:background="@drawable/bg_drag_handle" />
 
+    <!-- Avatar + name header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         android:paddingHorizontal="24dp"
-        android:paddingBottom="24dp">
+        android:paddingTop="24dp"
+        android:paddingBottom="20dp">
 
         <TextView
             android:id="@+id/tvPayDetailAvatar"
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:gravity="center"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="#818CF8"
             android:background="@drawable/bg_avatar_indigo_lg"
-            android:text="A" />
+            android:fontFamily="@font/prompt_bold"
+            android:gravity="center"
+            android:text="A"
+            android:textColor="#818CF8"
+            android:textSize="28sp" />
 
         <TextView
             android:id="@+id/tvPayDetailName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:fontFamily="@font/prompt_bold"
+            android:letterSpacing="-0.01"
             android:text="Name"
-            android:textColor="#111243"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textColor="#0F172A"
+            android:textSize="22sp" />
     </LinearLayout>
 
-    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F3F4F6" android:layout_marginBottom="8dp"/>
+    <!-- Details card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="20dp"
+        app:cardBackgroundColor="#F8FAFC"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#E2E8F0"
+        app:strokeWidth="1dp">
 
-    <!-- Payment Date -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingHorizontal="24dp" android:paddingVertical="14dp">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="Payment Date" android:textColor="#9CA3AF" android:textSize="14sp" />
-        <TextView android:id="@+id/tvPayDetailDate" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="—"
-            android:textColor="#111243" android:textSize="14sp" android:textStyle="bold" />
-    </LinearLayout>
-
-    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F3F4F6" android:layout_marginHorizontal="24dp"/>
-
-    <!-- Status -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingHorizontal="24dp" android:paddingVertical="14dp">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="Status" android:textColor="#9CA3AF" android:textSize="14sp" />
-        <TextView android:id="@+id/tvPayDetailStatus" android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_green_soft"
-            android:paddingHorizontal="12dp" android:paddingVertical="4dp"
-            android:text="OPEN" android:textColor="#059669" android:textSize="12sp" android:textStyle="bold" />
-    </LinearLayout>
+            android:orientation="vertical">
 
-    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F3F4F6" android:layout_marginHorizontal="24dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/ubuntu"
+                    android:text="Payment Date"
+                    android:textColor="#9CA3AF"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvPayDetailDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/ubuntu_bold"
+                    android:text="—"
+                    android:textColor="#0F172A"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
-    <!-- Amount -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingHorizontal="24dp" android:paddingVertical="14dp">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="Amount" android:textColor="#9CA3AF" android:textSize="14sp" />
-        <TextView android:id="@+id/tvPayDetailAmount" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="₱0.00"
-            android:textColor="#111243" android:textSize="18sp" android:textStyle="bold" />
-    </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E2E8F0" android:layout_marginHorizontal="20dp" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/ubuntu"
+                    android:text="Status"
+                    android:textColor="#9CA3AF"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvPayDetailStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_green_soft"
+                    android:fontFamily="@font/ubuntu_bold"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:text="OPEN"
+                    android:textColor="#059669"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E2E8F0" android:layout_marginHorizontal="20dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/ubuntu"
+                    android:text="Amount"
+                    android:textColor="#9CA3AF"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvPayDetailAmount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/prompt_bold"
+                    android:letterSpacing="-0.01"
+                    android:text="₱0.00"
+                    android:textColor="#6366F1"
+                    android:textSize="20sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Action buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="16dp">
+        android:paddingHorizontal="20dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnPayDetailEdit"
@@ -97,14 +164,14 @@
             android:layout_height="52dp"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
+            android:fontFamily="@font/ubuntu_bold"
             android:text="Edit"
             android:textAllCaps="false"
-            android:textColor="#818CF8"
-            android:textSize="16sp"
-            android:textStyle="bold"
+            android:textColor="#6366F1"
+            android:textSize="15sp"
             android:visibility="gone"
-            app:cornerRadius="14dp"
-            app:strokeColor="#818CF8"
+            app:cornerRadius="16dp"
+            app:strokeColor="#6366F1"
             app:strokeWidth="1.5dp" />
 
         <com.google.android.material.button.MaterialButton
@@ -112,12 +179,13 @@
             android:layout_width="0dp"
             android:layout_height="52dp"
             android:layout_weight="1"
+            android:fontFamily="@font/ubuntu_bold"
             android:text="Close"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:backgroundTint="#818CF8"
-            app:cornerRadius="14dp" />
+            android:textSize="15sp"
+            app:backgroundTint="#6366F1"
+            app:cornerRadius="16dp"
+            app:elevation="0dp" />
     </LinearLayout>
 </LinearLayout>

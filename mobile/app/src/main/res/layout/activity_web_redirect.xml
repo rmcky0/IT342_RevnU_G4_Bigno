@@ -37,9 +37,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:fontFamily="@font/prompt_bold"
+            android:gravity="center"
             android:text="Web Required"
             android:textColor="#0F172A"
-            android:textSize="26sp" />
+            android:textSize="32sp" />
 
         <TextView
             android:id="@+id/tvRedirectMessage"

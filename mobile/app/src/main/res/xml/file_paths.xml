@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <cache-path name="receipt_photos" path="receipts/" />
+    <cache-path name="logo_photos" path="logos/" />
 </paths>

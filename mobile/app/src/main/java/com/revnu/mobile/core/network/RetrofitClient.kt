@@ -37,7 +37,12 @@ object RetrofitClient {
         val request = chain.request()
         val response = chain.proceed(request)
 
-        if (response.code == 401 && ::sessionManager.isInitialized) {
+        val path = request.url.encodedPath
+        val isAuthEndpoint = path.contains("/auth/login") ||
+                path.contains("/auth/register") ||
+                path.contains("/auth/refresh")
+
+        if (response.code == 401 && !isAuthEndpoint && ::sessionManager.isInitialized) {
             val refreshToken = sessionManager.fetchRefreshToken()
 
             if (!refreshToken.isNullOrBlank()) {

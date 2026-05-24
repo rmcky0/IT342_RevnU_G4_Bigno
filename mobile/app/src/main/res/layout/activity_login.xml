@@ -8,81 +8,118 @@
     android:background="@drawable/bg_auth_gradient"
     tools:context=".features.auth.ui.LoginActivity">
 
-    <!-- Back button -->
+    <View
+        android:id="@+id/bgOrbTop"
+        android:layout_width="350dp"
+        android:layout_height="350dp"
+        android:background="@drawable/bg_glow_orb"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        android:translationX="-80dp"
+        android:translationY="-80dp"/>
+
+    <View
+        android:id="@+id/bgOrbBottom"
+        android:layout_width="400dp"
+        android:layout_height="400dp"
+        android:background="@drawable/bg_glow_orb"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0"
+        android:translationX="100dp"
+        android:translationY="100dp"/>
+
+    <View
+        android:id="@+id/bgGlassCard"
+        android:layout_width="160dp"
+        android:layout_height="192dp"
+        android:layout_marginTop="80dp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_glass_card"
+        android:rotation="12"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/bgGlassCircle"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="80dp"
+        android:background="@drawable/bg_glass_circle"
+        android:rotation="-12"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bgGlassCard" />
+
+
     <ImageButton
         android:id="@+id/btnAuthBack"
         android:layout_width="44dp"
         android:layout_height="44dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/bg_auth_tab_active"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Back"
+        android:padding="10dp"
+        android:scaleType="centerInside"
         android:src="@drawable/ic_arrow_back"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="#6D28D9" />
+        app:tint="#FFFFFF" />
 
-    <!-- Decorative logo in top area -->
-    <ImageView
-        android:id="@+id/imgAuthLogo"
-        android:layout_width="110dp"
-        android:layout_height="110dp"
-        android:alpha="0.20"
-        android:contentDescription="App logo"
-        android:src="@drawable/ic_revnu_logo"
-        app:layout_constraintBottom_toTopOf="@id/authCard"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnAuthBack"
-        app:layout_constraintVertical_bias="0.5" />
 
-    <!-- White card (bottom 72%, matching register) -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/authCard"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/bg_auth_card"
-        android:elevation="8dp"
+        android:elevation="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.72"
+        app:layout_constraintHeight_percent="0.75"
         app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="28dp"
-            android:paddingTop="32dp"
-            android:paddingBottom="32dp">
+            android:paddingHorizontal="32dp"
+            android:paddingTop="40dp"
+            android:paddingBottom="48dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/prompt_bold"
                 android:text="Welcome back!"
-                android:textColor="#1E1B4B"
-                android:textSize="24sp" />
+                android:textColor="#111827"
+                android:textSize="28sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="8dp"
                 android:fontFamily="@font/ubuntu"
                 android:text="Sign in to manage your restaurant."
-                android:textColor="#9CA3AF"
+                android:textColor="#6B7280"
                 android:textSize="14sp" />
 
-            <!-- Email label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:fontFamily="@font/ubuntu"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/ubuntu_bold"
                 android:text="Email"
                 android:textColor="#374151"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:textSize="13sp" />
 
             <EditText
                 android:id="@+id/etEmail"
@@ -93,21 +130,19 @@
                 android:fontFamily="@font/ubuntu"
                 android:hint="your@email.com"
                 android:inputType="textEmailAddress"
-                android:paddingHorizontal="18dp"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
+                android:paddingHorizontal="16dp"
+                android:textColor="#111827"
+                android:textColorHint="#9CA3AF"
                 android:textSize="15sp" />
 
-            <!-- Password label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:fontFamily="@font/ubuntu"
+                android:fontFamily="@font/ubuntu_bold"
                 android:text="Password"
                 android:textColor="#374151"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:textSize="13sp" />
 
             <EditText
                 android:id="@+id/etPassword"
@@ -118,9 +153,9 @@
                 android:fontFamily="@font/ubuntu"
                 android:hint="••••••••"
                 android:inputType="textPassword"
-                android:paddingHorizontal="18dp"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
+                android:paddingHorizontal="16dp"
+                android:textColor="#111827"
+                android:textColorHint="#9CA3AF"
                 android:textSize="15sp" />
 
             <TextView
@@ -128,34 +163,31 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:layout_marginTop="10dp"
-                android:fontFamily="@font/ubuntu"
+                android:layout_marginTop="12dp"
+                android:fontFamily="@font/ubuntu_bold"
                 android:paddingVertical="4dp"
                 android:text="Forgot Password?"
-                android:textColor="#7C3AED"
+                android:textColor="#7C6FF7"
                 android:textSize="13sp" />
 
-            <!-- Sign In pill button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSignIn"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/bg_auth_button"
+                android:layout_marginTop="10dp"
                 android:fontFamily="@font/ubuntu_bold"
                 android:text="Log In"
                 android:textAllCaps="false"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"
-                app:backgroundTint="@null"
-                app:cornerRadius="28dp"
+                app:backgroundTint="#7C6FF7"
+                app:cornerRadius="12dp"
                 app:elevation="0dp" />
 
-            <!-- Divider -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -171,7 +203,7 @@
                     android:fontFamily="@font/ubuntu"
                     android:paddingHorizontal="14dp"
                     android:text="or continue with"
-                    android:textColor="#9CA3AF"
+                    android:textColor="#6B7280"
                     android:textSize="12sp" />
 
                 <View
@@ -182,25 +214,23 @@
 
             </LinearLayout>
 
-            <!-- Google button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnGoogleSignIn"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="16dp"
-                android:fontFamily="@font/ubuntu"
+                android:layout_height="56dp"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/ubuntu_bold"
                 android:text="Google"
                 android:textAllCaps="false"
                 android:textColor="#374151"
                 android:textSize="15sp"
-                app:backgroundTint="#FFFFFF"
-                app:cornerRadius="28dp"
-                app:elevation="1dp"
+                app:cornerRadius="12dp"
                 app:icon="@drawable/ic_google"
                 app:iconGravity="textStart"
                 app:iconSize="20dp"
                 app:iconTint="@null"
-                app:strokeColor="#DDD6FE"
+                app:strokeColor="#E5E7EB"
                 app:strokeWidth="1dp" />
 
         </LinearLayout>

@@ -46,6 +46,8 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private lateinit var fabNewRecord: ImageButton
 
+    private var currentTab = "home"
+
     // Modern Colors matching your new UI
     private val selectedColor = Color.parseColor("#6366F1") // Indigo
     private val unselectedColor = Color.parseColor("#94A3B8") // Slate Gray
@@ -131,9 +133,13 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupFab() {
         fabNewRecord.setOnClickListener {
-            newRecordLauncher.launch(Intent(this, AddRecordActivity::class.java))
+            val intent = Intent(this, AddRecordActivity::class.java).apply {
+                if (currentTab == "expenses") putExtra(AddRecordActivity.EXTRA_START_TAB, "expense")
+            }
+            newRecordLauncher.launch(intent)
         }
     }
+
 
     private fun loadFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
@@ -142,6 +148,7 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun selectTab(selected: String) {
+        currentTab = selected
         setTabStyle(textSales, iconSales, false)
         setTabStyle(textExpenses, iconExpenses, false)
         setTabStyle(textHome, iconHome, false)

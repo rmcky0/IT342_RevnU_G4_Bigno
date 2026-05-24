@@ -34,6 +34,50 @@
             android:textColor="#64748B"
             android:textSize="16sp" />
 
+        <!-- Logo picker -->
+        <FrameLayout
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginTop="28dp">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/ivRestaurantLogo"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:src="@drawable/ic_store"
+                android:scaleType="centerCrop"
+                app:civ_border_color="#E2E8F0"
+                app:civ_border_width="2dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btnPickLogo"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="bottom|end"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="#6366F1"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="3dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_menu_camera"
+                    app:tint="#FFFFFF" />
+            </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/ubuntu"
+            android:text="Tap to add logo (optional)"
+            android:textColor="#94A3B8"
+            android:textSize="12sp" />
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

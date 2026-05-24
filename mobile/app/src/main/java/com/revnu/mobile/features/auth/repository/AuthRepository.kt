@@ -2,6 +2,9 @@ package com.revnu.mobile.features.auth.repository
 
 import com.revnu.mobile.core.network.ApiService
 import com.revnu.mobile.core.session.SessionManager
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.revnu.mobile.core.network.ApiResponse
 import com.revnu.mobile.features.auth.model.AuthResponse
 import com.revnu.mobile.features.auth.model.LoginRequest
 import com.revnu.mobile.features.auth.model.RegisterRequest
@@ -12,6 +15,16 @@ class AuthRepository(
     private val apiService: ApiService,
     private val sessionManager: SessionManager
 ) {
+
+    private fun parseErrorMessage(errorBody: okhttp3.ResponseBody?, fallback: String): String {
+        return try {
+            val type = object : TypeToken<ApiResponse<AuthResponse>>() {}.type
+            val parsed: ApiResponse<AuthResponse>? = Gson().fromJson(errorBody?.charStream(), type)
+            parsed?.error?.message ?: fallback
+        } catch (e: Exception) {
+            fallback
+        }
+    }
 
     suspend fun login(request: LoginRequest): Result<AuthResponse> {
         return withContext(Dispatchers.IO) {
@@ -30,7 +43,7 @@ class AuthRepository(
 
                     Result.success(authData)
                 } else {
-                    val errorMsg = response.body()?.error?.message ?: response.message()
+                    val errorMsg = parseErrorMessage(response.errorBody(), response.message())
                     Result.failure(Exception(errorMsg))
                 }
             } catch (e: Exception) {
@@ -56,7 +69,7 @@ class AuthRepository(
 
                     Result.success(authData)
                 } else {
-                    val errorMsg = response.body()?.error?.message ?: response.message()
+                    val errorMsg = parseErrorMessage(response.errorBody(), response.message())
                     Result.failure(Exception(errorMsg))
                 }
             } catch (e: Exception) {
