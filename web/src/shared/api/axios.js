@@ -32,8 +32,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const isUnauthorized = error.response?.status === 401;
+    const isAuthEndpoint = originalRequest?.url?.includes("/auth/login") ||
+      originalRequest?.url?.includes("/auth/register") ||
+      originalRequest?.url?.includes("/auth/refresh");
 
-    if (isUnauthorized && !originalRequest?._retry) {
+    if (isUnauthorized && !originalRequest?._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       const refreshToken = sessionStorage.getItem("refreshToken");
 
@@ -48,6 +51,7 @@ api.interceptors.response.use(
 
           if (newAccessToken) {
             sessionStorage.setItem("token", newAccessToken);
+            window.dispatchEvent(new Event("revnu-auth-token-changed"));
             if (newRefreshToken) {
               sessionStorage.setItem("refreshToken", newRefreshToken);
             }
@@ -62,6 +66,7 @@ api.interceptors.response.use(
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("refreshToken");
       sessionStorage.removeItem("user");
+      window.dispatchEvent(new Event("revnu-auth-token-changed"));
       window.location.href = "/login";
     }
 

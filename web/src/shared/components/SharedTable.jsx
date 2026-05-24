@@ -27,210 +27,223 @@ export const SharedTable = ({
   const isExpense = type === "expenses";
 
   const theme = {
-    amountColor: isExpense ? "text-red-500" : "text-[#7c83fd]",
-    rowHover: isExpense
-      ? "hover:shadow-[inset_3px_0_0_0_#ef4444]"
-      : "hover:shadow-[inset_3px_0_0_0_#7c83fd]",
+    amountColor: isExpense ? "text-red-500" : "text-[#6b72f5]",
+    chipBg: isExpense
+      ? "bg-red-50 text-red-600 border-red-100"
+      : "bg-[#eef0ff] text-[#6b72f5] border-[#d6d9ff]",
     emptyMsg: isExpense
-      ? "Your expense ledger is currently empty."
-      : "Your sales ledger is currently empty.",
+      ? "No expense records yet. Add your first one to get started."
+      : "No sales recorded yet. Add your first transaction to get started.",
+    emptyIcon: isExpense ? "text-red-300" : "text-[#7c83fd]",
+    emptyBg: isExpense ? "bg-red-50" : "bg-indigo-50",
   };
 
-  const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleString("en-US", {
+  const formatDateTime = (dateString) =>
+    new Date(dateString).toLocaleString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
       hour: "numeric",
       minute: "2-digit",
     });
-  };
 
   const SortableHeader = ({ label, sortKey, align = "left" }) => {
     const isActive = sortConfig?.key === sortKey;
+    const dir = sortConfig?.direction;
     return (
       <th
         onClick={() => requestSort(sortKey)}
-        className={`px-5 py-3 font-semibold text-xs tracking-wider uppercase cursor-pointer hover:bg-white/10 transition-colors select-none ${align === "right" ? "text-right" : "text-left"}`}
+        className={`px-5 py-3 text-[10px] font-bold tracking-widest uppercase cursor-pointer select-none whitespace-nowrap transition-colors hover:bg-black/3 border-b border-gray-100 ${
+          align === "right" ? "text-right" : "text-left"
+        } text-gray-400`}
       >
-        <div
-          className={`flex items-center gap-1.5 ${align === "right" ? "justify-end" : "justify-start"}`}
-        >
+        <span className={`inline-flex items-center gap-1 ${align === "right" ? "flex-row-reverse" : ""}`}>
           {label}
-          <div className="flex flex-col">
+          <span className="flex flex-col opacity-40">
             <ChevronUp
-              className={`w-2.5 h-2.5 -mb-1 ${isActive && sortConfig.direction === "asc" ? "text-white" : "text-indigo-200"}`}
+              className={`w-2.5 h-2.5 -mb-0.5 transition-opacity ${
+                isActive && dir === "asc" ? "opacity-100 text-[#7c83fd]" : ""
+              }`}
             />
             <ChevronDown
-              className={`w-2.5 h-2.5 ${isActive && sortConfig.direction === "desc" ? "text-white" : "text-indigo-200"}`}
+              className={`w-2.5 h-2.5 transition-opacity ${
+                isActive && dir === "desc" ? "opacity-100 text-[#7c83fd]" : ""
+              }`}
             />
-          </div>
-        </div>
+          </span>
+        </span>
       </th>
     );
   };
 
   return (
-    <div className="flex-1 bg-white rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col min-h-0 overflow-hidden relative">
-      <div className="flex-1 overflow-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse whitespace-nowrap">
-          <thead className="bg-gradient-to-r from-[#8f9df7] to-[#9faaf5] text-white sticky top-0 z-10 shadow-sm">
+    <div className="flex-1 bg-white rounded-xl border border-gray-100 flex flex-col min-h-0 overflow-hidden">
+      <div className="flex-1 overflow-auto">
+        <table
+          className="w-full border-collapse"
+          style={{ tableLayout: "fixed", minWidth: "560px" }}
+        >
+          <colgroup>
+            <col style={{ width: "160px" }} />
+            <col style={{ width: "120px" }} />
+            <col style={{ width: "120px" }} />
+            <col style={{ width: "auto" }} />
+            {isExpense && <col style={{ width: "44px" }} />}
+            <col style={{ width: "100px" }} />
+          </colgroup>
+
+          <thead className="sticky top-0 z-10 bg-gray-50">
             <tr>
-              <SortableHeader label="Date & Time" sortKey="date" />
+              <SortableHeader label="Date & time" sortKey="date" />
               <SortableHeader label="Amount" sortKey="amount" align="right" />
-              <th className="px-5 py-3 font-semibold text-xs tracking-wider uppercase w-48">
+              <th className="px-5 py-3 text-[10px] font-bold tracking-widest uppercase text-gray-400 text-left border-b border-gray-100">
                 Category
               </th>
-              <th className="px-5 py-3 font-semibold text-xs tracking-wider uppercase w-full">
+              <th className="px-5 py-3 text-[10px] font-bold tracking-widest uppercase text-gray-400 text-left border-b border-gray-100">
                 Notes
               </th>
-              <th className="px-5 py-3 font-semibold text-xs tracking-wider uppercase text-center">
+              {isExpense && <th className="border-b border-gray-100" />}
+              <th className="px-5 py-3 text-[10px] font-bold tracking-widest uppercase text-gray-400 text-right border-b border-gray-100">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50 relative">
-            {/* Loading Skeleton */}
-            {loading ? (
-              Array.from({ length: 8 }).map((_, idx) => (
-                <tr key={`skel-${idx}`} className="animate-pulse">
-                  <td className="px-5 py-4">
-                    <div className="h-3.5 bg-gray-100 rounded w-28"></div>
+
+          <tbody className="divide-y divide-gray-50">
+            {/* Loading skeleton */}
+            {loading &&
+              Array.from({ length: 7 }).map((_, idx) => (
+                <tr key={`sk-${idx}`} className="animate-pulse">
+                  <td className="px-5 py-3.5">
+                    <div className="h-3 bg-gray-100 rounded-full w-28" />
                   </td>
-                  <td className="px-5 py-4 flex justify-end">
-                    <div className="h-3.5 bg-gray-100 rounded w-20"></div>
+                  <td className="px-5 py-3.5">
+                    <div className="h-3 bg-gray-100 rounded-full w-16 ml-auto" />
                   </td>
-                  <td className="px-5 py-4">
-                    <div className="h-5 bg-gray-100 rounded-md w-16"></div>
+                  <td className="px-5 py-3.5">
+                    <div className="h-4 bg-gray-100 rounded-full w-14" />
                   </td>
-                  <td className="px-5 py-4">
-                    <div className="h-3.5 bg-gray-100 rounded w-40"></div>
+                  <td className="px-5 py-3.5">
+                    <div className="h-3 bg-gray-100 rounded-full w-32" />
                   </td>
-                  <td className="px-5 py-4">
-                    <div className="flex justify-center gap-2">
-                      <div className="w-6 h-6 bg-gray-100 rounded-md"></div>
-                    </div>
+                  {isExpense && <td />}
+                  <td className="px-5 py-3.5">
+                    <div className="h-3 bg-gray-100 rounded-full w-12 ml-auto" />
                   </td>
                 </tr>
-              ))
-            ) : data.length === 0 ? (
-              /* Empty State */
+              ))}
+
+            {/* Empty state */}
+            {!loading && data.length === 0 && (
               <tr>
-                <td colSpan="5" className="px-5 py-16 text-center">
-                  <div className="flex flex-col items-center justify-center max-w-sm mx-auto animate-in fade-in zoom-in-95 duration-300">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-50 to-gray-50 rounded-2xl flex items-center justify-center mb-4 shadow-inner border border-white">
-                      <Inbox className="w-8 h-8 text-[#7c83fd]" />
+                <td colSpan={isExpense ? 6 : 5} className="px-4 py-16 text-center">
+                  <div className="flex flex-col items-center gap-3 max-w-xs mx-auto animate-in fade-in zoom-in-95 duration-300">
+                    <div className={`w-14 h-14 rounded-2xl ${theme.emptyBg} flex items-center justify-center shadow-inner`}>
+                      <Inbox className={`w-7 h-7 ${theme.emptyIcon}`} />
                     </div>
-                    <h3 className="text-lg font-bold text-[#1e1b4b] mb-1">
-                      No records found
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-5">
-                      {searchTerm
-                        ? "We couldn't find any records matching your search criteria."
-                        : theme.emptyMsg}
-                    </p>
+                    <div>
+                      <p className="text-base font-bold text-[#1e1b4b] mb-1">No records found</p>
+                      <p className="text-sm text-gray-400 leading-relaxed">
+                        {searchTerm
+                          ? "Nothing matched your search. Try a different term."
+                          : theme.emptyMsg}
+                      </p>
+                    </div>
                     {searchTerm && (
                       <button
                         onClick={onClearSearch}
-                        className="px-5 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-semibold shadow-sm hover:bg-gray-50 hover:text-[#1e1b4b] transition-all"
+                        className="text-xs font-bold text-[#7c83fd] hover:underline underline-offset-2"
                       >
-                        Clear Filters
+                        Clear search
                       </button>
                     )}
                   </div>
                 </td>
               </tr>
-            ) : (
-              /* Actual Data Rows */
+            )}
+
+            {/* Data rows */}
+            {!loading &&
               data.map((item) => (
                 <tr
                   key={item.id}
-                  className={`group hover:bg-[#f8f9ff] transition-all duration-200 ${theme.rowHover}`}
+                  className="group hover:bg-[#f8f9ff] transition-colors duration-100"
                 >
-                  <td className="px-5 py-4 text-sm font-medium text-gray-600">
-                    {formatDateTime(
-                      item.createdAt || item.saleDate || item.expenseDate,
-                    )}
+                  <td className="px-5 py-3 text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {formatDateTime(item.createdAt || item.saleDate || item.expenseDate)}
                   </td>
-                  <td
-                    className={`px-5 py-4 text-sm font-bold text-right ${theme.amountColor}`}
-                  >
-                    ₱
-                    {parseFloat(item.amount).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+
+                  <td className={`px-5 py-3 text-sm font-bold text-right tabular-nums whitespace-nowrap ${theme.amountColor}`}>
+                    ₱{parseFloat(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </td>
-                  <td className="px-5 py-4 max-w-[200px]">
+
+                  <td className="px-5 py-3">
                     {item.categoryName ? (
-                      <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-100/50 text-[#7c83fd] text-[10px] font-bold uppercase rounded-md shadow-sm whitespace-nowrap">
+                      <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${theme.chipBg}`}>
                         {item.categoryName}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400 italic">None</span>
+                      <span className="text-xs text-gray-300">—</span>
                     )}
                   </td>
-                  <td className="px-5 py-4 text-sm text-gray-500 truncate max-w-[200px] group-hover:text-gray-700 transition-colors">
-                    {item.notes || "-"}
+
+                  <td className="px-5 py-3 text-xs text-gray-400 overflow-hidden text-ellipsis max-w-0 group-hover:text-gray-600 transition-colors">
+                    {item.notes || "—"}
                   </td>
-                  <td className="px-5 py-4">
-                    <div className="flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0">
-                      {/* View Action */}
+
+                  {isExpense && (
+                    <td className="px-1.5 py-3">
+                      {item.fileId ? (
+                        <button
+                          onClick={() => onViewReceipt(item.fileId)}
+                          className="p-1.5 text-[#7c83fd] hover:bg-[#eef0ff] rounded-lg transition-colors"
+                          title="View receipt"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                        </button>
+                      ) : !isLocked ? (
+                        <button
+                          onClick={() => onEdit(item)}
+                          className="p-1.5 text-gray-300 hover:bg-gray-50 hover:text-gray-500 rounded-lg transition-colors"
+                          title="Add receipt"
+                        >
+                          <FilePlus className="w-3.5 h-3.5" />
+                        </button>
+                      ) : null}
+                    </td>
+                  )}
+
+                  <td className="px-5 py-3">
+                    <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                       <button
                         onClick={() => onView(item)}
-                        className="p-1.5 text-gray-400 hover:text-[#7c83fd] hover:bg-indigo-50 rounded-md transition-colors"
-                        title="View Details"
+                        className="p-1.5 text-gray-400 hover:text-[#7c83fd] hover:bg-[#eef0ff] rounded-lg transition-colors"
+                        title="View"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-3.5 h-3.5" />
                       </button>
-
-                      {/* Expense-Specific Receipt Actions */}
-                      {isExpense && (
-                        <>
-                          {item.fileId ? (
-                            <button
-                              onClick={() => onViewReceipt(item.fileId)}
-                              className="p-1.5 text-[#7c83fd] hover:bg-indigo-50 rounded-md transition-colors"
-                              title="View Receipt"
-                            >
-                              <FileText className="w-4 h-4" />
-                            </button>
-                          ) : !isLocked ? (
-                            <button
-                              onClick={() => onEdit(item)}
-                              className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-md transition-colors"
-                              title="Add Receipt"
-                            >
-                              <FilePlus className="w-4 h-4" />
-                            </button>
-                          ) : null}
-                          <div className="w-px h-3 bg-gray-200 mx-1" />
-                        </>
-                      )}
-
-                      {/* Edit & Delete Actions — hidden when EOD-locked */}
                       {!isLocked && (
                         <>
                           <button
                             onClick={() => onEdit(item)}
-                            className="p-1.5 text-gray-400 hover:text-[#7c83fd] hover:bg-indigo-50 rounded-md transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-[#7c83fd] hover:bg-[#eef0ff] rounded-lg transition-colors"
                             title="Edit"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => onDelete(item)}
-                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </>
                       )}
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
+              ))}
           </tbody>
         </table>
       </div>

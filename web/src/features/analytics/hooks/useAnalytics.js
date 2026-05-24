@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { analyticsApi } from "../api/analyticsApi";
 import api from "../../../shared/api/axios";
 import * as cache from "../../../shared/cache/dataCache";
+import { useToast } from "../../../shared/components/Toast";
 import {
   DAILY_TTL,
   TREND_TTL,
@@ -16,13 +17,13 @@ import {
 import { fetchPhHoliday } from "../services/holidayService";
 
 export const useAnalytics = (date = null) => {
+  const { showToast } = useToast();
   const [data, setData] = useState(null);
   const [profitTrend, setProfitTrend] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
   const [lockLoading, setLockLoading] = useState(false);
-  const [lockError, setLockError] = useState(null);
   const [holidayName, setHolidayName] = useState(null);
 
   const fetchAnalytics = useCallback(
@@ -77,7 +78,6 @@ export const useAnalytics = (date = null) => {
 
   const handleLockRecords = useCallback(async () => {
     setLockLoading(true);
-    setLockError(null);
     try {
       const today = new Date().toISOString().split("T")[0];
       await api.post("/day/close", { date: today });
@@ -93,11 +93,11 @@ export const useAnalytics = (date = null) => {
       const msg =
         err?.response?.data?.error?.message ??
         "Failed to close the day. Please try again.";
-      setLockError(msg);
+      showToast("error", msg);
     } finally {
       setLockLoading(false);
     }
-  }, [date, fetchAnalytics]);
+  }, [date, fetchAnalytics, showToast]);
 
   const normalized = data ?? getEmptyAnalytics();
 
@@ -130,7 +130,6 @@ export const useAnalytics = (date = null) => {
     isEmpty,
     isLocked,
     lockLoading,
-    lockError,
     holidayName,
     salesDelta,
     expensesDelta,

@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 
 import { AuthProvider } from "../features/auth/context/AuthContext";
+import { ToastProvider } from "../shared/components/Toast";
 import ProtectedRoute from "../shared/routes/ProtectedRoute";
 import AdminRoute from "../shared/routes/AdminRoute";
 import { Login } from "../features/auth/pages/Login";
@@ -28,20 +29,25 @@ import { AdminHome } from "../features/admin/AdminHome";
 import { AdminUsers } from "../features/admin/AdminUsers";
 import { AdminRestaurants } from "../features/admin/AdminRestaurants";
 import { AdminLayout } from "../features/admin/AdminLayout";
+import { Welcome } from "../features/auth/pages/Welcome";
+import { AuthShell } from "../features/auth/components/AuthShell";
 
 function App() {
   return (
-    <AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route element={<AuthShell />}>
+            <Route path="/" element={<Welcome />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/auth/link-google" element={<LinkGoogle />} />
+            <Route path="/suspended" element={<Suspended />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+          </Route>
 
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/auth/link-google" element={<LinkGoogle />} />
-          <Route path="/suspended" element={<Suspended />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/setup-restaurant" element={<SetupRestaurant />} />
             <Route element={<Dashboard />}>
@@ -84,7 +90,8 @@ function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 

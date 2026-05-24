@@ -2,16 +2,16 @@ import { useState, useEffect, useMemo } from "react";
 import { expensesAPI } from "../api/expensesApi";
 import { categoriesAPI } from "../../categories/api/categoriesApi";
 import * as cache from "../../../shared/cache/dataCache";
+import { useToast } from "../../../shared/components/Toast";
 
 const CACHE_KEY = "expense_page_";
 const ITEMS_PER_PAGE = 9;
 
 export const useExpenses = () => {
+  const { showToast } = useToast();
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,6 +19,7 @@ export const useExpenses = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [pageOpenAmounts, setPageOpenAmounts] = useState({});
   const [sortConfig, setSortConfig] = useState({
     key: "date",
     direction: "desc",
@@ -35,15 +36,6 @@ export const useExpenses = () => {
       .then(setCategories)
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (!success && !error) return;
-    const t = setTimeout(() => {
-      setSuccess("");
-      setError("");
-    }, 3000);
-    return () => clearTimeout(t);
-  }, [success, error]);
 
   useEffect(() => {
     loadExpenses(currentPage);
@@ -63,12 +55,15 @@ export const useExpenses = () => {
         setExpenses(cached.content);
         setTotalPages(cached.totalPages);
         setTotalRecords(cached.totalElements);
+        const pageAmt = cached.content.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+        setPageOpenAmounts((prev) => ({ ...prev, [springPage]: pageAmt }));
         return;
       }
     }
 
+    if (forceRefresh) setPageOpenAmounts({});
+
     setLoading(true);
-    setError("");
     try {
       const res = await expensesAPI.getAllExpenses(springPage, ITEMS_PER_PAGE);
 
@@ -78,10 +73,12 @@ export const useExpenses = () => {
         : [];
 
       const activeExpenses = rawContent.filter((e) => e.status !== "CLOSED");
+      const pageAmt = activeExpenses.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
 
       setExpenses(activeExpenses);
       setTotalPages(pageData.totalPages || 1);
       setTotalRecords(pageData.totalElements || 0);
+      setPageOpenAmounts((prev) => ({ ...prev, [springPage]: pageAmt }));
 
       cache.set(cacheKey, {
         content: activeExpenses,
@@ -89,7 +86,7 @@ export const useExpenses = () => {
         totalElements: pageData.totalElements || 0,
       });
     } catch (err) {
-      setError("Failed to load expenses.");
+      showToast("error", "Failed to load expenses.");
       console.error("loadExpenses error:", err);
     } finally {
       setTimeout(() => setLoading(false), 400);
@@ -123,15 +120,10 @@ export const useExpenses = () => {
     });
   }, [expenses, searchTerm, sortConfig]);
 
-  const totalExpenses = filteredExpenses.reduce(
-    (sum, e) => sum + (parseFloat(e.amount) || 0),
-    0,
-  );
+  const totalExpenses = Object.values(pageOpenAmounts).reduce((sum, a) => sum + a, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
     setLoading(true);
     try {
       const payload = {
@@ -146,11 +138,11 @@ export const useExpenses = () => {
       if (editingId) {
         await expensesAPI.updateExpense(editingId, payload);
         expenseId = editingId;
-        setSuccess("Expense updated!");
+        showToast("success", "Expense updated!");
       } else {
         const createRes = await expensesAPI.createExpense(payload);
         expenseId = createRes?.data?.id;
-        setSuccess("Expense added!");
+        showToast("success", "Expense added!");
         setCurrentPage(1);
         targetPage = 1;
         setSortConfig({ key: "date", direction: "desc" });
@@ -158,14 +150,15 @@ export const useExpenses = () => {
 
       if (receiptFile && expenseId) {
         await expensesAPI.uploadReceipt(expenseId, receiptFile);
-        setSuccess("Expense and receipt saved!");
+        showToast("success", "Expense and receipt saved!");
       }
 
       cache.invalidatePrefix(CACHE_KEY);
       resetForm();
       await loadExpenses(targetPage, true);
     } catch (err) {
-      setError(
+      showToast(
+        "error",
         err?.response?.data?.error?.message ||
           err?.response?.data?.message ||
           "Save failed. Please try again.",
@@ -190,11 +183,12 @@ export const useExpenses = () => {
   const handleDelete = async (id) => {
     try {
       await expensesAPI.deleteExpense(id);
-      setSuccess("Expense deleted!");
+      showToast("success", "Expense deleted!");
       cache.invalidatePrefix(CACHE_KEY);
       await loadExpenses(currentPage, true);
     } catch (err) {
-      setError(
+      showToast(
+        "error",
         err?.response?.data?.error?.message ||
           err?.response?.data?.message ||
           "Delete failed.",
@@ -226,8 +220,6 @@ export const useExpenses = () => {
     handleNextPage,
     handlePrevPage,
     loading,
-    error,
-    success,
     showForm,
     setShowForm,
     formData,

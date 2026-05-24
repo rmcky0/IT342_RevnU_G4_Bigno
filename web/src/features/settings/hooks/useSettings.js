@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { settingsApi } from "../api/settingsApi";
 import { useAuth } from "../../auth/context/AuthContext";
 import { API_BASE_URL } from "../../../shared/api/axios";
+import { useToast } from "../../../shared/components/Toast";
 
 export const useSettings = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const { showToast } = useToast();
 
   const [personalData, setPersonalData] = useState({
     fullname: user?.fullname || "",
@@ -62,19 +63,18 @@ export const useSettings = () => {
           setLogoPreview(`${API_BASE_URL}/files/${restaurant.logoFileId}`);
         }
       }
-
     } catch (error) {
       console.error("Failed to load settings:", error);
-      showMessage("error", "Failed to load settings. Some data may not be available.");
+      showMessage(
+        "error",
+        "Failed to load settings. Some data may not be available.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const showMessage = (type, text) => {
-    setMessage({ type, text });
-    setTimeout(() => setMessage({ type: "", text: "" }), 3500);
-  };
+  const showMessage = (type, text) => showToast(type, text);
 
   const handlePersonalChange = (e) => {
     const { name, value } = e.target;
@@ -87,13 +87,15 @@ export const useSettings = () => {
   };
 
   const handleLinkGoogle = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/google`;
   };
 
   const handlePasswordInputChange = (e) => {
     const { name, value } = e.target;
     setPasswordData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
   const submitPasswordChange = async (e) => {
     e.preventDefault();
@@ -103,17 +105,27 @@ export const useSettings = () => {
       return;
     }
 
-    if (passwordData.newPassword.length < 8) {
-      showMessage("error", "New password must be at least 8 characters.");
+    if (!PASSWORD_REGEX.test(passwordData.newPassword)) {
+      showMessage(
+        "error",
+        "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.",
+      );
       return;
     }
 
     setLoading(true);
     try {
-      await settingsApi.changePassword(passwordData.currentPassword, passwordData.newPassword);
+      await settingsApi.changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword,
+      );
       showMessage("success", "Password updated successfully.");
       setShowPasswordModal(false);
-      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (err) {
       const msg =
         err?.response?.data?.error?.details ||
@@ -176,7 +188,6 @@ export const useSettings = () => {
 
   return {
     loading,
-    message,
     personalData,
     handlePersonalChange,
     savePersonal,

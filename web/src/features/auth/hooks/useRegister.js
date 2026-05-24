@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { authService } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../../../shared/components/Toast";
 
 export const useRegister = () => {
   const [form, setForm] = useState({
@@ -10,10 +11,9 @@ export const useRegister = () => {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const { login } = useAuth();
+  const { showToast } = useToast();
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -23,32 +23,29 @@ export const useRegister = () => {
     e.preventDefault();
 
     if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
+      showToast("error", "Passwords do not match.");
       return;
     }
 
     setLoading(true);
-    setError("");
-    setSuccess("");
 
     try {
       const data = await authService.register(form);
 
       if (data.token || data.accessToken) {
         login(data);
-
-        setSuccess("Account created! Let's set up your restaurant...");
         if (onSuccessRedirect) {
-          setTimeout(() => onSuccessRedirect("/setup-restaurant"), 1000);
+          setTimeout(() => onSuccessRedirect("/setup-restaurant"), 300);
         }
       } else {
-        setSuccess("Account created successfully. Please log in.");
+        showToast("success", "Account created successfully. Please log in.");
         if (onSuccessRedirect) {
-          setTimeout(() => onSuccessRedirect("/login"), 1000);
+          setTimeout(() => onSuccessRedirect("/login"), 1200);
         }
       }
     } catch (err) {
-      setError(
+      showToast(
+        "error",
         err.response?.data?.error?.details ||
           err.response?.data?.error?.message ||
           "Registration failed. Please try again.",
@@ -58,5 +55,5 @@ export const useRegister = () => {
     }
   };
 
-  return { form, loading, error, success, handleChange, handleSubmit };
+  return { form, loading, handleChange, handleSubmit };
 };

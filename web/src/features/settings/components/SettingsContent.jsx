@@ -4,7 +4,6 @@ import { SettingsBody } from "./SettingsBody";
 import { PasswordModal } from "./PasswordModal";
 
 export const SettingsContent = ({
-  message,
   personalData,
   handlePersonalChange,
   savePersonal,
@@ -22,8 +21,8 @@ export const SettingsContent = ({
   handlePasswordInputChange,
   submitPasswordChange,
 }) => (
-  <div className="flex flex-col flex-1 space-y-6 text-[#1e1b4b] pb-10">
-    <SettingsHeader message={message} />
+  <div className="flex flex-col flex-1 gap-4 text-[#1e1b4b] h-full overflow-y-auto custom-scrollbar pb-6">
+    <SettingsHeader />
 
     <SettingsBody
       restaurantData={restaurantData}

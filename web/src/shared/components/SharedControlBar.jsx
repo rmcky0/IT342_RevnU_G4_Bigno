@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Search,
-  X,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-} from "lucide-react";
+import { Search, X, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 export const SharedControlBar = ({
   searchTerm,
@@ -68,12 +61,6 @@ export const SharedControlBar = ({
             </button>
           )}
         </div>
-        <button
-          className="p-2 bg-gray-50/50 rounded-lg text-gray-400 hover:text-[#7c83fd] hover:bg-indigo-50 transition-colors border border-transparent"
-          title="Filter Options"
-        >
-          <Filter className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Pagination & Add Button Right Side */}

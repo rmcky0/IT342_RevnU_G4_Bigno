@@ -11,7 +11,17 @@ import { StaffFormModal } from "./components/StaffFormModal";
 import { SalaryFormModal } from "./components/SalaryFormModal";
 import { SharedControlBar } from "../../shared/components/SharedControlBar";
 
-import { Users, ShieldCheck, X, ChevronDown, BarChart2 } from "lucide-react";
+import {
+  Users,
+  BarChart2,
+  ChevronDown,
+  Wallet,
+} from "lucide-react";
+
+const TAB_CONFIG = [
+  { key: "directory", label: "Directory", icon: Users },
+  { key: "payroll", label: "Payout History", icon: Wallet },
+];
 
 export const Staff = () => {
   const navigate = useNavigate();
@@ -20,8 +30,6 @@ export const Staff = () => {
     setActiveTab,
     staffList,
     loading,
-    error,
-    success,
     showStaffForm,
     setShowStaffForm,
     staffFormData,
@@ -33,14 +41,13 @@ export const Staff = () => {
     handleEditStaff,
     handleDeleteStaff,
     resetStaffForm,
+    allStaff,
   } = useStaff();
 
   const {
     salaries,
     salaryTotalPages,
     loading: salaryLoading,
-    error: salaryError,
-    success: salarySuccess,
     showSalaryForm,
     setShowSalaryForm,
     salaryFormData,
@@ -64,22 +71,23 @@ export const Staff = () => {
     if (e.deltaY > 10 && showKPIs) setShowKPIs(false);
   };
 
-  const totalMonthlyPayroll = staffList.reduce(
+  const totalMonthlyPayroll = allStaff.reduce(
     (sum, s) => sum + (parseFloat(s.salaryRate) || 0),
     0,
   );
 
   const filteredStaff = useMemo(() => {
     if (!searchTerm) return staffList;
-    const lowerSearch = searchTerm.toLowerCase();
+    const q = searchTerm.toLowerCase();
     return staffList.filter(
       (s) =>
-        (s.fullname || "").toLowerCase().includes(lowerSearch) ||
-        (s.position || "").toLowerCase().includes(lowerSearch),
+        (s.fullname || "").toLowerCase().includes(q) ||
+        (s.position || "").toLowerCase().includes(q),
     );
   }, [staffList, searchTerm]);
 
   const totalStaffPages = Math.ceil(filteredStaff.length / ITEMS_PER_PAGE) || 1;
+
   const paginatedStaff = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredStaff.slice(start, start + ITEMS_PER_PAGE);
@@ -98,118 +106,103 @@ export const Staff = () => {
     }
   }, [currentPage, activeTab]);
 
+  const recordCount =
+    activeTab === "directory" ? staffList.length : salaries?.length || 0;
+
   return (
     <div
-      className="flex flex-col flex-1 h-full max-h-full space-y-4 overflow-hidden text-[#1e1b4b]"
+      className="flex flex-col flex-1 h-full max-h-full gap-3 overflow-hidden text-[#1e1b4b]"
       onWheel={handleWheel}
     >
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-[#8f9df7] to-[#7c83fd] rounded-lg shadow-md shadow-indigo-200">
-            <Users className="w-5 h-5 text-white" />
+      {/* ── Header ── */}
+      <div className="shrink-0 flex items-center justify-between gap-3 flex-wrap">
+        {/* Left: icon + title + badge */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 bg-[#7c83fd] rounded-xl flex items-center justify-center shrink-0">
+            <Users className="w-4.5 h-4.5 text-white" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Team & Payroll</h2>
-          <span className="px-2.5 py-0.5 bg-white text-[#7c83fd] text-xs font-bold rounded-md border border-gray-100 shadow-sm ml-2">
-            {activeTab === "directory"
-              ? staffList.length
-              : salaries?.length || 0}{" "}
-            records
+          <h2 className="text-lg font-bold tracking-tight truncate">Team &amp; Payroll</h2>
+          <span className="shrink-0 text-[10px] font-bold text-[#7c83fd] bg-[#f0f1ff] border border-[#d6d9ff] rounded-full px-2.5 py-0.5 uppercase tracking-wider">
+            {recordCount} records
           </span>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-          <button
-            onClick={() => setActiveTab("directory")}
-            className={`px-5 py-1.5 rounded-lg font-semibold text-sm transition-all ${activeTab === "directory" ? "bg-indigo-50 text-[#7c83fd] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-          >
-            Directory
-          </button>
-          <button
-            onClick={() => setActiveTab("payroll")}
-            className={`px-5 py-1.5 rounded-lg font-semibold text-sm transition-all ${activeTab === "payroll" ? "bg-indigo-50 text-[#7c83fd] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-          >
-            Payroll History
-          </button>
+        {/* Right: tab switcher */}
+        <div className="flex items-center shrink-0 bg-gray-100 rounded-xl p-1 gap-1">
+          {TAB_CONFIG.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all whitespace-nowrap ${
+                activeTab === key
+                  ? "bg-white text-[#7c83fd] shadow-sm"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* ── Notifications ──────────────────────────────────────────────────── */}
-      {(success || error) && (
-        <div
-          className={`shrink-0 px-4 py-3 rounded-lg text-sm font-medium shadow-sm animate-in fade-in flex items-center gap-2 ${success ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}
-        >
-          {success ? (
-            <ShieldCheck className="w-4 h-4" />
-          ) : (
-            <X className="w-4 h-4" />
-          )}
-          {success || error}
-        </div>
-      )}
-
+      {/* ── Show-metrics toggle ── */}
       {!showKPIs && (
-        <div className="shrink-0 flex justify-center animate-in fade-in slide-in-from-top-1">
+        <div className="shrink-0 flex justify-center animate-in fade-in slide-in-from-top-1 duration-200">
           <button
             onClick={() => setShowKPIs(true)}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-white rounded-full shadow-sm border border-gray-200 text-gray-400 hover:text-[#7c83fd] transition-all text-xs font-bold uppercase tracking-wider group"
+            className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-white hover:text-[#7c83fd] border border-gray-200 rounded-full px-4 py-1.5 transition-colors"
           >
-            <BarChart2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />{" "}
-            Show Metrics <ChevronDown className="w-3.5 h-3.5" />
+            <BarChart2 className="w-3 h-3" />
+            Show metrics
+            <ChevronDown className="w-3 h-3" />
           </button>
         </div>
       )}
 
-      {/* ── Extracted Components ───────────────────────────────────────────── */}
+      {/* ── KPIs ── */}
       <StaffKPIs
         showKPIs={showKPIs}
-        staffCount={staffList.length}
+        staffCount={allStaff.length}
         totalMonthlyPayroll={totalMonthlyPayroll}
       />
 
+      {/* ── Control bar ── */}
       <SharedControlBar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         currentPage={currentPage}
         totalPages={currentTotalPages}
         handlePrevPage={() => setCurrentPage((p) => Math.max(1, p - 1))}
-        handleNextPage={() =>
-          setCurrentPage((p) => Math.min(currentTotalPages, p + 1))
-        }
+        handleNextPage={() => setCurrentPage((p) => Math.min(currentTotalPages, p + 1))}
         onAddClick={() =>
-          activeTab === "directory"
-            ? setShowStaffForm(true)
-            : setShowSalaryForm(true)
+          activeTab === "directory" ? setShowStaffForm(true) : setShowSalaryForm(true)
         }
         type={activeTab === "directory" ? "staff" : "salary"}
       />
 
-      {/* ── Conditional Table Rendering ────────────────────────────────────── */}
-      <div className="flex-1 bg-white rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col min-h-0 overflow-hidden relative">
-        <div className="overflow-x-auto flex-1">
-          {activeTab === "directory" ? (
-            <StaffTable
-              data={paginatedStaff}
-              loading={loading}
-              searchTerm={searchTerm}
-              onView={(staff) => setStaffToView(staff)}
-              onEdit={(staff) => handleEditStaff(staff)}
-              onDelete={(staff) => setItemToDelete(staff)}
-              navigate={navigate}
-            />
-          ) : (
-            <PayrollTable
-              data={salaries}
-              loading={salaryLoading}
-              searchTerm={searchTerm}
-              onEdit={handleEditSalary}
-              onDelete={(salary) => setSalaryToDelete(salary)}
-            />
-          )}
-        </div>
-      </div>
+      {/* ── Tables ── */}
+      {activeTab === "directory" ? (
+        <StaffTable
+          data={paginatedStaff}
+          loading={loading}
+          searchTerm={searchTerm}
+          onView={(staff) => setStaffToView(staff)}
+          onEdit={(staff) => handleEditStaff(staff)}
+          onDelete={(staff) => setItemToDelete(staff)}
+          navigate={navigate}
+        />
+      ) : (
+        <PayrollTable
+          data={salaries}
+          loading={salaryLoading}
+          searchTerm={searchTerm}
+          onEdit={handleEditSalary}
+          onDelete={(salary) => setSalaryToDelete(salary)}
+        />
+      )}
 
+      {/* ── Modals ── */}
       <StaffViewModal
         staffToView={staffToView}
         onClose={() => setStaffToView(null)}
@@ -255,8 +248,6 @@ export const Staff = () => {
         setFormData={setSalaryFormData}
         staffList={staffList}
         loading={salaryLoading}
-        error={salaryError}
-        success={salarySuccess}
         isEditing={!!editingSalaryId}
       />
     </div>

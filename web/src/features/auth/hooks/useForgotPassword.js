@@ -1,19 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { authApi } from "../api/authApi";
+import { useToast } from "../../../shared/components/Toast";
 
 const RESEND_COOLDOWN = 60;
 
 export const useForgotPassword = () => {
-  const [step, setStep] = useState("email"); // "email" | "otp" | "new-password" | "done"
+  const [step, setStep] = useState("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const cooldownRef = useRef(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     return () => clearInterval(cooldownRef.current);
@@ -32,23 +32,21 @@ export const useForgotPassword = () => {
     }, 1000);
   };
 
-  const clearMessages = () => { setError(""); setSuccess(""); };
+  const getErrMsg = (err, fallback) =>
+    err?.response?.data?.error?.details ||
+    err?.response?.data?.error?.message ||
+    fallback;
 
   const handleRequestOtp = async (e) => {
     e.preventDefault();
-    clearMessages();
     setLoading(true);
     try {
       await authApi.forgotPassword(email);
-      setSuccess("OTP sent! Check your email inbox.");
+      showToast("success", "OTP sent! Check your email inbox.");
       startCooldown();
       setStep("otp");
     } catch (err) {
-      setError(
-        err?.response?.data?.error?.details ||
-          err?.response?.data?.error?.message ||
-          "Failed to send OTP. Please try again."
-      );
+      showToast("error", getErrMsg(err, "Failed to send OTP. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -56,18 +54,12 @@ export const useForgotPassword = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    clearMessages();
     setLoading(true);
     try {
       await authApi.verifyOtp(email, otp);
-      setSuccess("");
       setStep("new-password");
     } catch (err) {
-      setError(
-        err?.response?.data?.error?.details ||
-          err?.response?.data?.error?.message ||
-          "Incorrect or expired OTP."
-      );
+      showToast("error", getErrMsg(err, "Incorrect or expired OTP."));
     } finally {
       setLoading(false);
     }
@@ -75,46 +67,32 @@ export const useForgotPassword = () => {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    clearMessages();
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters.");
+      showToast("error", "Passwords do not match.");
       return;
     }
 
     setLoading(true);
     try {
       await authApi.resetPassword(email, otp, newPassword);
-      setSuccess("Password reset successfully! You can now log in.");
+      showToast("success", "Password reset successfully! You can now log in.");
       setStep("done");
     } catch (err) {
-      setError(
-        err?.response?.data?.error?.details ||
-          err?.response?.data?.error?.message ||
-          "Failed to reset password. Please try again."
-      );
+      showToast("error", getErrMsg(err, "Failed to reset password. Please try again."));
     } finally {
       setLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    clearMessages();
     setLoading(true);
     try {
       await authApi.forgotPassword(email);
-      setSuccess("A new OTP has been sent to your email.");
+      showToast("success", "A new OTP has been sent to your email.");
       startCooldown();
     } catch (err) {
-      setError(
-        err?.response?.data?.error?.details ||
-          err?.response?.data?.error?.message ||
-          "Failed to resend OTP."
-      );
+      showToast("error", getErrMsg(err, "Failed to resend OTP."));
     } finally {
       setLoading(false);
     }
@@ -128,8 +106,6 @@ export const useForgotPassword = () => {
     confirmPassword, setConfirmPassword,
     loading,
     cooldown,
-    error,
-    success,
     handleRequestOtp,
     handleVerifyOtp,
     handleResetPassword,

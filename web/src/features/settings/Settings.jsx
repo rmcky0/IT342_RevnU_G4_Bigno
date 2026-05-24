@@ -5,7 +5,6 @@ import { SettingsContent } from "./components/SettingsContent";
 export const Settings = () => {
   const {
     loading,
-    message,
     personalData,
     handlePersonalChange,
     savePersonal,
@@ -26,7 +25,6 @@ export const Settings = () => {
   return (
     <SettingsContent
       loading={loading}
-      message={message}
       personalData={personalData}
       handlePersonalChange={handlePersonalChange}
       savePersonal={savePersonal}
