@@ -2,15 +2,10 @@ package com.revnu.backend.features.reporting.email;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 
-import jakarta.mail.internet.MimeMessage;
+import com.resend.Resend;
+import com.resend.services.emails.model.CreateEmailOptions;
 
-/**
- * Template Method pattern — defines the skeleton for building and sending a RevnU email.
- * Subclasses supply the variant parts; send() orchestrates the fixed steps.
- */
 public abstract class EmailTemplate {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailTemplate.class);
@@ -25,10 +20,16 @@ public abstract class EmailTemplate {
 
     protected abstract String buildBody();
 
-    public final void send(String to, JavaMailSender mailSender, String fromAddress) {
+    public final void send(String to, Resend resend, String fromAddress) {
         try {
             String html = wrap(getAccentColor(), getIconSvg(), getTitle(), buildBody());
-            sendHtml(to, getSubject(), html, mailSender, fromAddress);
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from(fromAddress)
+                    .to(to)
+                    .subject(getSubject())
+                    .html(html)
+                    .build();
+            resend.emails().send(params);
             logger.info("{} sent to {}", getClass().getSimpleName(), to);
         } catch (Exception e) {
             logger.warn("Failed to send {} to {}: {}", getClass().getSimpleName(), to, e.getMessage());
@@ -87,16 +88,5 @@ public abstract class EmailTemplate {
                 </body>
                 </html>
                 """.formatted(accentColor, iconSvg, title, bodyHtml);
-    }
-
-    private void sendHtml(String to, String subject, String html,
-            JavaMailSender mailSender, String fromAddress) throws Exception {
-        MimeMessage mime = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mime, true, "UTF-8");
-        helper.setFrom(fromAddress, "RevnU Team");
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(html, true);
-        mailSender.send(mime);
     }
 }
