@@ -9,7 +9,7 @@ export const getEmptyAnalytics = () => ({
   saleRecordsCount: 0,
   expenseRecordsCount: 0,
   salesTrend: [],
-  tags: [],
+  categories: [],
   yesterdayLabel: "",
   isClosed: false,
   date: new Date().toISOString().split("T")[0],
@@ -17,11 +17,11 @@ export const getEmptyAnalytics = () => ({
 
 export const normalizeAnalytics = (payload) => {
   if (!payload) return getEmptyAnalytics();
-  const rawTags = Array.isArray(payload.tags)
-    ? payload.tags
-    : payload.categories;
-  const tags = Array.isArray(rawTags)
-    ? rawTags.map((cat) => ({
+  const rawCategories = Array.isArray(payload.categories)
+    ? payload.categories
+    : payload.tags;
+  const categories = Array.isArray(rawCategories)
+    ? rawCategories.map((cat) => ({
         name: cat.name ?? "Uncategorized",
         value: Number(cat.value ?? 0),
         color: cat.color ?? "#5a7cff",
@@ -38,7 +38,7 @@ export const normalizeAnalytics = (payload) => {
     saleRecordsCount: Number(payload.saleRecordsCount ?? 0),
     expenseRecordsCount: Number(payload.expenseRecordsCount ?? 0),
     salesTrend: Array.isArray(payload.salesTrend) ? payload.salesTrend : [],
-    tags,
+    categories,
     yesterdayLabel: payload.yesterdayLabel ?? "",
     isClosed: Boolean(payload.isClosed),
     date: payload.date ?? new Date().toISOString().split("T")[0],

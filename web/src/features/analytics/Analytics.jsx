@@ -18,7 +18,7 @@ import { SalaryInfoBanner } from "./components/banners/SalaryInfoBanner";
 import { ErrorBanner } from "./components/banners/ErrorBanner";
 import { LoadingSpinner } from "./components/banners/LoadingSpinner";
 import { SalesTrendChart } from "./components/SalesTrendChart";
-import { SalesByTagChart } from "./components/SalesByTagChart";
+import { SalesByCategoryChart } from "./components/SalesByCategoryChart";
 import { WeeklyProfitChart } from "./components/WeeklyProfitChart";
 import { EodLockCard } from "./components/EodLockCard";
 import { getFormattedDate } from "./utils/dateUtils";
@@ -34,9 +34,12 @@ export const Analytics = () => {
     isLocked,
     lockLoading,
     holidayName,
-    salesDelta,
-    expensesDelta,
-    profitDelta,
+    openSalesTotal,
+    openExpensesTotal,
+    openNetProfit,
+    openCategories,
+    openSaleRecordsCount,
+    openExpenseRecordsCount,
     handleLockRecords,
     refetch,
   } = useAnalytics();
@@ -112,8 +115,7 @@ export const Analytics = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0 mb-4">
         <KPICard
           title="Total Sales"
-          value={data.totalSales}
-          delta={salesDelta}
+          value={openSalesTotal}
           isEmpty={isEmpty}
           emptyMessage="Waiting on first sale."
           icon={ShoppingCart}
@@ -121,8 +123,7 @@ export const Analytics = () => {
         />
         <KPICard
           title="Total Expenses"
-          value={data.totalExpenses}
-          delta={expensesDelta}
+          value={openExpensesTotal}
           isEmpty={isEmpty}
           emptyMessage="Log expenses to see totals."
           invertDelta
@@ -132,8 +133,7 @@ export const Analytics = () => {
         />
         <KPICard
           title="Net Profit"
-          value={data.netProfit}
-          delta={profitDelta}
+          value={openNetProfit}
           isEmpty={isEmpty}
           emptyMessage="Requires activity."
           highlight
@@ -148,7 +148,7 @@ export const Analytics = () => {
           data={data.salesTrend}
           yesterdayLabel={data.yesterdayLabel}
         />
-        <SalesByTagChart tags={data.tags} />
+        <SalesByCategoryChart categories={openCategories} />
       </div>
 
       {/* ── Bottom Row: Mini Charts & Actions ── */}
@@ -156,12 +156,12 @@ export const Analytics = () => {
         <div className="flex flex-col gap-3 min-h-0">
           <RecordCountCard
             title="Sale Records"
-            count={data.saleRecordsCount}
+            count={openSaleRecordsCount}
             icon={ListOrdered}
           />
           <RecordCountCard
             title="Expense Records"
-            count={data.expenseRecordsCount}
+            count={openExpenseRecordsCount}
             icon={ListOrdered}
           />
         </div>

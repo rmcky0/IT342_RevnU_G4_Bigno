@@ -48,12 +48,12 @@ export const Welcome = () => {
       {/* Mobile feature pills */}
       <div className="lg:hidden mt-10 flex flex-wrap justify-center gap-2">
         {["Sales Tracking", "Expense Logs", "Staff Payroll", "EOD Reports"].map(
-          (tag) => (
+          (category) => (
             <span
-              key={tag}
+              key={category}
               className="px-3 py-1 bg-[#7C6FF7]/8 text-[#7C6FF7] text-xs font-semibold rounded-full border border-[#7C6FF7]/15"
             >
-              {tag}
+              {category}
             </span>
           ),
         )}

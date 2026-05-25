@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { analyticsApi } from "../api/analyticsApi";
+import { salesAPI } from "../../sales/api/salesApi";
+import { expensesAPI } from "../../expenses/api/expensesApi";
+import { categoriesAPI } from "../../categories/api/categoriesApi";
 import api from "../../../shared/api/axios";
 import * as cache from "../../../shared/cache/dataCache";
 import { useToast } from "../../../shared/components/Toast";
@@ -16,6 +19,19 @@ import {
 } from "../utils/analyticsUtils";
 import { fetchPhHoliday } from "../services/holidayService";
 
+const OPEN_TOTALS_TTL = 2 * 60 * 1000;
+const OPEN_TOTALS_KEY = "analytics:open-totals";
+const CATEGORY_COLORS = [
+  "#7c83fd",
+  "#f87171",
+  "#34d399",
+  "#fbbf24",
+  "#60a5fa",
+  "#a78bfa",
+  "#fb923c",
+  "#e879f9",
+];
+
 export const useAnalytics = (date = null) => {
   const { showToast } = useToast();
   const [data, setData] = useState(null);
@@ -25,6 +41,11 @@ export const useAnalytics = (date = null) => {
   const [isLocked, setIsLocked] = useState(false);
   const [lockLoading, setLockLoading] = useState(false);
   const [holidayName, setHolidayName] = useState(null);
+  const [openSalesTotal, setOpenSalesTotal] = useState(0);
+  const [openExpensesTotal, setOpenExpensesTotal] = useState(0);
+  const [openSaleRecordsCount, setOpenSaleRecordsCount] = useState(0);
+  const [openExpenseRecordsCount, setOpenExpenseRecordsCount] = useState(0);
+  const [openCategories, setOpenCategories] = useState([]);
 
   const fetchAnalytics = useCallback(
     async (forceRefresh = false) => {
@@ -59,6 +80,64 @@ export const useAnalytics = (date = null) => {
         setProfitTrend(trendPayload?.points ?? []);
 
         fetchPhHoliday(normalized.date).then(setHolidayName);
+
+        let openTotals = !forceRefresh ? cache.get(OPEN_TOTALS_KEY) : null;
+        if (!openTotals) {
+          const [salesRes, expensesRes, saleCategories] = await Promise.all([
+            salesAPI.getAllSales(0, 9999),
+            expensesAPI.getAllExpenses(0, 9999),
+            categoriesAPI.getCategories("SALE"),
+          ]);
+
+          const openSales = (salesRes?.data?.content ?? []).filter(
+            (r) => r.status !== "CLOSED",
+          );
+          const openExpenses = (expensesRes?.data?.content ?? []).filter(
+            (r) => r.status !== "CLOSED",
+          );
+
+          const colorMap = {};
+          if (Array.isArray(saleCategories)) {
+            saleCategories.forEach((c) => {
+              colorMap[c.id] = c.color;
+            });
+          }
+
+          const categoryMap = {};
+          openSales.forEach((r) => {
+            const name = r.categoryName || "Uncategorized";
+            if (!categoryMap[name])
+              categoryMap[name] = { name, categoryId: r.categoryId, value: 0 };
+            categoryMap[name].value += parseFloat(r.amount) || 0;
+          });
+          const categories = Object.values(categoryMap).map((t, i) => ({
+            name: t.name,
+            value: t.value,
+            color:
+              colorMap[t.categoryId] ??
+              CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+          }));
+
+          openTotals = {
+            sales: openSales.reduce(
+              (sum, r) => sum + (parseFloat(r.amount) || 0),
+              0,
+            ),
+            expenses: openExpenses.reduce(
+              (sum, r) => sum + (parseFloat(r.amount) || 0),
+              0,
+            ),
+            saleRecordsCount: openSales.length,
+            expenseRecordsCount: openExpenses.length,
+            categories,
+          };
+          cache.set(OPEN_TOTALS_KEY, openTotals, OPEN_TOTALS_TTL);
+        }
+        setOpenSalesTotal(openTotals.sales);
+        setOpenExpensesTotal(openTotals.expenses);
+        setOpenSaleRecordsCount(openTotals.saleRecordsCount);
+        setOpenExpenseRecordsCount(openTotals.expenseRecordsCount);
+        setOpenCategories(openTotals.categories);
       } catch (err) {
         console.error("Failed to load analytics:", err);
         setError(
@@ -85,6 +164,7 @@ export const useAnalytics = (date = null) => {
 
       cache.invalidate(dailyCacheKey(date), trendCacheKey());
       cache.invalidate("archive:summaries");
+      cache.invalidate(OPEN_TOTALS_KEY);
       cache.invalidatePrefix("sales_page_");
       cache.invalidatePrefix("expense_page_");
 
@@ -102,12 +182,12 @@ export const useAnalytics = (date = null) => {
   const normalized = data ?? getEmptyAnalytics();
 
   const isEmpty =
-    normalized.totalSales === 0 &&
-    normalized.totalExpenses === 0 &&
+    openSalesTotal === 0 &&
+    openExpensesTotal === 0 &&
     normalized.saleRecordsCount === 0 &&
     normalized.expenseRecordsCount === 0 &&
     normalized.salesTrend.length === 0 &&
-    normalized.tags.length === 0;
+    normalized.categories.length === 0;
 
   const salesDelta = calcDelta(
     normalized.totalSales,
@@ -122,6 +202,9 @@ export const useAnalytics = (date = null) => {
     normalized.yesterdayProfit,
   );
 
+  const openNetProfit =
+    openSalesTotal - openExpensesTotal - normalized.totalSalaries;
+
   return {
     data: normalized,
     profitTrend,
@@ -134,6 +217,12 @@ export const useAnalytics = (date = null) => {
     salesDelta,
     expensesDelta,
     profitDelta,
+    openSalesTotal,
+    openExpensesTotal,
+    openNetProfit,
+    openCategories,
+    openSaleRecordsCount,
+    openExpenseRecordsCount,
     handleLockRecords,
     refetch: () => fetchAnalytics(true),
   };
