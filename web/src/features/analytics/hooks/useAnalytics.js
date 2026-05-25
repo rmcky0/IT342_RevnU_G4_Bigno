@@ -3,6 +3,7 @@ import { analyticsApi } from "../api/analyticsApi";
 import { salesAPI } from "../../sales/api/salesApi";
 import { expensesAPI } from "../../expenses/api/expensesApi";
 import { categoriesAPI } from "../../categories/api/categoriesApi";
+import { salaryApi } from "../../staff/api/salaryApi";
 import api from "../../../shared/api/axios";
 import * as cache from "../../../shared/cache/dataCache";
 import { useToast } from "../../../shared/components/Toast";
@@ -43,6 +44,7 @@ export const useAnalytics = (date = null) => {
   const [holidayName, setHolidayName] = useState(null);
   const [openSalesTotal, setOpenSalesTotal] = useState(0);
   const [openExpensesTotal, setOpenExpensesTotal] = useState(0);
+  const [openTotalSalaries, setOpenTotalSalaries] = useState(0);
   const [openSaleRecordsCount, setOpenSaleRecordsCount] = useState(0);
   const [openExpenseRecordsCount, setOpenExpenseRecordsCount] = useState(0);
   const [openCategories, setOpenCategories] = useState([]);
@@ -83,10 +85,11 @@ export const useAnalytics = (date = null) => {
 
         let openTotals = !forceRefresh ? cache.get(OPEN_TOTALS_KEY) : null;
         if (!openTotals) {
-          const [salesRes, expensesRes, saleCategories] = await Promise.all([
+          const [salesRes, expensesRes, saleCategories, salariesRes] = await Promise.all([
             salesAPI.getAllSales(0, 9999),
             expensesAPI.getAllExpenses(0, 9999),
             categoriesAPI.getCategories("SALE"),
+            salaryApi.getSalaryHistory(0, 9999),
           ]);
 
           const openSales = (salesRes?.data?.content ?? []).filter(
@@ -118,6 +121,12 @@ export const useAnalytics = (date = null) => {
               CATEGORY_COLORS[i % CATEGORY_COLORS.length],
           }));
 
+          const salaryRecords = salariesRes?.data?.content ?? [];
+          const totalSalaries = salaryRecords.reduce(
+            (sum, r) => sum + (parseFloat(r.amount) || 0),
+            0,
+          );
+
           openTotals = {
             sales: openSales.reduce(
               (sum, r) => sum + (parseFloat(r.amount) || 0),
@@ -127,6 +136,7 @@ export const useAnalytics = (date = null) => {
               (sum, r) => sum + (parseFloat(r.amount) || 0),
               0,
             ),
+            totalSalaries,
             saleRecordsCount: openSales.length,
             expenseRecordsCount: openExpenses.length,
             categories,
@@ -135,6 +145,7 @@ export const useAnalytics = (date = null) => {
         }
         setOpenSalesTotal(openTotals.sales);
         setOpenExpensesTotal(openTotals.expenses);
+        setOpenTotalSalaries(openTotals.totalSalaries);
         setOpenSaleRecordsCount(openTotals.saleRecordsCount);
         setOpenExpenseRecordsCount(openTotals.expenseRecordsCount);
         setOpenCategories(openTotals.categories);
@@ -202,8 +213,7 @@ export const useAnalytics = (date = null) => {
     normalized.yesterdayProfit,
   );
 
-  const openNetProfit =
-    openSalesTotal - openExpensesTotal - normalized.totalSalaries;
+  const openNetProfit = openSalesTotal - openExpensesTotal - openTotalSalaries;
 
   return {
     data: normalized,
@@ -219,6 +229,7 @@ export const useAnalytics = (date = null) => {
     profitDelta,
     openSalesTotal,
     openExpensesTotal,
+    openTotalSalaries,
     openNetProfit,
     openCategories,
     openSaleRecordsCount,
