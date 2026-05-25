@@ -34,6 +34,8 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     List<Category> findByRestaurantIsNull();
 
+    List<Category> findByRestaurantIsNullAndType(String type);
+
     boolean existsByNameAndTypeAndRestaurantIsNull(String name, String type);
 
     Optional<Category> findByIdAndRestaurant(UUID id, Restaurant restaurant);
