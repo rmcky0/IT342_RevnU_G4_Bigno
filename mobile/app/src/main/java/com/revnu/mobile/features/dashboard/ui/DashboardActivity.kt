@@ -51,7 +51,6 @@ class DashboardActivity : AppCompatActivity() {
     private val selectedColor = Color.parseColor("#6366F1")
     private val unselectedColor = Color.parseColor("#94A3B8")
 
-    // Fragment instances — resolved from the fragment manager to survive recreation
     private lateinit var analyticsFragment: AnalyticsFragment
     private lateinit var salesFragment: SalesFragment
     private lateinit var expensesFragment: ExpensesFragment
@@ -88,8 +87,6 @@ class DashboardActivity : AppCompatActivity() {
     private fun resolveFragments(savedInstanceState: Bundle?) {
         val fm = supportFragmentManager
 
-        // On recreation the fragment manager already has the fragments — find them by tag.
-        // On fresh start they won't exist yet, so create new instances.
         analyticsFragment = fm.findFragmentByTag(TAB_HOME) as? AnalyticsFragment ?: AnalyticsFragment()
         salesFragment     = fm.findFragmentByTag(TAB_SALES) as? SalesFragment ?: SalesFragment()
         expensesFragment  = fm.findFragmentByTag(TAB_EXPENSES) as? ExpensesFragment ?: ExpensesFragment()
@@ -107,7 +104,6 @@ class DashboardActivity : AppCompatActivity() {
             activeFragment = analyticsFragment
             selectTab(TAB_HOME)
         } else {
-            // Restore active tab from saved state; derive activeFragment from the tag
             val restoredTab = savedInstanceState.getString(KEY_ACTIVE_TAB, TAB_HOME) ?: TAB_HOME
             currentTab = restoredTab
             activeFragment = fragmentForTab(restoredTab)
@@ -157,7 +153,6 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun showFragment(target: Fragment) {
-        // Guard against no-op using actual fragment state, not a tracked variable
         if (!target.isHidden) return
         supportFragmentManager.beginTransaction()
             .hide(activeFragment)

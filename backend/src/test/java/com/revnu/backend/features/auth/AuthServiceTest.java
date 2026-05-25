@@ -1,5 +1,25 @@
 package com.revnu.backend.features.auth;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import org.mockito.Mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import com.revnu.backend.features.auth.dto.AuthResponse;
 import com.revnu.backend.features.auth.dto.LoginRequest;
 import com.revnu.backend.features.auth.dto.RegisterRequest;
@@ -9,43 +29,30 @@ import com.revnu.backend.features.auth.model.User;
 import com.revnu.backend.features.auth.repository.UserRepository;
 import com.revnu.backend.features.auth.service.AuthService;
 import com.revnu.backend.features.auth.service.TokenBlacklistService;
+import com.revnu.backend.features.auth.observer.AuthEventListener;
 import com.revnu.backend.features.auth.validator.RegistrationValidationPipeline;
-import com.revnu.backend.features.notifications.service.NotificationService;
-import com.revnu.backend.features.reporting.service.EmailService;
 import com.revnu.backend.features.restaurants.repository.RestaurantRepository;
 import com.revnu.backend.shared.security.JwtService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService Unit Tests")
 class AuthServiceTest {
 
-    @Mock private UserRepository userRepository;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private JwtService jwtService;
-    @Mock private TokenBlacklistService tokenBlacklistService;
-    @Mock private RegistrationValidationPipeline validationPipeline;
-    @Mock private RestaurantRepository restaurantRepository;
-    @Mock private NotificationService notificationService;
-    @Mock private EmailService emailService;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtService jwtService;
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
+    @Mock
+    private RegistrationValidationPipeline validationPipeline;
+    @Mock
+    private RestaurantRepository restaurantRepository;
+    @Mock
+    private AuthEventListener authEventListener;
 
-    @InjectMocks
     private AuthService authService;
 
     private User activeRestaurateur;
@@ -53,6 +60,11 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
+        authService = new AuthService(
+                userRepository, passwordEncoder, jwtService,
+                tokenBlacklistService, validationPipeline,
+                restaurantRepository, List.of(authEventListener));
+
         activeRestaurateur = User.builder()
                 .id(UUID.randomUUID())
                 .email("owner@test.com")
@@ -200,9 +212,6 @@ class AuthServiceTest {
     @Test
     @DisplayName("Rule 15 - Google OAuth registration stores null passwordHash")
     void register_googleOAuth_passwordHashIsNull() {
-        // Google OAuth users registered via authenticateWithGoogleToken store no password
-        // Verified by checking User builder in the authenticateWithGoogleToken method:
-        // user = User.builder()...build() without .passwordHash(...)
         User googleUser = User.builder()
                 .email("google@test.com")
                 .fullname("Google User")
@@ -228,7 +237,6 @@ class AuthServiceTest {
 
         authService.register(request);
 
-        verify(notificationService).notifyAdminsUserRegistered(any(User.class));
-        verify(emailService).sendWelcomeEmail(anyString(), anyString());
+        verify(authEventListener).onUserRegistered(any(User.class));
     }
 }

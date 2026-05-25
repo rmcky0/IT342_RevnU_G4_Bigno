@@ -25,7 +25,7 @@ class AddRecordViewModel(
         amount: Double,
         notes: String,
         categoryId: String,
-        recordId: String? = null // ADDED: Optional ID for Edit Mode
+        recordId: String? = null 
     ) {
         _recordState.value = AddRecordState.Loading
 

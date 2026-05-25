@@ -10,7 +10,7 @@ data class RestaurantSetupRequest(
     val physicalLocation: String,
 
     @SerializedName("openingHrs")
-    val openingHrs: String, // Format: "HH:mm:ss" or "HH:mm" based on your backend
+    val openingHrs: String,
 
     @SerializedName("closingHrs")
     val closingHrs: String

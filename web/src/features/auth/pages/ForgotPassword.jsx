@@ -2,8 +2,6 @@ import { Link } from "react-router-dom";
 import { useForgotPassword } from "../hooks/useForgotPassword";
 import revnuLogo from "../../../../public/revnu.svg";
 
-
-// Helper to keep the layout DRY across all 4 steps
 const FormShell = ({ title, subtitle, children }) => (
   <div className="w-full flex flex-col">
     <div className="text-center mb-8">
@@ -44,7 +42,6 @@ export const ForgotPassword = () => {
     handleResendOtp,
   } = useForgotPassword();
 
-  // ── Step 1: Enter email ────────────────────────────────────────────────────
   if (step === "email") {
     return (
       <FormShell
@@ -78,7 +75,6 @@ export const ForgotPassword = () => {
     );
   }
 
-  // ── Step 2: Enter OTP ──────────────────────────────────────────────────────
   if (step === "otp") {
     return (
       <FormShell
@@ -140,7 +136,6 @@ export const ForgotPassword = () => {
     );
   }
 
-  // ── Step 3: Set new password ───────────────────────────────────────────────
   if (step === "new-password") {
     return (
       <FormShell

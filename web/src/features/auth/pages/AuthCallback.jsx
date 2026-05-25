@@ -48,7 +48,6 @@ export const AuthCallback = () => {
     navigate("/login", { replace: true });
   }, [searchParams, navigate, login]);
 
-  // Error UI
   if (errorMessage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

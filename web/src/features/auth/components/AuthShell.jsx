@@ -153,7 +153,6 @@ export const AuthShell = () => {
           </button>
         )}
 
-        {/* The key prop forces re-mount (and re-animation) on every route change */}
         <div
           key={location.pathname}
           className="w-full max-w-md animate-panel-enter"

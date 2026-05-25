@@ -29,11 +29,6 @@ public class SupabaseStorageService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    /**
-     * Uploads a file to the configured Supabase bucket and returns its public
-     * URL. The x-upsert header allows re-uploading a path without a 409
-     * conflict error.
-     */
     public String uploadFile(MultipartFile file, String folder) {
         String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "upload";
         String storagePath = folder + "/" + UUID.randomUUID() + "_" + original;

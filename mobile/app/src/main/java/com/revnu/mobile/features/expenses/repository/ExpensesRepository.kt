@@ -13,7 +13,7 @@ class ExpensesRepository(
     suspend fun getTodayExpenses(): Result<List<ExpenseResponse>> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = apiService.getAllExpenses() // Ensure you have default pagination (page=0, size=100) in ApiService
+                val response = apiService.getAllExpenses()
                 if (response.isSuccessful && response.body()?.success == true) {
                     val expensesList = response.body()!!.data?.content ?: emptyList()
                     Result.success(expensesList)
@@ -73,7 +73,6 @@ class ExpensesRepository(
         }
     }
 
-    // You still need these because AddRecordViewModel calls them!
     suspend fun recordExpense(request: ExpenseRequest): Result<ExpenseResponse> {
         return withContext(Dispatchers.IO) {
             try {

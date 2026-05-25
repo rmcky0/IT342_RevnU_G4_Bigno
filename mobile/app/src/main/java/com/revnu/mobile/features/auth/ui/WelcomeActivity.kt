@@ -24,7 +24,7 @@ class WelcomeActivity : AppCompatActivity() {
 
         val glassCard = findViewById<View>(R.id.bgGlassCard)
         ObjectAnimator.ofFloat(glassCard, "translationY", 0f, -30f).apply {
-            duration = 4000 // 4 seconds up, 4 seconds down (8s total like your JSX)
+            duration = 4000 
             repeatCount = ObjectAnimator.INFINITE
             repeatMode = ObjectAnimator.REVERSE
             start()
@@ -32,7 +32,6 @@ class WelcomeActivity : AppCompatActivity() {
         RetrofitClient.init(this)
         val sessionManager = SessionManager(this)
 
-        // Fire-and-forget ping so Render wakes up before the user reaches the login screen
         lifecycleScope.launch(Dispatchers.IO) {
             try { RetrofitClient.apiService.getMe() } catch (_: Exception) {}
         }

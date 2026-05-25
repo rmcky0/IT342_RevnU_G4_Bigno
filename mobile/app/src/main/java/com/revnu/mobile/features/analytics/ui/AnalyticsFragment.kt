@@ -52,12 +52,10 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Create the factory manually
         val factory = AnalyticsViewModelFactory(
             AnalyticsRepository(RetrofitClient.apiService)
         )
 
-        // Initialize the ViewModel using ViewModelProvider
         viewModel = ViewModelProvider(this, factory)[AnalyticsViewModel::class.java]
 
         bindViews(view)

@@ -15,10 +15,8 @@ import java.util.Locale
 
 class SalaryViewModel(private val repository: SalaryRepository) : ViewModel() {
 
-    // Holds the raw data from the server
     private var allPayroll = listOf<SalaryResponse>()
 
-    // The filtered list exposed to the UI
     private val _filteredPayroll = MutableStateFlow<List<SalaryResponse>>(emptyList())
     val filteredPayroll: StateFlow<List<SalaryResponse>> = _filteredPayroll.asStateFlow()
 
@@ -26,7 +24,6 @@ class SalaryViewModel(private val repository: SalaryRepository) : ViewModel() {
     val currentFilterMonth: StateFlow<String> = _currentFilterMonth.asStateFlow()
 
     init {
-        // Default to current month (e.g., "2026-05")
         val sdf = SimpleDateFormat("yyyy-MM", Locale.getDefault())
         _currentFilterMonth.value = sdf.format(Date())
     }
@@ -46,7 +43,6 @@ class SalaryViewModel(private val repository: SalaryRepository) : ViewModel() {
     }
 
     private fun applyMonthFilter(yearMonth: String) {
-        // paymentDate from backend is likely "YYYY-MM-DD"
         _filteredPayroll.value = allPayroll.filter { it.paymentDate.startsWith(yearMonth) }
     }
 
