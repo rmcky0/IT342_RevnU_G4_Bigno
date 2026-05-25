@@ -131,7 +131,6 @@ export const AuthShell = () => {
           <div className="absolute top-[25%] right-[10%] w-40 h-48 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl rotate-12 animate-[bounce_8s_infinite]" />
           <div className="absolute top-[35%] right-[25%] w-20 h-20 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full -rotate-12 animate-[bounce_6s_infinite_reverse]" />
 
-          {/* Left content — re-mounts on welcome ↔ auth switch */}
           <div
             key={isWelcome ? "welcome" : "auth"}
             className="relative z-10 h-full animate-panel-enter"

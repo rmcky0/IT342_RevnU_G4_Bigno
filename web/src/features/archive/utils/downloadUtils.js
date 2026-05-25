@@ -114,8 +114,6 @@ export const buildEodPdf = (
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text("End of Day Report", 14, 24);
-
-  // Restaurant & owner on right
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.text(restaurantName, 196, 15, { align: "right" });
@@ -256,7 +254,7 @@ export const buildEodPdf = (
       : undefined,
     theme: "striped",
     headStyles: {
-      fillColor: [245, 158, 11], // Softer amber for expenses
+      fillColor: [245, 158, 11],
       textColor: [255, 255, 255],
       fontStyle: "bold",
       fontSize: 9,

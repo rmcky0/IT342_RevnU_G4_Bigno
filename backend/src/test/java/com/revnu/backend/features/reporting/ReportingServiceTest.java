@@ -196,10 +196,6 @@ class ReportingServiceTest {
         when(summaryRepository.save(any(DailySummary.class))).thenReturn(savedSummary);
         doThrow(new RuntimeException("SMTP server down"))
                 .when(notificationService).sendEodSummaryEmail(any(), any(), any());
-
-        // sendEodSummaryEmail is @Async in production (fire-and-forget). In a unit test
-        // (no Spring context) it runs synchronously, so closeDay() propagates the exception.
-        // We verify that summaryRepository.save was called before the notification attempt.
         assertThatThrownBy(() -> reportingService.closeDay("owner@test.com", today))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("SMTP server down");

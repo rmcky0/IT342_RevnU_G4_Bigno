@@ -214,8 +214,6 @@ class StaffServiceTest {
         StaffRequest req = new StaffRequest("John Doe", "Waiter", new BigDecimal("750.00"));
 
         staffService.updateStaff("owner@test.com", staffId, req);
-
-        // Salary records are untouched — only staffRepository.save is called
         verify(salaryRepository, never()).save(any(Salary.class));
         verify(salaryRepository, never()).saveAll(any());
     }
