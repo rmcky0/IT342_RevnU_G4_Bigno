@@ -36,6 +36,7 @@ export const Analytics = () => {
     holidayName,
     openSalesTotal,
     openExpensesTotal,
+    openTotalSalaries,
     openNetProfit,
     openCategories,
     openSaleRecordsCount,
@@ -129,7 +130,7 @@ export const Analytics = () => {
           invertDelta
           icon={CreditCard}
           color="red"
-          payroll={data.totalSalaries}
+          payroll={openTotalSalaries}
         />
         <KPICard
           title="Net Profit"
