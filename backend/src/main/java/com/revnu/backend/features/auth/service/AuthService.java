@@ -1,5 +1,6 @@
 package com.revnu.backend.features.auth.service;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -17,10 +18,9 @@ import com.revnu.backend.features.auth.dto.RegisterRequest;
 import com.revnu.backend.features.auth.model.AccountStatus;
 import com.revnu.backend.features.auth.model.RoleType;
 import com.revnu.backend.features.auth.model.User;
+import com.revnu.backend.features.auth.observer.AuthEventListener;
 import com.revnu.backend.features.auth.repository.UserRepository;
 import com.revnu.backend.features.auth.validator.RegistrationValidationPipeline;
-import com.revnu.backend.features.notifications.service.NotificationService;
-import com.revnu.backend.features.reporting.service.EmailService;
 import com.revnu.backend.features.restaurants.repository.RestaurantRepository;
 import com.revnu.backend.shared.security.JwtService;
 
@@ -33,8 +33,7 @@ public class AuthService {
     private final TokenBlacklistService tokenBlacklistService;
     private final RegistrationValidationPipeline validationPipeline;
     private final RestaurantRepository restaurantRepository;
-    private final NotificationService notificationService;
-    private final EmailService emailService;
+    private final List<AuthEventListener> authEventListeners;
 
     public AuthService(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
@@ -42,16 +41,14 @@ public class AuthService {
             TokenBlacklistService tokenBlacklistService,
             RegistrationValidationPipeline validationPipeline,
             RestaurantRepository restaurantRepository,
-            NotificationService notificationService,
-            EmailService emailService) {
+            List<AuthEventListener> authEventListeners) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.tokenBlacklistService = tokenBlacklistService;
         this.validationPipeline = validationPipeline;
         this.restaurantRepository = restaurantRepository;
-        this.notificationService = notificationService;
-        this.emailService = emailService;
+        this.authEventListeners = authEventListeners;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -67,8 +64,7 @@ public class AuthService {
                 .build();
 
         User saved = userRepository.save(user);
-        notificationService.notifyAdminsUserRegistered(saved);
-        emailService.sendWelcomeEmail(saved.getEmail(), saved.getFullname());
+        authEventListeners.forEach(l -> l.onUserRegistered(saved));
         String token = jwtService.generateToken(saved.getEmail());
         String refreshToken = jwtService.generateRefreshToken(saved.getEmail());
 
@@ -130,8 +126,8 @@ public class AuthService {
                     .provider("google")
                     .build();
             user = userRepository.save(user);
-            notificationService.notifyAdminsUserRegistered(user);
-            emailService.sendWelcomeEmail(user.getEmail(), user.getFullname());
+            final User savedUser = user;
+            authEventListeners.forEach(l -> l.onUserRegistered(savedUser));
         }
 
         if (user.getOauthId() == null) {
@@ -290,8 +286,8 @@ public class AuthService {
                     .provider("google")
                     .build();
             user = userRepository.save(user);
-            notificationService.notifyAdminsUserRegistered(user);
-            emailService.sendWelcomeEmail(user.getEmail(), user.getFullname());
+            final User savedUser = user;
+            authEventListeners.forEach(l -> l.onUserRegistered(savedUser));
         } else if (user.getOauthId() == null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "This email is already registered with email and password. Please sign in with your email and password instead.");
