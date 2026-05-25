@@ -9,7 +9,7 @@ import {
   TrendingDown,
   CreditCard,
   Wallet,
-  Category as CategoryIcon,
+  Tag as CategoryIcon,
   Inbox,
   FileText,
   ShoppingCart,
