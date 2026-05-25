@@ -37,3 +37,9 @@ web/.vite/
 Thumbs.db
 
 .claude*
+.postman*
+postman
+mobile/app/release
+*.jks
+*.postman_collection.json
+seed_demo_data.sql
