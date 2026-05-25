@@ -15,7 +15,6 @@ class SalaryRepository(
             try {
                 val response = apiService.getSalaryHistory(page = page, size = size)
                 if (response.isSuccessful && response.body()?.success == true) {
-                    // Extract the list from the paginated content wrapper
                     val payrollList = response.body()!!.data?.content ?: emptyList()
                     Result.success(payrollList)
                 } else {

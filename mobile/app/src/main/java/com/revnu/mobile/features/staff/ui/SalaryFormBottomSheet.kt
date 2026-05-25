@@ -59,7 +59,6 @@ class SalaryFormBottomSheet : BottomSheetDialogFragment() {
 
         val isEdit = arguments?.containsKey("edit_id") == true
 
-        // Populate staff spinner
         val staffNames = staffList.map { it.fullname }
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, staffNames)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -75,10 +74,9 @@ class SalaryFormBottomSheet : BottomSheetDialogFragment() {
                 if (it == 0.0) "" else it.toString()
             })
             etDate.setText(arguments?.getString("edit_date") ?: "")
-            spinner.isEnabled = false // staff cannot be changed on edit
+            spinner.isEnabled = false 
         }
 
-        // Date picker
         val openDatePicker = {
             val cal = Calendar.getInstance()
             val existing = etDate.text.toString()

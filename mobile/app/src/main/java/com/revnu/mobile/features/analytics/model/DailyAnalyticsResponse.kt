@@ -3,7 +3,7 @@ package com.revnu.mobile.features.analytics.model
 data class DailyAnalyticsResponse(
     val totalSales: Double,
     val totalExpenses: Double,
-    val totalSalaries: Double, // This is your "payout"
+    val totalSalaries: Double,
     val netProfit: Double,
     val yesterdaySales: Double,
     val yesterdayExpenses: Double,

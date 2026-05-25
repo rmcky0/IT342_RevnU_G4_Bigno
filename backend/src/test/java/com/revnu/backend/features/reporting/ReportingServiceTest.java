@@ -142,7 +142,6 @@ class ReportingServiceTest {
         reportingService.closeDay("owner@test.com", today);
 
         DailySummary captured = summaryCaptor.getValue();
-        // Net Profit = 1500 - 300 - 200 = 1000
         assertThat(captured.getTotalSales()).isEqualByComparingTo(new BigDecimal("1500.00"));
         assertThat(captured.getTotalExpenses()).isEqualByComparingTo(new BigDecimal("300.00"));
         assertThat(captured.getTotalSalaries()).isEqualByComparingTo(new BigDecimal("200.00"));

@@ -1,7 +1,7 @@
 package com.revnu.mobile.features.sales.repository
 
 import com.revnu.mobile.core.network.ApiService
-import com.revnu.mobile.features.sales.model.CloseDayRequest // Assuming you have this model
+import com.revnu.mobile.features.sales.model.CloseDayRequest 
 import com.revnu.mobile.features.sales.model.SaleRequest
 import com.revnu.mobile.features.sales.model.SaleResponse
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +14,7 @@ class SalesRepository(
     suspend fun getTodaySales(): Result<List<SaleResponse>> {
         return withContext(Dispatchers.IO) {
             try {
-                // Fetching the first page of sales.
+               
                 val response = apiService.getAllSales(page = 0, size = 100)
 
                 if (response.isSuccessful && response.body()?.success == true) {
@@ -79,7 +79,6 @@ class SalesRepository(
         }
     }
 
-    // You still need this here because AddRecordActivity will call it!
     suspend fun updateSale(id: String, request: SaleRequest): Result<SaleResponse> {
         return withContext(Dispatchers.IO) {
             try {

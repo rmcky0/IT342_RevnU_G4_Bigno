@@ -8,5 +8,5 @@ import com.google.gson.annotations.SerializedName
 data class SalaryRequest(
     @SerializedName("staffId") val staffId: String,
     @SerializedName("amount") val amount: Double,
-    @SerializedName("paymentDate") val paymentDate: String // Format: "YYYY-MM-DD"
+    @SerializedName("paymentDate") val paymentDate: String 
 )

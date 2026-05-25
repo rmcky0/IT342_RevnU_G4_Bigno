@@ -24,7 +24,6 @@ export const downloadExcel = (
   const { summary, sales = [], expenses = [] } = detail;
   const wb = XLSX.utils.book_new();
 
-  // Summary sheet
   const summaryRows = [
     ["RevnU – End of Day Report", ""],
     ["Restaurant", restaurantName],
@@ -42,7 +41,6 @@ export const downloadExcel = (
   wsSummary["!cols"] = [{ wch: 24 }, { wch: 20 }];
   XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
 
-  // Sales sheet
   const salesHeader = ["Time", "Amount (PHP)", "Category", "Notes"];
   const salesRows = sales.map((s) => [
     fmtTime(s.createdAt),
@@ -61,7 +59,6 @@ export const downloadExcel = (
   wsSales["!cols"] = [{ wch: 22 }, { wch: 16 }, { wch: 20 }, { wch: 35 }];
   XLSX.utils.book_append_sheet(wb, wsSales, "Sales");
 
-  // Expenses sheet
   const expHeader = ["Time", "Amount (PHP)", "Category", "Notes"];
   const expRows = expenses.map((e) => [
     fmtTime(e.createdAt),
@@ -85,12 +82,12 @@ export const downloadExcel = (
 
 // ── PDF builder ───────────────────────────────────────────────────────────────
 
-const BRAND = [99, 102, 241]; // Slightly softer indigo
+const BRAND = [99, 102, 241];
 const TEXT_MAIN = [55, 65, 81];
 const TEXT_LIGHT = [107, 114, 128];
 const BORDER_COLOR = [229, 231, 235];
 
-const USABLE_W = 182; // 210 - 14*2 margin
+const USABLE_W = 182;
 const COL_TIME = 35;
 const COL_AMT = 40;
 const COL_CAT = 40;

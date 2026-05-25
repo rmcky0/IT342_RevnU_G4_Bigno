@@ -55,7 +55,6 @@ class AnalyticsViewModel(private val repository: AnalyticsRepository) : ViewMode
         viewModelScope.launch {
             val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             repository.closeDay(date).onSuccess {
-                // Refresh analytics so the EOD card updates to locked state
                 forceRefresh()
             }
         }

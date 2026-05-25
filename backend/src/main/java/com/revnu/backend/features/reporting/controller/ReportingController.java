@@ -3,7 +3,6 @@ package com.revnu.backend.features.reporting.controller;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -40,9 +39,6 @@ public class ReportingController {
         return ResponseEntity.ok(ResponseUtil.success(response));
     }
 
-    /**
-     * GET /revnu/day/summary/{date} — single EOD summary
-     */
     @GetMapping("/summary/{date}")
     public ResponseEntity<ApiResponse> getSummary(
             Principal principal,
@@ -51,21 +47,12 @@ public class ReportingController {
         return ResponseEntity.ok(ResponseUtil.success(summary));
     }
 
-    /**
-     * GET /revnu/day/summaries Returns all closed days for the restaurateur,
-     * newest first. Feeds the "Archived Records" list on the frontend.
-     */
     @GetMapping("/summaries")
     public ResponseEntity<ApiResponse> getAllSummaries(Principal principal) {
         List<DailySummaryDto> summaries = reportingService.getAllSummaries(principal.getName());
         return ResponseEntity.ok(ResponseUtil.success(summaries));
     }
 
-    /**
-     * GET /revnu/day/detail/{date} Returns the full EOD detail for one date:
-     * summary totals + every individual sale + expense record from that day.
-     * Feeds the "Archived Detail" page on the frontend.
-     */
     @GetMapping("/detail/{date}")
     public ResponseEntity<ApiResponse> getDayDetail(
             Principal principal,

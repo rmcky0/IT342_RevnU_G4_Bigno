@@ -69,7 +69,7 @@ class RegisterActivity : AppCompatActivity() {
         setContentView(R.layout.activity_register)
         val glassCard = findViewById<View>(R.id.bgGlassCard)
         ObjectAnimator.ofFloat(glassCard, "translationY", 0f, -30f).apply {
-            duration = 4000 // 4 seconds up, 4 seconds down (8s total like your JSX)
+            duration = 4000 
             repeatCount = ObjectAnimator.INFINITE
             repeatMode = ObjectAnimator.REVERSE
             start()

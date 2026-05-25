@@ -46,7 +46,6 @@ class SalaryDetailBottomSheet : BottomSheetDialogFragment() {
         view.findViewById<TextView>(R.id.tvPayDetailAmount).text =
             "₱${String.format("%.2f", amount)}"
 
-        // Format date
         val tvDate = view.findViewById<TextView>(R.id.tvPayDetailDate)
         try {
             val inputFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -57,7 +56,6 @@ class SalaryDetailBottomSheet : BottomSheetDialogFragment() {
             tvDate.text = paymentDate
         }
 
-        // Status chip styling
         val tvStatus = view.findViewById<TextView>(R.id.tvPayDetailStatus)
         tvStatus.text = status
         when (status) {

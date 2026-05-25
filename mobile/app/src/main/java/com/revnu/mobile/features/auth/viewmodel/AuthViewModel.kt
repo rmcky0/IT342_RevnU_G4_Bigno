@@ -30,7 +30,6 @@ class AuthViewModel(
                         repository.logout()
                         _authState.value = AuthState.AdminDetected
                     } else {
-                        // pass hasRestaurant here
                         _authState.value = AuthState.Success(response.role, response.hasRestaurant)
                     }
                 },

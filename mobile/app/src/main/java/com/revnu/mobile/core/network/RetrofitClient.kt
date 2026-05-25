@@ -52,7 +52,6 @@ object RetrofitClient {
                     val previousToken = request.header("Authorization")?.removePrefix("Bearer ")
 
                     if (currentToken != null && currentToken != previousToken) {
-                        // Token was already refreshed, just retry the original request
                         val newRequest = request.newBuilder()
                             .header("Authorization", "Bearer $currentToken")
                             .build()

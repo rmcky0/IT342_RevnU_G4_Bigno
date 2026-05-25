@@ -36,10 +36,14 @@ import static org.mockito.Mockito.*;
 @DisplayName("StaffService Unit Tests")
 class StaffServiceTest {
 
-    @Mock private StaffRepository staffRepository;
-    @Mock private SalaryRepository salaryRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private RestaurantRepository restaurantRepository;
+    @Mock
+    private StaffRepository staffRepository;
+    @Mock
+    private SalaryRepository salaryRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private RestaurantRepository restaurantRepository;
 
     @InjectMocks
     private StaffService staffService;
@@ -82,7 +86,6 @@ class StaffServiceTest {
 
         staffService.addStaff("owner@test.com", req);
 
-        // Staff is saved but never touches UserRepository — no login account created
         verify(userRepository, never()).save(any(User.class));
         verify(staffRepository).save(any(Staff.class));
     }

@@ -31,15 +31,13 @@ class StaffAdapter(
         val staff = staffList[position]
         holder.bind(staff)
 
-        // Short Press
         holder.itemView.setOnClickListener {
             onItemShortClick(staff)
         }
 
-        // Long Press
         holder.itemView.setOnLongClickListener {
             onItemLongClick(staff)
-            true // Return true to indicate the long click was consumed
+            true
         }
     }
 

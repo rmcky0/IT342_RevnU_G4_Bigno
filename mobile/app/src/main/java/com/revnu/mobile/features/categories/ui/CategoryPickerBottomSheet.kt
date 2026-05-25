@@ -30,7 +30,6 @@ class CategoryPickerBottomSheet : BottomSheetDialogFragment() {
 
     var onCategorySelected: ((CategoryResponse) -> Unit)? = null
 
-    // Theme Colors
     private val colorPurpleMain by lazy { Color.parseColor("#8B5CF6") }
     private val colorRedMain by lazy { Color.parseColor("#EF4444") }
 
@@ -49,10 +48,8 @@ class CategoryPickerBottomSheet : BottomSheetDialogFragment() {
         val numberPicker = view.findViewById<NumberPicker>(R.id.numberPicker)
         val btnConfirm = view.findViewById<MaterialButton>(R.id.btnConfirm)
 
-        // Set Title text dynamically
         tvTitle.text = "Select ${type.lowercase().replaceFirstChar { it.uppercase() }} Category"
 
-        // Apply Dynamic Theme Color (Purple for Sale, Red for Expense)
         val themeColor = if (type.uppercase() == "SALE") colorPurpleMain else colorRedMain
         val colorStateList = ColorStateList.valueOf(themeColor)
 

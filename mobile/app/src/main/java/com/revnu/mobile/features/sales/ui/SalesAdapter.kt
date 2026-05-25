@@ -16,7 +16,7 @@ import java.util.Locale
 
 class SalesAdapter(
     private var salesList: List<SaleResponse> = emptyList(),
-    private val onSaleClicked: (SaleResponse) -> Unit // NEW: Pass a click function
+    private val onSaleClicked: (SaleResponse) -> Unit 
 ) : RecyclerView.Adapter<SalesAdapter.SalesViewHolder>() {
 
     fun updateData(newList: List<SaleResponse>) {
@@ -44,14 +44,12 @@ class SalesAdapter(
     override fun getItemCount(): Int = salesList.size
 
     class SalesViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // These perfectly match the IDs in your new item_sale.xml
         private val tvDateTime: TextView = itemView.findViewById(R.id.tvDateTime)
         private val tvAmount: TextView = itemView.findViewById(R.id.tvAmount)
         private val tvNotes: TextView = itemView.findViewById(R.id.tvNotes)
         private val tvCategory: TextView = itemView.findViewById(R.id.tvCategory)
 
         fun bind(sale: SaleResponse) {
-            // 1. Format the Date
             try {
                 val rawDateString = sale.createdAt.substringBefore(".")
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
@@ -68,10 +66,8 @@ class SalesAdapter(
                 tvDateTime.text = sale.createdAt
             }
 
-            // 2. Format the Money
             tvAmount.text = "₱${String.format("%.2f", sale.amount)}"
 
-            // 3. Set the Notes
             tvNotes.text = if (sale.notes.isNullOrBlank()) "No notes" else sale.notes
 
             tvCategory.text = if (sale.categoryName.isNullOrBlank()) "UNCATEGORIZED" else sale.categoryName

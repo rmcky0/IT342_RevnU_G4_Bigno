@@ -47,7 +47,6 @@ class ForgotPasswordActivity : AppCompatActivity() {
     private lateinit var stepDone: LinearLayout
     private lateinit var btnBackToLogin: MaterialButton
 
-    // Held across steps
     private var currentEmail = ""
     private var verifiedOtp = ""
 

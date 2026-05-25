@@ -194,7 +194,6 @@ class AdminControllerTest {
             ServletResponse response = invocation.getArgument(1);
             FilterChain chain = invocation.getArgument(2);
 
-            // Pass the request to the next filter in the chain
             chain.doFilter(request, response);
             return null;
         }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());

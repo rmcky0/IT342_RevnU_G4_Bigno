@@ -41,7 +41,6 @@ class WebRedirectActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
-        // Check if they got here because an Admin just tried to log in
         isAdminLogin = intent.getBooleanExtra(EXTRA_IS_ADMIN_LOGIN, false)
 
         bindViews()
@@ -84,7 +83,6 @@ class WebRedirectActivity : AppCompatActivity() {
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
             } else {
-                // If it was a Restaurateur trying to access Settings, just close this activity
                 finish()
             }
         }
