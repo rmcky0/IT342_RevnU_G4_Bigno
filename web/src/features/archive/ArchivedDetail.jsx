@@ -9,7 +9,7 @@ import {
   TrendingDown,
   CreditCard,
   Wallet,
-  Tag as TagIcon,
+  Category as CategoryIcon,
   Inbox,
   FileText,
   ShoppingCart,
@@ -190,13 +190,14 @@ export const ArchivedDetail = () => {
   const profit = parseFloat(summary?.netProfit || 0);
   const isProfit = profit >= 0;
 
-  const tagTotals = {};
+  const categoryTotals = {};
   sales.forEach((s) => {
-    (s.tags || []).forEach((tag) => {
-      tagTotals[tag] = (tagTotals[tag] || 0) + parseFloat(s.amount || 0);
+    (s.categories || []).forEach((category) => {
+      categoryTotals[category] =
+        (categoryTotals[category] || 0) + parseFloat(s.amount || 0);
     });
   });
-  const topTags = Object.entries(tagTotals)
+  const topCategories = Object.entries(categoryTotals)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
   const COLORS = ["#7c83fd", "#ff5a8d", "#ffb800", "#4ade80", "#a78bfa"];
@@ -372,17 +373,19 @@ export const ArchivedDetail = () => {
         </p>
       </div>
 
-      {/* ── Tag Breakdown ── */}
-      {topTags.length > 0 && (
+      {/* ── Category Breakdown ── */}
+      {topCategories.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_12px_rgb(0,0,0,0.03)] p-5">
           <div className="flex items-center gap-2 mb-4">
-            <TagIcon className="w-4 h-4 text-[#7c83fd]" />
-            <h3 className="font-bold text-sm text-[#1e1b4b]">Sales by Tag</h3>
+            <CategoryIcon className="w-4 h-4 text-[#7c83fd]" />
+            <h3 className="font-bold text-sm text-[#1e1b4b]">
+              Sales by Category
+            </h3>
           </div>
           <div className="flex flex-wrap gap-2">
-            {topTags.map(([tag, amount], i) => (
+            {topCategories.map(([category, amount], i) => (
               <div
-                key={tag}
+                key={category}
                 className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100"
               >
                 <div
@@ -390,7 +393,7 @@ export const ArchivedDetail = () => {
                   style={{ backgroundColor: COLORS[i % COLORS.length] }}
                 />
                 <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wide">
-                  {tag}
+                  {category}
                 </span>
                 <span
                   className="text-[11px] font-black tabular-nums"
@@ -420,7 +423,7 @@ export const ArchivedDetail = () => {
                 <tr>
                   <TH>Time</TH>
                   <TH align="right">Amount</TH>
-                  <TH>Category / Tags</TH>
+                  <TH>Category / Categories</TH>
                   <TH>Notes</TH>
                 </tr>
               </thead>
@@ -438,7 +441,7 @@ export const ArchivedDetail = () => {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {(s.tags || []).map((t, i) => (
+                        {(s.categories || []).map((t, i) => (
                           <span
                             key={i}
                             className="px-2 py-0.5 bg-[#eef0ff] text-[#6b72f5] text-[10px] font-bold uppercase rounded-full border border-[#d6d9ff]"
@@ -446,7 +449,7 @@ export const ArchivedDetail = () => {
                             {t}
                           </span>
                         ))}
-                        {(!s.tags || s.tags.length === 0) && (
+                        {(!s.categories || s.categories.length === 0) && (
                           <span className="text-xs text-gray-300">—</span>
                         )}
                       </div>
@@ -495,7 +498,7 @@ export const ArchivedDetail = () => {
                 <tr>
                   <TH>Time</TH>
                   <TH align="right">Amount</TH>
-                  <TH>Category / Tags</TH>
+                  <TH>Category / Categories</TH>
                   <TH>Notes</TH>
                 </tr>
               </thead>
@@ -513,7 +516,7 @@ export const ArchivedDetail = () => {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {(e.tags || []).map((t, i) => (
+                        {(e.categories || []).map((t, i) => (
                           <span
                             key={i}
                             className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase rounded-full border border-amber-200"
@@ -521,7 +524,7 @@ export const ArchivedDetail = () => {
                             {t}
                           </span>
                         ))}
-                        {(!e.tags || e.tags.length === 0) && (
+                        {(!e.categories || e.categories.length === 0) && (
                           <span className="text-xs text-gray-300">—</span>
                         )}
                       </div>
