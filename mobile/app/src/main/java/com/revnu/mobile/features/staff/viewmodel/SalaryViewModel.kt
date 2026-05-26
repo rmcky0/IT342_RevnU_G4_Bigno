@@ -58,9 +58,17 @@ class SalaryViewModel(private val repository: SalaryRepository) : ViewModel() {
         }
     }
 
+    private val _deleteError = MutableStateFlow<String?>(null)
+    val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
+
     fun deleteSalary(id: String) {
         viewModelScope.launch {
-            repository.deleteSalary(id).onSuccess { loadPayroll() }
+            repository.deleteSalary(id).fold(
+                onSuccess = { loadPayroll() },
+                onFailure = { error -> _deleteError.value = error.message }
+            )
         }
     }
+
+    fun clearDeleteError() { _deleteError.value = null }
 }

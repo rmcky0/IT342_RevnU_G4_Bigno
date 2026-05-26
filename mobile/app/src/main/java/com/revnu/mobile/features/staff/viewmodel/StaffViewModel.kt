@@ -34,21 +34,29 @@ class StaffViewModel(private val repository: StaffRepository) : ViewModel() {
         private const val CACHE_TTL_MS = 5 * 60 * 1000L
     }
 
+    private val _deleteError = MutableStateFlow<String?>(null)
+    val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
+
     fun addStaff(request: StaffRequest) {
         viewModelScope.launch {
-            repository.createStaff(request).onSuccess { loadStaff() }
+            repository.createStaff(request).onSuccess { forceRefresh() }
         }
     }
 
     fun updateStaff(id: String, request: StaffRequest) {
         viewModelScope.launch {
-            repository.updateStaff(id, request).onSuccess { loadStaff() }
+            repository.updateStaff(id, request).onSuccess { forceRefresh() }
         }
     }
 
     fun deleteStaff(id: String) {
         viewModelScope.launch {
-            repository.deleteStaff(id).onSuccess { loadStaff() }
+            repository.deleteStaff(id).fold(
+                onSuccess = { forceRefresh() },
+                onFailure = { error -> _deleteError.value = error.message }
+            )
         }
     }
+
+    fun clearDeleteError() { _deleteError.value = null }
 }

@@ -46,20 +46,19 @@ class SalesViewModel(
         private const val CACHE_TTL_MS = 5 * 60 * 1000L
     }
 
+    private val _deleteError = MutableStateFlow<String?>(null)
+    val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
+
     fun deleteSale(id: String) {
         viewModelScope.launch {
-            val result = repository.deleteSale(id)
-
-            result.fold(
-                onSuccess = {
-                    loadSales()
-                },
-                onFailure = { error ->
-                    error.printStackTrace()
-                }
+            repository.deleteSale(id).fold(
+                onSuccess = { forceRefresh() },
+                onFailure = { error -> _deleteError.value = error.message }
             )
         }
     }
+
+    fun clearDeleteError() { _deleteError.value = null }
 
     fun lockEod() {
         viewModelScope.launch {
