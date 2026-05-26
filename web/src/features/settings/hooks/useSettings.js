@@ -165,6 +165,9 @@ export const useSettings = () => {
     const file = event.target.files[0];
     if (!file) return;
 
+    const localPreview = URL.createObjectURL(file);
+    setLogoPreview(localPreview);
+
     const formData = new FormData();
     formData.append("logo", file);
 
@@ -174,10 +177,13 @@ export const useSettings = () => {
       const res = await settingsApi.getRestaurantProfile();
       const updated = res?.data;
       if (updated?.logoFileId) {
-        setLogoPreview(`${API_BASE_URL}/files/${updated.logoFileId}`);
+        setLogoPreview(`${API_BASE_URL}/files/${updated.logoFileId}?t=${Date.now()}`);
       }
+      URL.revokeObjectURL(localPreview);
       showMessage("success", "Logo updated successfully.");
     } catch (err) {
+      URL.revokeObjectURL(localPreview);
+      setLogoPreview(null);
       showMessage("error", "Failed to upload logo.");
     } finally {
       setLoading(false);

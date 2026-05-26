@@ -2,8 +2,9 @@ package com.revnu.mobile.features.analytics.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.revnu.mobile.features.analytics.model.DailyAnalyticsResponse
+import com.revnu.mobile.features.analytics.model.OpenAnalyticsData
 import com.revnu.mobile.features.analytics.repository.AnalyticsRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,19 +31,35 @@ class AnalyticsViewModel(private val repository: AnalyticsRepository) : ViewMode
         viewModelScope.launch {
             _uiState.value = UiState.Loading
             try {
-                val response = repository.getDailyAnalytics()
+                val dailyDeferred   = async { repository.getDailyAnalytics() }
+                val salesDeferred   = async { repository.getOpenSales() }
+                val expensesDeferred = async { repository.getOpenExpenses() }
+                val salariesDeferred = async { repository.getAllSalaries() }
 
-                if (response.isSuccessful && response.body() != null) {
-                    val data = response.body()!!.data
-                    if (data != null) {
-                        _uiState.value = UiState.Success(data)
-                        lastFetchedAt = System.currentTimeMillis()
-                    } else {
-                        _uiState.value = UiState.Error("No data available for today.")
-                    }
-                } else {
-                    _uiState.value = UiState.Error("Server error: ${response.code()}")
-                }
+                val dailyResponse = dailyDeferred.await()
+                val openSales     = salesDeferred.await()
+                val openExpenses  = expensesDeferred.await()
+                val allSalaries   = salariesDeferred.await()
+
+                val isClosed = dailyResponse.body()?.data?.isClosed ?: false
+
+                val totalSales     = openSales.sumOf { it.amount }
+                val totalExpenses  = openExpenses.sumOf { it.amount }
+                val totalSalaries  = allSalaries.sumOf { it.amount }
+                val netProfit      = totalSales - totalExpenses - totalSalaries
+
+                _uiState.value = UiState.Success(
+                    OpenAnalyticsData(
+                        totalSales         = totalSales,
+                        totalExpenses      = totalExpenses,
+                        totalSalaries      = totalSalaries,
+                        netProfit          = netProfit,
+                        saleRecordsCount   = openSales.size.toLong(),
+                        expenseRecordsCount = openExpenses.size.toLong(),
+                        isClosed           = isClosed
+                    )
+                )
+                lastFetchedAt = System.currentTimeMillis()
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("Connection failed. Check your internet.")
             }
@@ -66,7 +83,7 @@ class AnalyticsViewModel(private val repository: AnalyticsRepository) : ViewMode
 
     sealed class UiState {
         object Loading : UiState()
-        data class Success(val analytics: DailyAnalyticsResponse) : UiState()
+        data class Success(val analytics: OpenAnalyticsData) : UiState()
         data class Error(val message: String) : UiState()
     }
 }
