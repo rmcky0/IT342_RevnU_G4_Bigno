@@ -45,7 +45,7 @@ class AnalyticsViewModel(private val repository: AnalyticsRepository) : ViewMode
 
                 val totalSales     = openSales.sumOf { it.amount }
                 val totalExpenses  = openExpenses.sumOf { it.amount }
-                val totalSalaries  = allSalaries.sumOf { it.amount }
+                val totalSalaries  = allSalaries.filter { it.status != "CLOSED" }.sumOf { it.amount }
                 val netProfit      = totalSales - totalExpenses - totalSalaries
 
                 _uiState.value = UiState.Success(
