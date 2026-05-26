@@ -29,6 +29,8 @@ public interface SalaryRepository extends JpaRepository<Salary, UUID> {
 
     List<Salary> findByRestaurantAndStatus(Restaurant restaurant, SalaryStatus status);
 
+    List<Salary> findByRestaurantAndReportDate(Restaurant restaurant, LocalDate reportDate);
+
     Page<Salary> findByRestaurant(Restaurant restaurant, Pageable pageable);
 
     List<Salary> findByStaff(Staff staff);

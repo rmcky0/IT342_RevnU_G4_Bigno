@@ -1,6 +1,7 @@
 package com.revnu.backend.features.expenses.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     Page<Expense> findByRestaurantAndStatus(Restaurant restaurant, ExpenseStatus status, Pageable pageable);
 
     List<Expense> findByRestaurantAndStatus(Restaurant restaurant, ExpenseStatus status);
+
+    List<Expense> findByRestaurantAndReportDate(Restaurant restaurant, LocalDate reportDate);
 
     List<Expense> findByRestaurantAndCreatedAtBetween(Restaurant restaurant, LocalDateTime start, LocalDateTime end);
 

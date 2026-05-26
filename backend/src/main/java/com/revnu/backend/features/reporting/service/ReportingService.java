@@ -84,13 +84,13 @@ public class ReportingService {
         BigDecimal totalSalaries = sum(salaries.stream().map(Salary::getAmount).toList());
         BigDecimal netProfit = totalSales.subtract(totalExpenses).subtract(totalSalaries);
 
-        sales.forEach(s -> s.setStatus(SaleStatus.CLOSED));
+        sales.forEach(s -> { s.setStatus(SaleStatus.CLOSED); s.setReportDate(date); });
         saleRepository.saveAll(sales);
 
-        expenses.forEach(e -> e.setStatus(ExpenseStatus.CLOSED));
+        expenses.forEach(e -> { e.setStatus(ExpenseStatus.CLOSED); e.setReportDate(date); });
         expenseRepository.saveAll(expenses);
 
-        salaries.forEach(s -> s.setStatus(SalaryStatus.CLOSED));
+        salaries.forEach(s -> { s.setStatus(SalaryStatus.CLOSED); s.setReportDate(date); });
         salaryRepository.saveAll(salaries);
 
         DailySummary summary = DailySummary.builder()
@@ -143,23 +143,20 @@ public class ReportingService {
                 "No EOD summary found for " + date));
 
         List<SaleResponse> sales = saleRepository
-                .findByRestaurantAndCreatedAtBetween(
-                        restaurant, date.atStartOfDay(), date.atTime(23, 59, 59))
+                .findByRestaurantAndReportDate(restaurant, date)
                 .stream().map(this::mapSale).collect(Collectors.toList());
 
         List<ExpenseResponse> expenses = expenseRepository
-                .findByRestaurantAndCreatedAtBetween(
-                        restaurant, date.atStartOfDay(), date.atTime(23, 59, 59))
+                .findByRestaurantAndReportDate(restaurant, date)
                 .stream().map(this::mapExpense).collect(Collectors.toList());
 
         List<CashFlowRecord> outflow = new java.util.ArrayList<>();
         expenseRepository
-                .findByRestaurantAndCreatedAtBetween(
-                        restaurant, date.atStartOfDay(), date.atTime(23, 59, 59))
+                .findByRestaurantAndReportDate(restaurant, date)
                 .forEach(e -> outflow.add(new CashFlowRecord(
                 e.getId(), "EXPENSE", e.getAmount(), e.getNotes(), e.getCreatedAt())));
         salaryRepository
-                .findByRestaurantAndPaymentDate(restaurant, date)
+                .findByRestaurantAndReportDate(restaurant, date)
                 .forEach(s -> outflow.add(new CashFlowRecord(
                 s.getId(), "PAYROLL", s.getAmount(),
                 "Payroll: " + s.getStaff().getFullname(), s.getCreatedAt())));

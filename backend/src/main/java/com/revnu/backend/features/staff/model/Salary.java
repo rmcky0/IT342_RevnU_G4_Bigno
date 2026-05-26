@@ -56,9 +56,15 @@ public class Salary {
     @Column(nullable = false, length = 20)
     private SalaryStatus status = SalaryStatus.OPEN;
 
+    @Column(name = "report_date")
+    private LocalDate reportDate;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    public LocalDate getReportDate() { return reportDate; }
+    public void setReportDate(LocalDate reportDate) { this.reportDate = reportDate; }
 
     // --- Builder Pattern ---
     public static SalaryBuilder builder() {
