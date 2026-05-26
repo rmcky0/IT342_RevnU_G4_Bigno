@@ -1,6 +1,7 @@
 package com.revnu.backend.features.sales.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,8 @@ public interface SaleRepository extends JpaRepository<Sale, UUID> {
     Page<Sale> findByRestaurantAndStatus(Restaurant restaurant, SaleStatus status, Pageable pageable);
 
     List<Sale> findByRestaurantAndStatus(Restaurant restaurant, SaleStatus status);
+
+    List<Sale> findByRestaurantAndReportDate(Restaurant restaurant, LocalDate reportDate);
 
     List<Sale> findByRestaurantAndCreatedAtBetween(Restaurant restaurant, LocalDateTime start, LocalDateTime end);
 

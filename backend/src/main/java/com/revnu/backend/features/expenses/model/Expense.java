@@ -1,6 +1,7 @@
 package com.revnu.backend.features.expenses.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -64,9 +65,15 @@ public class Expense {
     @Column(nullable = false, length = 20)
     private ExpenseStatus status = ExpenseStatus.OPEN;
 
+    @Column(name = "report_date")
+    private LocalDate reportDate;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    public LocalDate getReportDate() { return reportDate; }
+    public void setReportDate(LocalDate reportDate) { this.reportDate = reportDate; }
 
     public static ExpenseBuilder builder() {
         return new ExpenseBuilder();

@@ -1,6 +1,7 @@
 package com.revnu.backend.features.sales.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -56,9 +57,15 @@ public class Sale {
     @Column(nullable = false, length = 20)
     private SaleStatus status = SaleStatus.OPEN;
 
+    @Column(name = "report_date")
+    private LocalDate reportDate;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    public LocalDate getReportDate() { return reportDate; }
+    public void setReportDate(LocalDate reportDate) { this.reportDate = reportDate; }
 
     public static SaleBuilder builder() {
         return new SaleBuilder();
