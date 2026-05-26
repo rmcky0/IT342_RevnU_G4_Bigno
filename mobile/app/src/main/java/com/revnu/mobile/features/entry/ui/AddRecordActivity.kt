@@ -33,6 +33,9 @@ import com.revnu.mobile.features.entry.viewmodel.AddRecordViewModel
 import com.revnu.mobile.features.expenses.repository.ExpensesRepository
 import com.revnu.mobile.features.sales.repository.SalesRepository
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 
 class AddRecordActivity : AppCompatActivity() {
@@ -46,6 +49,7 @@ class AddRecordActivity : AppCompatActivity() {
         const val EXTRA_DESCRIPTION = "record_desc"
         const val EXTRA_CATEGORY_ID = "record_category_id"
         const val EXTRA_CATEGORY_NAME = "record_category_name"
+        const val EXTRA_HAS_RECEIPT = "record_has_receipt"
         const val EXTRA_START_TAB = "start_tab"
     }
 
@@ -74,6 +78,7 @@ class AddRecordActivity : AppCompatActivity() {
 
     private var isEditMode = false
     private var editRecordId: String? = null
+    private var receiptPhotoFile: File? = null
 
     private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
@@ -157,6 +162,10 @@ class AddRecordActivity : AppCompatActivity() {
             etNotes.setText(intent.getStringExtra(EXTRA_DESCRIPTION))
             selectedCategoryId = intent.getStringExtra(EXTRA_CATEGORY_ID)
             tvSelectedCategory.text = intent.getStringExtra(EXTRA_CATEGORY_NAME) ?: "SELECT CATEGORY"
+
+            if (intent.getBooleanExtra(EXTRA_HAS_RECEIPT, false)) {
+                tvReceiptAction.text = "Receipt attached — tap to replace"
+            }
         }
     }
 
@@ -231,6 +240,7 @@ class AddRecordActivity : AppCompatActivity() {
             .let { File(it, "receipt_${System.currentTimeMillis()}.jpg") }
         val uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", photoFile)
         receiptPhotoUri = uri
+        receiptPhotoFile = photoFile
         takePicture.launch(uri)
     }
 
@@ -280,7 +290,15 @@ class AddRecordActivity : AppCompatActivity() {
                 Toast.makeText(this, "Please select a category", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            viewModel.saveRecord(isSaleMode, amount, etNotes.text.toString().trim(), selectedCategoryId!!, editRecordId)
+            val receiptPart = receiptPhotoFile
+                ?.takeIf { !isSaleMode && it.exists() }
+                ?.let {
+                    MultipartBody.Part.createFormData(
+                        "file", it.name,
+                        it.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                    )
+                }
+            viewModel.saveRecord(isSaleMode, amount, etNotes.text.toString().trim(), selectedCategoryId!!, editRecordId, receiptPart)
         }
     }
 

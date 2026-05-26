@@ -125,7 +125,7 @@ class SalesFragment : Fragment(R.layout.fragment_sales) {
                 adapter.updateData(activeSales)
                 layoutEmptyState.visibility = if (activeSales.isEmpty()) View.VISIBLE else View.GONE
                 rvSales.visibility = if (activeSales.isEmpty()) View.GONE else View.VISIBLE
-                tvTotalRevenue.text = "₱${String.format("%.2f", activeSales.sumOf { it.amount })}"
+                tvTotalRevenue.text = "₱${String.format("%,.2f", activeSales.sumOf { it.amount })}"
             }
         }
 
