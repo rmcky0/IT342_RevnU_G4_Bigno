@@ -2,8 +2,13 @@ import React, { useMemo } from "react";
 import { Wallet, Lock, Unlock, Pencil, Trash2, CalendarDays } from "lucide-react";
 
 function groupByMonth(data) {
+  const sorted = [...(data || [])].sort((a, b) => {
+    const da = a.paymentDate ? new Date(a.paymentDate) : new Date(0);
+    const db = b.paymentDate ? new Date(b.paymentDate) : new Date(0);
+    return db - da;
+  });
   const groups = {};
-  (data || []).forEach((salary) => {
+  sorted.forEach((salary) => {
     const d = salary.paymentDate ? new Date(salary.paymentDate) : null;
     const key = d
       ? d.toLocaleDateString(undefined, { month: "long", year: "numeric" })
