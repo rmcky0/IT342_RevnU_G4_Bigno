@@ -49,8 +49,18 @@ export const Expenses = () => {
     requestSort,
   } = useExpenses();
 
-  const { data: analyticsData, isLocked, lockLoading, handleLockRecords } =
-    useAnalytics();
+  const {
+    data: analyticsData,
+    isLocked,
+    lockLoading,
+    handleLockRecords,
+    openSalesTotal,
+    openExpensesTotal,
+    openTotalSalaries,
+    openNetProfit,
+    openSaleRecordsCount,
+    openExpenseRecordsCount,
+  } = useAnalytics();
 
   const [showKPIs, setShowKPIs] = useState(true);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -213,6 +223,12 @@ export const Expenses = () => {
         onClose={() => setShowLockModal(false)}
         onConfirm={confirmLock}
         lockLoading={lockLoading}
+        openSalesTotal={openSalesTotal}
+        openExpensesTotal={openExpensesTotal}
+        openTotalSalaries={openTotalSalaries}
+        openNetProfit={openNetProfit}
+        openSaleRecordsCount={openSaleRecordsCount}
+        openExpenseRecordsCount={openExpenseRecordsCount}
       />
     </div>
   );

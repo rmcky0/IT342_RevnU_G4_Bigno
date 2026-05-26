@@ -52,6 +52,12 @@ export const Sales = () => {
     isLocked,
     lockLoading,
     handleLockRecords,
+    openSalesTotal,
+    openExpensesTotal,
+    openTotalSalaries,
+    openNetProfit,
+    openSaleRecordsCount,
+    openExpenseRecordsCount,
   } = useAnalytics();
 
   const [showKPIs, setShowKPIs] = useState(true);
@@ -206,6 +212,12 @@ export const Sales = () => {
         onClose={() => setShowLockModal(false)}
         onConfirm={confirmLock}
         lockLoading={lockLoading}
+        openSalesTotal={openSalesTotal}
+        openExpensesTotal={openExpensesTotal}
+        openTotalSalaries={openTotalSalaries}
+        openNetProfit={openNetProfit}
+        openSaleRecordsCount={openSaleRecordsCount}
+        openExpenseRecordsCount={openExpenseRecordsCount}
       />
     </div>
   );
