@@ -42,6 +42,7 @@
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.08"
                 android:text="NET PROFIT"
+                android:fontFamily="@font/ubuntu_bold"
                 android:textColor="#C7D2FE"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -55,6 +56,7 @@
                 android:text="₱0.00"
                 android:textColor="@android:color/white"
                 android:textSize="44sp"
+                android:fontFamily="@font/prompt_bold"
                 android:textStyle="bold" />
 
             <TextView
@@ -63,6 +65,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="Sales − Expenses − Payroll"
+                android:fontFamily="@font/ubuntu"
                 android:textColor="#E0E7FF"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -97,6 +100,7 @@
                     android:letterSpacing="0.06"
                     android:text="TOTAL SALES"
                     android:textColor="#64748B"
+                    android:fontFamily="@font/ubuntu_bold"
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
@@ -107,6 +111,7 @@
                     android:layout_marginTop="8dp"
                     android:text="₱0.00"
                     android:textColor="#6366F1"
+                    android:fontFamily="@font/prompt_bold"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
@@ -116,6 +121,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="0 transactions"
+                    android:fontFamily="@font/ubuntu"
                     android:textColor="#94A3B8"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -143,6 +149,7 @@
                     android:letterSpacing="0.06"
                     android:text="TOTAL EXPENSES"
                     android:textColor="#64748B"
+                    android:fontFamily="@font/ubuntu_bold"
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
@@ -152,6 +159,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="₱0.00"
+                    android:fontFamily="@font/prompt_bold"
                     android:textColor="#EF4444"
                     android:textSize="22sp"
                     android:textStyle="bold" />
@@ -162,6 +170,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="0 entries"
+                    android:fontFamily="@font/ubuntu"
                     android:textColor="#94A3B8"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -189,6 +198,7 @@
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.06"
                 android:text="EXPENSE BREAKDOWN"
+                android:fontFamily="@font/ubuntu_bold"
                 android:textColor="#64748B"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -224,6 +234,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Operational"
+                            android:fontFamily="@font/ubuntu"
                             android:textColor="#64748B"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -234,6 +245,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="₱0.00"
+                        android:fontFamily="@font/prompt_bold"
                         android:textColor="#0F172A"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -269,6 +281,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Payroll"
+                            android:fontFamily="@font/ubuntu"
                             android:textColor="#64748B"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -279,6 +292,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="₱0.00"
+                        android:fontFamily="@font/prompt_bold"
                         android:textColor="#0F172A"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -334,12 +348,14 @@
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.03"
                     android:text="EOD NOT LOCKED"
+                    android:fontFamily="@font/ubuntu_bold"
                     android:textColor="#DC2626"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvEodSub"
+                    android:fontFamily="@font/ubuntu"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
@@ -353,6 +369,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Lock EOD"
+                android:fontFamily="@font/ubuntu"
                 android:textAllCaps="false"
                 android:textSize="13sp"
                 app:backgroundTint="#DC2626"

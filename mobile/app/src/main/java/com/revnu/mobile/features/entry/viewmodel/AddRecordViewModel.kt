@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.revnu.mobile.features.entry.model.AddRecordState
 import com.revnu.mobile.features.expenses.model.ExpenseRequest
 import com.revnu.mobile.features.expenses.repository.ExpensesRepository
+import okhttp3.MultipartBody
 import com.revnu.mobile.features.sales.model.SaleRequest
 import com.revnu.mobile.features.sales.repository.SalesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +26,8 @@ class AddRecordViewModel(
         amount: Double,
         notes: String,
         categoryId: String,
-        recordId: String? = null 
+        recordId: String? = null,
+        receiptPart: MultipartBody.Part? = null
     ) {
         _recordState.value = AddRecordState.Loading
 
@@ -53,7 +55,12 @@ class AddRecordViewModel(
                 }
 
                 result.fold(
-                    onSuccess = { _recordState.value = AddRecordState.Success("expense") },
+                    onSuccess = { expense ->
+                        if (receiptPart != null) {
+                            expensesRepository.uploadReceipt(expense.id, receiptPart)
+                        }
+                        _recordState.value = AddRecordState.Success("expense")
+                    },
                     onFailure = { error -> _recordState.value = AddRecordState.Error(error.message ?: "Failed to save expense") }
                 )
             }

@@ -47,7 +47,7 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
     private val editRecordLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) viewModel.loadExpenses()
+        if (result.resultCode == Activity.RESULT_OK) viewModel.forceRefresh()
     }
 
     private val imagePickerLauncher = registerForActivityResult(
@@ -129,7 +129,7 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
                 adapter.updateData(activeExpenses)
                 layoutEmptyState.visibility = if (activeExpenses.isEmpty()) View.VISIBLE else View.GONE
                 rvExpenses.visibility = if (activeExpenses.isEmpty()) View.GONE else View.VISIBLE
-                tvTotalExpenses.text = "₱${String.format("%.2f", activeExpenses.sumOf { it.amount })}"
+                tvTotalExpenses.text = "₱${String.format("%,.2f", activeExpenses.sumOf { it.amount })}"
             }
         }
 
@@ -183,6 +183,7 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
             putExtra(AddRecordActivity.EXTRA_DESCRIPTION, expenseToEdit.notes ?: "")
             putExtra(AddRecordActivity.EXTRA_CATEGORY_ID, expenseToEdit.categoryId)
             putExtra(AddRecordActivity.EXTRA_CATEGORY_NAME, expenseToEdit.categoryName ?: "")
+            putExtra(AddRecordActivity.EXTRA_HAS_RECEIPT, expenseToEdit.fileId != null)
         }
         editRecordLauncher.launch(intent)
     }

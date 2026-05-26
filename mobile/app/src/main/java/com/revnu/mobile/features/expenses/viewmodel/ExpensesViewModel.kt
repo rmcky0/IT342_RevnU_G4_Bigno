@@ -72,7 +72,7 @@ class ExpensesViewModel(
         viewModelScope.launch {
             val result = repository.uploadReceipt(id, filePart)
             result.fold(
-                onSuccess = { loadExpenses() }, 
+                onSuccess = { forceRefresh() },
                 onFailure = { it.printStackTrace() }
             )
         }
