@@ -24,6 +24,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
     Page<Expense> findByRestaurantAndStatus(Restaurant restaurant, ExpenseStatus status, Pageable pageable);
 
+    List<Expense> findByRestaurantAndStatus(Restaurant restaurant, ExpenseStatus status);
+
     List<Expense> findByRestaurantAndCreatedAtBetween(Restaurant restaurant, LocalDateTime start, LocalDateTime end);
 
     List<Expense> findByRestaurantAndCreatedAtBetweenAndStatus(
