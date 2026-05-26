@@ -76,7 +76,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         if (success) {
             cameraLogoFile?.let { file ->
                 val body = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                val part = MultipartBody.Part.createFormData("file", file.name, body)
+                val part = MultipartBody.Part.createFormData("logo", file.name, body)
                 viewModel.uploadLogo(part)
             }
         }
@@ -260,7 +260,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             val tmp = File(requireContext().cacheDir, "logo_${System.currentTimeMillis()}.jpg")
             FileOutputStream(tmp).use { input.copyTo(it) }
             val body = tmp.asRequestBody("image/jpeg".toMediaTypeOrNull())
-            val part = MultipartBody.Part.createFormData("file", tmp.name, body)
+            val part = MultipartBody.Part.createFormData("logo", tmp.name, body)
             viewModel.uploadLogo(part)
         } catch (e: Exception) {
             Toast.makeText(requireContext(), "Failed to process image", Toast.LENGTH_SHORT).show()
