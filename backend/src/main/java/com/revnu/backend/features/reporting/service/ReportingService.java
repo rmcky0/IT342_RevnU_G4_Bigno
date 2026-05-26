@@ -73,14 +73,11 @@ public class ReportingService {
             throw new IllegalStateException("Records for " + date + " are already closed.");
         }
 
-        List<Sale> sales = saleRepository.findByRestaurantAndCreatedAtBetweenAndStatus(
-                restaurant, date.atStartOfDay(), date.atTime(23, 59, 59), SaleStatus.OPEN);
+        List<Sale> sales = saleRepository.findByRestaurantAndStatus(restaurant, SaleStatus.OPEN);
 
-        List<Expense> expenses = expenseRepository.findByRestaurantAndCreatedAtBetweenAndStatus(
-                restaurant, date.atStartOfDay(), date.atTime(23, 59, 59), ExpenseStatus.OPEN);
+        List<Expense> expenses = expenseRepository.findByRestaurantAndStatus(restaurant, ExpenseStatus.OPEN);
 
-        List<Salary> salaries = salaryRepository.findByRestaurantAndPaymentDateAndStatus(
-                restaurant, date, SalaryStatus.OPEN);
+        List<Salary> salaries = salaryRepository.findByRestaurantAndStatus(restaurant, SalaryStatus.OPEN);
 
         BigDecimal totalSales = sum(sales.stream().map(Sale::getAmount).toList());
         BigDecimal totalExpenses = sum(expenses.stream().map(Expense::getAmount).toList());

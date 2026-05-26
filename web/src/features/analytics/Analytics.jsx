@@ -179,6 +179,12 @@ export const Analytics = () => {
         onClose={() => setShowLockModal(false)}
         onConfirm={confirmLock}
         lockLoading={lockLoading}
+        openSalesTotal={openSalesTotal}
+        openExpensesTotal={openExpensesTotal}
+        openTotalSalaries={openTotalSalaries}
+        openNetProfit={openNetProfit}
+        openSaleRecordsCount={openSaleRecordsCount}
+        openExpenseRecordsCount={openExpenseRecordsCount}
       />
     </div>
   );
