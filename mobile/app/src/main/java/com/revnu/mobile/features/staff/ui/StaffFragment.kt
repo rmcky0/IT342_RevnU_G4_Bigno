@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
@@ -247,6 +248,24 @@ class StaffFragment : Fragment(R.layout.fragment_staff) {
                 launch {
                     salaryViewModel.currentFilterMonth.collect { yearMonth ->
                         tvCurrentMonth.text = formatMonthLabel(yearMonth)
+                    }
+                }
+
+                launch {
+                    staffViewModel.deleteError.collect { error ->
+                        if (error != null) {
+                            Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                            staffViewModel.clearDeleteError()
+                        }
+                    }
+                }
+
+                launch {
+                    salaryViewModel.deleteError.collect { error ->
+                        if (error != null) {
+                            Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                            salaryViewModel.clearDeleteError()
+                        }
                     }
                 }
             }

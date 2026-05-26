@@ -143,6 +143,15 @@ class ExpensesFragment : Fragment(R.layout.fragment_expenses) {
                 }
             }
         }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.deleteError.collect { error ->
+                if (error != null) {
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                    viewModel.clearDeleteError()
+                }
+            }
+        }
     }
 
     private fun showLockConfirmation() {

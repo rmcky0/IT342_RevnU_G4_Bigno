@@ -54,15 +54,19 @@ class ExpensesViewModel(
         private const val CACHE_TTL_MS = 5 * 60 * 1000L
     }
 
+    private val _deleteError = MutableStateFlow<String?>(null)
+    val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
+
     fun deleteExpense(id: String) {
         viewModelScope.launch {
-            val result = repository.deleteExpense(id)
-            result.fold(
-                onSuccess = { loadExpenses() },
-                onFailure = { it.printStackTrace() }
+            repository.deleteExpense(id).fold(
+                onSuccess = { forceRefresh() },
+                onFailure = { error -> _deleteError.value = error.message }
             )
         }
     }
+
+    fun clearDeleteError() { _deleteError.value = null }
 
     fun uploadReceipt(id: String, filePart: MultipartBody.Part) {
         viewModelScope.launch {
