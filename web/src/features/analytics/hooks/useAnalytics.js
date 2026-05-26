@@ -122,7 +122,8 @@ export const useAnalytics = (date = null) => {
           }));
 
           const salaryRecords = salariesRes?.data?.content ?? [];
-          const totalSalaries = salaryRecords.reduce(
+          const openSalaries = salaryRecords.filter((r) => r.status !== "CLOSED");
+          const totalSalaries = openSalaries.reduce(
             (sum, r) => sum + (parseFloat(r.amount) || 0),
             0,
           );
