@@ -16,7 +16,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.revnu.mobile.R
 import com.revnu.mobile.core.network.RetrofitClient
-import com.revnu.mobile.features.analytics.model.DailyAnalyticsResponse
+import com.revnu.mobile.features.analytics.model.OpenAnalyticsData
 import com.revnu.mobile.features.analytics.repository.AnalyticsRepository
 import com.revnu.mobile.features.analytics.viewmodel.AnalyticsViewModel
 import com.revnu.mobile.features.analytics.viewmodel.AnalyticsViewModelFactory
@@ -147,7 +147,7 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
 
     // ── Populate views ─────────────────────────────────────────────────────────
 
-    private fun updateAnalytics(data: DailyAnalyticsResponse) {
+    private fun updateAnalytics(data: OpenAnalyticsData) {
         // Net profit (hero card)
         tvNetProfit.text = formatPeso(data.netProfit)
         // Dim color when a loss
