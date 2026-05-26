@@ -15,6 +15,20 @@ class AnalyticsRepository(private val apiService: ApiService) {
         return apiService.getDailyStats()
     }
 
+    suspend fun getOpenPayrollTotal(): Double {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getSalaryHistory(page = 0, size = 9999)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val records = response.body()!!.data?.content ?: emptyList()
+                    records.filter { it.status != "CLOSED" }.sumOf { it.amount }
+                } else 0.0
+            } catch (e: Exception) {
+                0.0
+            }
+        }
+    }
+
     suspend fun closeDay(date: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {

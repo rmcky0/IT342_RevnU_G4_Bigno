@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.revnu.mobile.features.analytics.model.DailyAnalyticsResponse
 import com.revnu.mobile.features.analytics.repository.AnalyticsRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,18 +32,24 @@ class AnalyticsViewModel(private val repository: AnalyticsRepository) : ViewMode
         viewModelScope.launch {
             _uiState.value = UiState.Loading
             try {
-                val response = repository.getDailyAnalytics()
+                coroutineScope {
+                    val analyticsDeferred = async { repository.getDailyAnalytics() }
+                    val openPayrollDeferred = async { repository.getOpenPayrollTotal() }
 
-                if (response.isSuccessful && response.body() != null) {
-                    val data = response.body()!!.data
-                    if (data != null) {
-                        _uiState.value = UiState.Success(data)
-                        lastFetchedAt = System.currentTimeMillis()
+                    val response = analyticsDeferred.await()
+                    val openPayroll = openPayrollDeferred.await()
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val data = response.body()!!.data
+                        if (data != null) {
+                            _uiState.value = UiState.Success(data, openPayroll)
+                            lastFetchedAt = System.currentTimeMillis()
+                        } else {
+                            _uiState.value = UiState.Error("No data available for today.")
+                        }
                     } else {
-                        _uiState.value = UiState.Error("No data available for today.")
+                        _uiState.value = UiState.Error("Server error: ${response.code()}")
                     }
-                } else {
-                    _uiState.value = UiState.Error("Server error: ${response.code()}")
                 }
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("Connection failed. Check your internet.")
@@ -66,7 +74,7 @@ class AnalyticsViewModel(private val repository: AnalyticsRepository) : ViewMode
 
     sealed class UiState {
         object Loading : UiState()
-        data class Success(val analytics: DailyAnalyticsResponse) : UiState()
+        data class Success(val analytics: DailyAnalyticsResponse, val openTotalSalaries: Double) : UiState()
         data class Error(val message: String) : UiState()
     }
 }

@@ -114,7 +114,7 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
                         is AnalyticsViewModel.UiState.Loading -> showLoading()
                         is AnalyticsViewModel.UiState.Success -> {
                             showContent()
-                            updateAnalytics(state.analytics)
+                            updateAnalytics(state.analytics, state.openTotalSalaries)
                         }
                         is AnalyticsViewModel.UiState.Error -> {
                             showError(state.message)
@@ -147,7 +147,7 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
 
     // ── Populate views ─────────────────────────────────────────────────────────
 
-    private fun updateAnalytics(data: DailyAnalyticsResponse) {
+    private fun updateAnalytics(data: DailyAnalyticsResponse, openTotalSalaries: Double) {
         // Net profit (hero card)
         tvNetProfit.text = formatPeso(data.netProfit)
         // Dim color when a loss
@@ -163,10 +163,10 @@ class AnalyticsFragment : Fragment(R.layout.fragment_analytics) {
         tvTotalExpenses.text  = formatPeso(data.totalExpenses)
         tvExpenseRecords.text = "${data.expenseRecordsCount} entr${if (data.expenseRecordsCount != 1L) "ies" else "y"}"
 
-        // Breakdown
-        val opsExpense = data.totalExpenses - data.totalSalaries
+        // Breakdown — payroll shows open records only (excludes CLOSED)
+        val opsExpense = data.totalExpenses - openTotalSalaries
         tvOpsExpense.text     = formatPeso(opsExpense)
-        tvPayrollExpense.text = formatPeso(data.totalSalaries)
+        tvPayrollExpense.text = formatPeso(openTotalSalaries)
 
         // EOD status
         updateEodCard(data.isClosed)
