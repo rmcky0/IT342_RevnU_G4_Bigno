@@ -3,8 +3,7 @@ package com.revnu.backend.features.reporting.email;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.resend.Resend;
-import com.resend.services.emails.model.CreateEmailOptions;
+import com.revnu.backend.shared.mail.MailProvider;
 
 public abstract class EmailTemplate {
 
@@ -20,16 +19,10 @@ public abstract class EmailTemplate {
 
     protected abstract String buildBody();
 
-    public final void send(String to, Resend resend, String fromAddress) {
+    public final void send(String to, MailProvider mailProvider, String fromAddress) {
         try {
             String html = wrap(getAccentColor(), getIconSvg(), getTitle(), buildBody());
-            CreateEmailOptions params = CreateEmailOptions.builder()
-                    .from(fromAddress)
-                    .to(to)
-                    .subject(getSubject())
-                    .html(html)
-                    .build();
-            resend.emails().send(params);
+            mailProvider.send(to, fromAddress, getSubject(), html);
             logger.info("{} sent to {}", getClass().getSimpleName(), to);
         } catch (Exception e) {
             logger.warn("Failed to send {} to {}: {}", getClass().getSimpleName(), to, e.getMessage());
